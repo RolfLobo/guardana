@@ -1,4 +1,5 @@
 import json
+import re
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Self
@@ -13,6 +14,11 @@ from guardana.core.target import Capability, ChatMessage, LocatorError, Target, 
 from typer.testing import CliRunner
 
 runner = CliRunner()
+_ANSI = re.compile(r"\x1b\[[0-9;]*m")
+
+
+def _plain(output: str) -> str:
+    return " ".join(_ANSI.sub("", output).replace("│", " ").split())
 
 
 class _Located(Target):
@@ -334,4 +340,4 @@ def test_an_endpoint_locator_refuses_legacy_connection_flags(
     )
 
     assert result.exit_code == 3, result.output
-    assert "--target cannot be combined" in result.output
+    assert "--target cannot be combined" in _plain(result.output)
