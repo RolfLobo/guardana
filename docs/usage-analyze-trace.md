@@ -212,6 +212,8 @@ session that ends when the process does is `unterminated` by construction.
 
 | Option | Meaning |
 |---|---|
+| `--target SCHEME://LOCATOR` | Build a trusted installed trace target instead of reading the positional trace file |
+| `--target-option KEY=VALUE` | Repeatable, non-secret configuration passed to that target |
 | `--dialect guardana\|otel` | Override detection |
 | `--write-trace PATH` | Also write the trace in the native dialect |
 | `--profile`, `--preset` | Policy, as for every other command — see [`profiles.md`](profiles.md) |
@@ -221,6 +223,10 @@ session that ends when the process does is `unterminated` by construction.
 | `--ai-system`, `--environment`, `--deployment-id` | What this trace came from. Never guessed |
 | `--rules`, `--plugins`, `--allow-plugin` | Rule loading, as for `scan` |
 | `--contract PATH` | A [security contract](usage-contracts.md) to check this execution against; repeatable, and a directory loads every `.yaml` in it |
+
+The trace file and `--target` are mutually exclusive, and `--dialect` applies
+only to a file. A custom target must be a trace target and implement
+`TraceReader`; otherwise the command refuses it before grading anything.
 
 ## Exit codes
 

@@ -23,7 +23,7 @@ Every roadmap item must preserve these properties:
 5. Application-specific risk remains expressible without forking the engine.
 6. Public schemas are versioned and migratable.
 
-## What ships today (0.23.0)
+## What ships today (0.24.0)
 
 The current release is beta. It provides artifact scanning, controlled endpoint
 and MCP probing, recorded-trace analysis, regression comparison, policy and
@@ -31,23 +31,25 @@ baseline gates, extension APIs, and an optional authenticated PostgreSQL-backed
 collector. See [FEATURES.md](FEATURES.md) for the concise overview and
 [Product status](docs/product-status.md) for limitations.
 
-## Now: application awareness and honest regression
+## Now: repeatable application assurance
 
-The next milestone makes custom targets usable from the CLI and turns individual
-assessments into comparable suites. Complete the following in order.
+Target locators are complete for 0.24.0. The remaining milestone turns a
+one-off extension into something a team can scaffold, repeat, compare, and
+operate. The order below reflects the
+[0.23 repository and market audit](docs/design/audit-0.23-market.md): author
+workflow and honest measurement come before additional output destinations.
 
 | Order | Deliverable | Done when |
 |---:|---|---|
-| 1 | Target locators and `TargetFactory` | an installed target can be selected from the CLI without user Python; malformed and conflicting schemes fail closed |
-| 2 | Renderer and reporter plugins | outputs are discoverable entry points and every output remains behind the common redaction boundary |
-| 3 | YAML fixtures for scenario and trajectory rules | declarative rules can ship positive, negative, and inconclusive samples just like Python rules |
-| 4 | `guardana new-pack` | one command creates an installable pack with manifest, entry points, fixtures, and tests |
-| 5 | Suites, versioned datasets, and assessors | a run records the sample, assessor, denominator, and uncertainty rather than only findings |
-| 6 | Paired statistical diff | comparison refuses unequal or undersized samples and gates only on a declared minimum effect |
+| 1 | YAML fixtures for scenario and trajectory rules | declarative rules can ship positive, negative, and inconclusive samples just like Python rules |
+| 2 | `guardana new-pack` | one command creates an installable pack with manifest, entry points, fixtures, locator target, and tests |
+| 3 | Suites, versioned datasets, and assessors | a run records the sample, assessor, denominator, and uncertainty rather than only findings |
+| 4 | Paired statistical diff | comparison refuses unequal or undersized samples and gates only on a declared minimum effect |
+| 5 | Renderer and reporter plugins | outputs are discoverable entry points and every output remains behind the common redaction boundary |
+| 6 | Provider conformance matrix | documented endpoint support is backed by repeatable capability tests |
 | 7 | Assessments in the collector | trends are keyed by system, deployment, dataset, and assessor version; findings and quality measurements stay separate |
-| 8 | Provider conformance matrix | documented endpoint support is backed by repeatable capability tests |
 
-Design inputs already exist for the first six items:
+Design inputs already exist for the shipped locator and the first five remaining items:
 
 - [target locators](docs/design/target-locators.md)
 - [output plugins](docs/design/output-plugins.md)
@@ -55,10 +57,16 @@ Design inputs already exist for the first six items:
 - [quality suites](docs/design/quality-suites.md)
 - [paired regression statistics](docs/design/paired-regression-statistics.md)
 
+The full OTLP intake remains in the next milestone because the OpenTelemetry
+GenAI agent conventions are still changing. A compatibility spike may proceed
+after items 3 and 4, in parallel with items 5 and 6, but it must normalize an
+explicit supported subset behind an adapter rather than make a development
+convention a persisted Guardana schema.
+
 ### Milestone exit criteria
 
 - A third-party target, rule, evaluator, renderer, and reporter are usable without
-  modifying Guardana.
+  modifying Guardana; target locators satisfy the target part from 0.24.0.
 - A suite records passes as well as failures and names its dataset version.
 - `guardana diff` can say better, worse, unchanged, or incomparable with an
   auditable statistical reason.
@@ -74,6 +82,11 @@ inline control.
 3. Continuous rules over synthetic runs and recorded traffic.
 4. Prometheus and webhook outputs through the reporter seam.
 5. Retention, deletion, and audit behavior proven under the new data volume.
+
+This lane starts as soon as suite and statistical shapes are stable; it does not
+wait for every provider-matrix entry. That ordering responds to the market need
+for continuous inventory and post-deployment evidence without freezing a moving
+external telemetry convention into Guardana's own documents.
 
 Exit criteria: overload fails closed without affecting the application; raw
 sensitive payloads are not retained by default; every trend identifies its sample

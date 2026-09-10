@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The 0.23 repository and market audit — Guardana documentation</title>
+<meta name="description" content="what the released 0.23.0 code, roadmap and documentation say, what current agent-security demand adds, and why target locators stay first while repeatable measurement moves ahead of output plugins">
+<link rel="canonical" href="https://guardana.dev/docs/design/audit-0.23-market.html">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+<link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+<header class="top"><div class="bar">
+<a class="mark" href="../../">guard<span>ana</span></a>
+<nav>
+<a href="../index.html">Documentation</a>
+<a href="../rules/index.html">Rules</a>
+<a href="https://github.com/guardana/guardana">GitHub</a>
+</nav>
+</div></header>
+<div class="shell">
+<nav class="side">
+<ul class="home"><li><a href="../index.html">Overview</a></li></ul>
+<h2>First run</h2><ul>
+<li><a href="../how-it-works.html">How Guardana works</a></li>
+<li><a href="../install.html">Installing</a></li>
+<li><a href="../usage-testing.html">In your test suite</a></li>
+<li><a href="../usage-scan.html">guardana scan</a></li>
+<li><a href="../usage-probe.html">guardana probe</a></li>
+</ul>
+<h2>Run and policy</h2><ul>
+<li><a href="../safe-testing.html">Safe active testing</a></li>
+<li><a href="../usage-doctor.html">guardana doctor</a></li>
+<li><a href="../usage-target.html">guardana target inspect</a></li>
+<li><a href="../usage-plan.html">guardana plan</a></li>
+<li><a href="../exit-codes.html">Exit codes</a></li>
+<li><a href="../profiles.html">Profiles — guardana.yaml</a></li>
+</ul>
+<h2>Evidence and regression</h2><ul>
+<li><a href="../usage-baseline.html">guardana baseline</a></li>
+<li><a href="../usage-diff.html">guardana diff</a></li>
+<li><a href="../usage-monitor.html">guardana monitor</a></li>
+<li><a href="../usage-run.html">guardana run</a></li>
+<li><a href="../usage-calibrate.html">guardana calibrate</a></li>
+<li><a href="../privacy.html">Evidence and redaction</a></li>
+</ul>
+<h2>Recorded applications</h2><ul>
+<li><a href="../usage-analyze-trace.html">guardana analyze-trace</a></li>
+<li><a href="../usage-trace-inspect.html">guardana trace inspect</a></li>
+<li><a href="../usage-contracts.html">Security contracts</a></li>
+<li><a href="../usage-import-observations.html">guardana import-observations</a></li>
+<li><a href="../writing-an-integrator.html">Writing an integrator<span class="tag">beta</span></a></li>
+</ul>
+<h2>Rules and extensions</h2><ul>
+<li><a href="../usage-rules.html">guardana rules</a></li>
+<li><a href="../usage-taxonomy.html">guardana taxonomy</a></li>
+<li><a href="../writing-rules.html">Writing rules</a></li>
+<li><a href="../usage-rule-test.html">guardana rule test</a></li>
+<li><a href="../usage-pack.html">guardana pack</a></li>
+<li><a href="../extending.html">Extending Guardana</a></li>
+<li><a href="../model-formats.html">Reading model formats</a></li>
+</ul>
+<h2>Collector and deployment</h2><ul>
+<li><a href="../integrations.html">CI and pre-commit</a></li>
+<li><a href="../deployment.html">Deploying the collector<span class="tag">beta</span></a></li>
+<li><a href="../usage-collector.html">The collector<span class="tag">beta</span></a></li>
+</ul>
+<h2>Architecture and security</h2><ul>
+<li><a href="../product-status.html">Product status</a></li>
+<li><a href="../threat-model.html">Threat model</a></li>
+<li><a href="../architecture.html">Architecture</a></li>
+</ul>
+<h2>Reference</h2><ul>
+<li><a href="../rules/index.html">Rule explorer</a></li>
+<li><a href="../generated/rule-summary.html">Rule summary</a></li>
+<li><a href="../generated/rule-catalog.html">Rule catalog</a></li>
+<li><a href="../generated/evaluator-catalog.html">Evaluator catalog</a></li>
+<li><a href="../generated/taxonomy-coverage.html">Taxonomy coverage</a></li>
+</ul>
+<h2>Design documents</h2><ul>
+<li><a href="../design/README.html">How these are written</a></li>
+</ul>
+<h2>Project direction</h2><ul>
+<li><a href="../design/audit-0.23-market.html" aria-current="page">The 0.23 repository and market audit<span class="tag">accepted</span></a></li>
+</ul>
+<h2>Maintainers</h2><ul>
+<li><a href="../maintainers/github-setup.html">GitHub repository setup</a></li>
+</ul>
+<h2>Also here</h2><ul>
+<li><a href="../design/trace-domain-model.html">The Trace domain model<span class="tag">implemented</span></a></li>
+<li><a href="../design/trace-producer.html">Producing a trace<span class="tag">implemented</span></a></li>
+<li><a href="../design/framework-adapters.html">Framework adapters<span class="tag">implemented</span></a></li>
+<li><a href="../design/assessment-channel.html">The assessment channel<span class="tag">accepted</span></a></li>
+<li><a href="../design/capability-protocols.html">Capability protocols<span class="tag">accepted</span></a></li>
+<li><a href="../design/production-intake.html">Production intake<span class="tag">proposed</span></a></li>
+<li><a href="../design/audit-0.21.html">The 0.21 audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-0.22.html">The 0.22 audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/security-contracts.html">Security contracts<span class="tag">implemented</span></a></li>
+<li><a href="../design/mcp-protocol-eras.html">MCP has two eras<span class="tag">implemented</span></a></li>
+<li><a href="../design/mcp-authorization-depth.html">MCP authorization depth<span class="tag">implemented</span></a></li>
+<li><a href="../design/taxonomy-editions.html">Taxonomy editions<span class="tag">implemented</span></a></li>
+<li><a href="../design/extension-author-tooling.html">Extension author tooling<span class="tag">accepted</span></a></li>
+<li><a href="../design/target-locators.html">Target locators<span class="tag">implemented</span></a></li>
+<li><a href="../design/output-plugins.html">Output plugins<span class="tag">proposed</span></a></li>
+<li><a href="../design/quality-suites.html">Quality suites<span class="tag">proposed</span></a></li>
+<li><a href="../design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
+<li><a href="../design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
+<li><a href="../design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
+<li><a href="../design/documentation-site.html">A documentation site<span class="tag">implemented</span></a></li>
+<li><a href="../design/run-manifest-v2.html">Run manifest v2<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-domain-model.html">Collector domain model<span class="tag">superseded</span></a></li>
+<li><a href="../design/privacy-and-redaction.html">Privacy and redaction<span class="tag">implemented</span></a></li>
+<li><a href="../design/exit-codes.html">Exit codes and gate semantics<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-persistence.html">Collector persistence<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-tenancy.html">Collector tenancy<span class="tag">implemented</span></a></li>
+<li><a href="../design/ai-systems-and-deployments.html">AI systems and deployments<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-runs-and-findings.html">Runs and findings<span class="tag">accepted</span></a></li>
+<li><a href="../design/finding-lifecycle-and-waivers.html">Finding lifecycle and waivers<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-retention-and-deletion.html">Audit, retention and deletion<span class="tag">accepted</span></a></li>
+<li><a href="../design/panel-sessions.html">Panel sessions<span class="tag">accepted</span></a></li>
+</ul>
+</nav>
+<main>
+<h1>The 0.23 repository and market audit<span class="status accepted">accepted</span></h1><p class="lede">what the released 0.23.0 code, roadmap and documentation say, what current agent-security demand adds, and why target locators stay first while repeatable measurement moves ahead of output plugins</p><p><strong>Status:</strong> accepted · <strong>Written:</strong> 2026-09-09 · <strong>Subject:</strong> released 0.23.0 at
+<code>946f2ef</code>, with the unreleased repository cleanup at <code>0b05d56</code></p>
+<h2 id="decision-in-one-page">Decision in one page</h2>
+<p>Keep target locators first and ship them in 0.24.0. They close a real product
+gap: Guardana has discovered custom targets since 0.1 but no CLI command could
+build one. Current buyers also operate heterogeneous agent stacks, while the
+closest open-source products treat custom targets as a basic integration
+surface, not an advanced feature.[^csa-enterprise][^pyrit][^promptfoo][^garak]</p>
+<p>Change the order after that:</p>
+<ol>
+<li>YAML fixtures for scenario and trajectory rules;</li>
+<li><code>guardana new-pack</code>;</li>
+<li>suites, versioned datasets, and assessors;</li>
+<li>paired statistical diff;</li>
+<li>renderer and reporter plugins;</li>
+<li>provider conformance matrix;</li>
+<li>assessments in the collector.</li>
+</ol>
+<p>This moves repeatability and statistically honest regression ahead of adding
+more output destinations. Begin the OpenTelemetry compatibility and production
+intake work after the suite and comparison shapes settle, in parallel with the
+later extension work. Do not make today's developmental GenAI semantic
+conventions a persisted Guardana schema.[^otel-agent][^otel-releases]</p>
+<p>Do not move live RAG to the next release. It remains valuable, but it is one
+target category. The stronger cross-market need is to connect the systems teams
+already have, know which agents and permissions exist, repeat evaluations, and
+retain evidence over time.[^csa-autonomous][^csa-governance][^nist-ai-rmf]</p>
+<h2 id="scope-and-method">Scope and method</h2>
+<p>The repository audit read the engine, CLI, rule pack, collector, example packs,
+release automation, root documentation, task guides, generated references, and
+accepted/proposed designs. Claims about behavior were checked with static
+analysis, strict typing, targeted tests, the full repository gate, and isolated
+installation tests. The release gate results belong in the 0.24.0 changelog and
+release record, not in this time-stable audit.</p>
+<p>The market review used primary or first-party sources: NIST, the EU AI Act,
+OWASP, OpenTelemetry, official competitor documentation, and two Cloud Security
+Alliance surveys. The CSA surveys were sponsored by security vendors; their
+percentages are useful directional signals, not neutral market sizing. No
+customer interviews were conducted.</p>
+<p>Public repository evidence is thin: the project had no open public issues at the
+time of review.[^guardana-issues] That means this order is a researched product
+hypothesis, not a claim that Guardana users voted for it. The validation plan
+below is part of the decision for that reason.</p>
+<h2 id="repository-audit">Repository audit</h2>
+<h3 id="what-is-strong">What is strong</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Evidence in the repository</th>
+<th>Assessment</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Verdict integrity</td>
+<td>findings, inconclusive results, errors, skips, coverage shortfalls, and assessments remain separate; default gates do not translate missing evidence into a pass</td>
+<td>a credible differentiator, and the principle every new feature should preserve</td>
+</tr>
+<tr>
+<td>Bounded execution</td>
+<td>planning, request/token/duration ceilings, safety levels, explicit destructive permission, and offline artifact scanning</td>
+<td>aligned with enterprise requirements for controlled testing rather than autonomous attack execution</td>
+</tr>
+<tr>
+<td>Evidence model</td>
+<td>versioned run, trace, baseline, lock, contract, calibration, and collector documents with migration/round-trip gates</td>
+<td>unusually mature for a beta CLI; suitable foundation for audit evidence</td>
+</tr>
+<tr>
+<td>Extensibility</td>
+<td>entry points for rules, evaluators, targets, and taxonomies; transactional discovery; plugin trust; pack validation and locking; conformance helpers</td>
+<td>strong Python embedding surface, but incomplete user workflow before 0.24.0</td>
+</tr>
+<tr>
+<td>Verification discipline</td>
+<td>264 test modules, aggregate and per-area coverage floors, strict typing, import boundaries, CodeQL, dogfood scanning, generated-doc checks, three isolated examples, and a clean-install gate</td>
+<td>release engineering is a product strength, not only a maintainer convenience</td>
+</tr>
+<tr>
+<td>Deployment boundary</td>
+<td>engine remains out of the request path; collector is optional and separated by a data-only protocol</td>
+<td>coherent with the stated non-goal of becoming an inline firewall or APM</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="findings-and-action">Findings and action</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align:right">Priority</th>
+<th>Finding</th>
+<th>Evidence and risk</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right">P0</td>
+<td>A discovered custom target cannot be selected by the CLI</td>
+<td><code>guardana.targets</code>, manifests, locks, and conformance tests exist, but nine target-building command paths used only literal built-ins. A documented extension could work from Python and remain unusable in normal CI</td>
+<td>ship target locators in 0.24.0 across scan, baseline, plan, probe, monitor, inspection, and trace analysis; refuse unknown/conflicting schemes and target-kind mismatches</td>
+</tr>
+<tr>
+<td style="text-align:right">P0</td>
+<td>Canary rules need a construction contract on custom endpoints</td>
+<td>grading a canary without planting it is a false pass; constructing one target per rule can multiply the budget</td>
+<td>add <code>SystemPromptPlanter</code>; skip canary checks honestly when absent; require planted views to share usage and budget state</td>
+</tr>
+<tr>
+<td style="text-align:right">P1</td>
+<td>The roadmap sequence optimized extension breadth before repeatable outcomes</td>
+<td>renderer/reporter plugins were ahead of fixtures, author scaffolding, suites, and paired statistics</td>
+<td>move fixtures, scaffolding, suites, and paired diff ahead of output plugins</td>
+</tr>
+<tr>
+<td style="text-align:right">P1</td>
+<td>The public direction contradicted itself</td>
+<td><code>README.md</code> called live RAG and sink-aware output “next”; <code>ROADMAP.md</code> called target locators next</td>
+<td>make <code>ROADMAP.md</code> authoritative and make the README summarize it rather than maintain a second order</td>
+</tr>
+<tr>
+<td style="text-align:right">P1</td>
+<td>Several old design records still said “ships in the next release”</td>
+<td>implemented MCP, taxonomy, adapter, and trace designs looked unreleased years of milestones later</td>
+<td>replace those stale status lines with the release that actually contains each decision</td>
+</tr>
+<tr>
+<td style="text-align:right">P1</td>
+<td>Continuous evidence is deferred too coarsely</td>
+<td><code>monitor</code> re-runs synthetic probes and the collector stores findings, but neither consumes bounded production samples or trends assessments</td>
+<td>start a compatibility layer and intake spike once suite/paired shapes settle; keep the full intake behind explicit backpressure, redaction, retention, and deletion gates</td>
+</tr>
+<tr>
+<td style="text-align:right">P2</td>
+<td>Product prioritization has no direct user-evidence loop</td>
+<td>zero open issues is not proof of zero unmet needs; the roadmap says evidence changes order but defines no collection cadence</td>
+<td>publish the hypotheses and metrics below; recruit design partners before promoting target-specific work</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="market-needs">Market needs</h2>
+<h3 id="1-heterogeneous-agents-need-adapters-and-inventory-first">1. Heterogeneous agents need adapters and inventory first</h3>
+<p>The 2026 CSA enterprise survey reports that 87% of responding organizations use
+two or more agent platforms, while 54% report unsanctioned agent use. Only 15%
+say almost all agents have an assigned owner.[^csa-enterprise] A separate CSA
+survey reports 40% already running autonomous agents in production and only 21%
+having real-time agent registry or inventory capability.[^csa-autonomous]</p>
+<p>The implication for Guardana is not to embed every vendor. It is to make a
+private gateway, artifact store, or trace export a first-class target selected
+by the same CLI and governed by the same plugin trust policy. Target locators do
+that while preserving Guardana's small core.</p>
+<h3 id="2-identity-permissions-tool-use-and-ownership-are-the-urgent-risk-surface">2. Identity, permissions, tool use, and ownership are the urgent risk surface</h3>
+<p>In the enterprise survey, 53% report agents exceeding intended permissions at
+least occasionally, 47% report an agent-related security incident, and 58% say
+detection and response take five hours or longer.[^csa-enterprise] OWASP's 2026
+agentic guidance emphasizes goal hijacking, tool misuse, identity and privilege
+abuse, supply-chain exposure, and unexpected code execution.[^owasp-agentic]</p>
+<p>Guardana already has meaningful checks and trace dimensions in this area. The
+gap is operational: run those checks against each organization's system, prove
+which capability was actually available, and make the result repeatable. That
+supports locators, fixtures, conformance, suites, and continuous evidence before
+another broad category of built-in checks.</p>
+<h3 id="3-continuous-attributable-evidence-is-becoming-a-requirement">3. Continuous, attributable evidence is becoming a requirement</h3>
+<p>NIST's AI RMF materials call for testing before deployment and regularly during
+operation, using objective and repeatable TEVV, documented metrics, uncertainty,
+and formal reporting.[^nist-ai-rmf][^nist-core] Article 72 of the EU AI Act
+requires active, systematic post-market collection, documentation, and analysis
+for high-risk systems; the Act also establishes logging obligations for relevant
+deployers.[^eu-ai-act][^eu-summary]</p>
+<p>That does not justify turning Guardana into an APM. It supports the roadmap's
+existing out-of-path model: named systems and deployments, bounded samples,
+versioned datasets and assessors, paired comparisons, retention rules, and
+auditability. The collector should receive assessments only after their
+denominator and comparability keys are stable.</p>
+<h3 id="4-the-interoperability-standard-is-useful-and-still-moving">4. The interoperability standard is useful and still moving</h3>
+<p>OpenTelemetry defines experimental GenAI agent spans for agent creation,
+invocation, workflow planning, and tool execution. The specification marks this
+work as developmental, and GenAI conventions recently moved into a dedicated
+repository.[^otel-agent][^otel-releases]</p>
+<p>Guardana should consume a conservative subset behind a versioned adapter and
+preserve unknown attributes, not copy the current attribute set into its own
+public schema. This is why intake work is accelerated but the persisted suite
+and comparison model is settled first.</p>
+<h3 id="5-custom-targets-and-repeatable-evaluations-are-competitive-table-stakes">5. Custom targets and repeatable evaluations are competitive table stakes</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Product</th>
+<th>First-party documented strength</th>
+<th>Consequence for Guardana</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Microsoft PyRIT</td>
+<td>custom targets, scenarios, datasets, multi-turn orchestration, database storage, and a UI[^pyrit]</td>
+<td>target integration and dataset workflow must be easy; Guardana should differentiate on bounded execution and evidence integrity</td>
+</tr>
+<tr>
+<td>Promptfoo</td>
+<td>custom HTTP/Python/JavaScript targets, RAG and agent workflows, configurable plugins/strategies, and CI evaluation[^promptfoo][^promptfoo-config]</td>
+<td>a custom target that requires user-written orchestration is below the market baseline</td>
+</tr>
+<tr>
+<td>NVIDIA garak</td>
+<td>CLI-selected generator targets plus probes, detectors, evaluators, and harness plugins[^garak]</td>
+<td>extensibility is expected at the command line, not only from a library API</td>
+</tr>
+<tr>
+<td>Giskard</td>
+<td>agent evaluation/red teaming and a continuous enterprise collaboration layer[^giskard]</td>
+<td>Guardana's collector needs repeatable measurements and ownership, not only finding storage</td>
+</tr>
+</tbody>
+</table></div>
+<p>The response should not be feature parity. Guardana's defensible position is:
+out of the request path, explicit budgets and side effects, honest unknowns,
+versioned evidence, and a small extension surface that private systems can use.</p>
+<h2 id="revised-sequencing-and-dependencies">Revised sequencing and dependencies</h2>
+<pre><code class="language-text">target locators (0.24)
+        |
+        v
+scenario/trajectory fixtures --&gt; new-pack
+        |
+        v
+versioned suites + assessors --&gt; paired statistical diff
+        |                              |
+        +--------------+---------------+
+                       v
+          collector assessment trends
+
+output plugins -----------------------&gt; Prometheus/webhooks
+provider conformance -----------------&gt; trusted target coverage
+stable measurement shapes ------------&gt; bounded OTLP intake
+</code></pre>
+<p>The sequence is not a promise that independent work must wait. Provider
+conformance and the OpenTelemetry compatibility spike may proceed in parallel
+after the target contract ships. The dependency that must not be bypassed is
+persisting or alerting on quality trends before dataset, assessor, denominator,
+uncertainty, and paired-sample semantics are stable.</p>
+<h2 id="what-moved-and-what-did-not">What moved, and what did not</h2>
+<ul>
+<li><strong>Stayed first:</strong> target locators, because they unblock private systems and
+match a multi-platform market.</li>
+<li><strong>Moved up:</strong> complete YAML fixtures and <code>new-pack</code>, because an extension that
+is possible but expensive to prove will not create an ecosystem.</li>
+<li><strong>Moved up:</strong> suites and paired statistics, because continuous evaluation
+without a denominator and uncertainty is dashboard theater.</li>
+<li><strong>Moved down:</strong> renderer/reporter plugins. They matter for integrations, but
+the current JSON, SARIF, JUnit, human, and collector outputs are enough to
+prove the measurement model first.</li>
+<li><strong>Accelerated in parallel:</strong> provider conformance and the production-intake
+compatibility spike.</li>
+<li><strong>Stayed later:</strong> full OTLP intake, collector quality trends, Helm/RBAC, and
+live RAG, each behind its named dependency.</li>
+<li><strong>Still rejected:</strong> inline enforcement, a universal risk score, unbounded
+autonomous attack generation, and a second trace store.</li>
+</ul>
+<h2 id="validation-plan">Validation plan</h2>
+<p>The next order should change again if evidence disproves it. For the first 60
+days after 0.24.0, collect these product signals without telemetry in the CLI:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Hypothesis</th>
+<th>Observable signal</th>
+<th>Decision threshold</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>teams need non-built-in targets</td>
+<td>design-partner target implementations and support discussions naming a private gateway/store/export</td>
+<td>keep conformance work high if at least three independent systems reach a working locator; otherwise interview the failed adopters before adding schemes</td>
+</tr>
+<tr>
+<td>author tooling is the adoption bottleneck</td>
+<td>elapsed time from an empty directory to an isolated, passing pack; points where authors leave the guide</td>
+<td><code>new-pack</code> should make a conforming pack runnable in under 15 minutes without copying repository internals</td>
+</tr>
+<tr>
+<td>suites answer a more frequent question than another output plugin</td>
+<td>design partners able to name a dataset, assessor, minimum sample, and decision they make from the result</td>
+<td>build suites before output plugins when at least three partners can provide real cases and thresholds</td>
+</tr>
+<tr>
+<td>continuous evidence is urgent but must remain out of path</td>
+<td>requests for production sampling that include volume, retention, redaction, and acceptable loss/backpressure behavior</td>
+<td>start implementation only with two concrete operating envelopes and a written overload test</td>
+</tr>
+</tbody>
+</table></div>
+<p>Also measure product integrity on every release: zero unknown target schemes that
+are silently ignored; zero canary rules graded without a planted marker; all
+custom-target runs recording target identity and usage as known or explicitly
+unknown; and no regression comparison crossing dataset or assessor versions.</p>
+<h2 id="sources">Sources</h2>
+<p>[^csa-enterprise]: Cloud Security Alliance, <a href="https://cloudsecurityalliance.org/artifacts/enterprise-ai-security-starts-with-ai-agents"><em>Enterprise AI Security Starts with AI Agents</em></a>, 15 April 2026. Survey sponsored by Zenity; used as directional adoption, ownership, permission, and incident evidence. Accessed 9 September 2026.
+[^csa-autonomous]: Cloud Security Alliance, <a href="https://cloudsecurityalliance.org/artifacts/securing-autonomous-ai-agents"><em>Securing Autonomous AI Agents</em></a>, 4 February 2026. Used for production adoption, IAM confidence, inventory, and budget signals. Accessed 9 September 2026.
+[^csa-governance]: Cloud Security Alliance, <a href="https://cloudsecurityalliance.org/artifacts/the-state-of-ai-security-and-governance"><em>The State of AI Security and Governance</em></a>, December 2025. Used for governance maturity, multi-model strategy, and data-exposure priorities. Accessed 9 September 2026.
+[^nist-ai-rmf]: NIST, <a href="https://www.nist.gov/itl/ai-risk-management-framework"><em>AI Risk Management Framework</em></a>. Used for the Govern/Map/Measure/Manage risk model and lifecycle testing context. Accessed 9 September 2026.
+[^nist-core]: NIST AI Resource Center, <a href="https://airc.nist.gov/airmf-resources/airmf/5-sec-core/"><em>AI RMF Core</em></a>. Used for repeatable TEVV, metrics, uncertainty, monitoring, and reporting expectations. Accessed 9 September 2026.
+[^eu-ai-act]: European Union, <a href="https://eur-lex.europa.eu/eli/reg/2024/1689/oj?locale=en">Regulation (EU) 2024/1689, Article 72</a>. Used for the post-market monitoring obligation. Accessed 9 September 2026.
+[^eu-summary]: European Commission, <a href="https://digital-strategy.ec.europa.eu/en/policies/regulatory-framework-ai"><em>AI Act regulatory framework</em></a>. Used for the Commission's current implementation overview, including monitoring, logging, and human oversight. Accessed 9 September 2026.
+[^owasp-agentic]: OWASP GenAI Security Project, <a href="https://genai.owasp.org/2025/12/09/owasp-top-10-for-agentic-applications-the-benchmark-for-agentic-security-in-the-age-of-autonomous-ai/"><em>OWASP Top 10 for Agentic Applications</em></a>, 9 December 2025, and <a href="https://genai.owasp.org/2026/09/01/owasp-genai-security-project-unveils-2026-top-10-for-llm-applications-new-agent-control-standard-and-sponsors-as-community-tops-30000-members/">2026 project release announcement</a>, 1 September 2026. Used for the current agentic threat categories and ecosystem direction. Accessed 9 September 2026.
+[^otel-agent]: OpenTelemetry, <a href="https://github.com/open-telemetry/semantic-conventions-genai/blob/main/docs/gen-ai/gen-ai-agent-spans.md"><em>Semantic conventions for GenAI agent spans</em></a>. Used for the developmental agent/workflow/tool span model. Accessed 9 September 2026.
+[^otel-releases]: OpenTelemetry, <a href="https://github.com/open-telemetry/semantic-conventions/releases">semantic-conventions releases</a>. Used to verify the current release stream and GenAI repository transition. Accessed 9 September 2026.
+[^pyrit]: Microsoft, <a href="https://microsoft.github.io/PyRIT/">PyRIT documentation</a>. Used for documented targets, scenarios, datasets, orchestration, storage, and UI capabilities. Accessed 9 September 2026.
+[^promptfoo]: Promptfoo, <a href="https://www.promptfoo.dev/docs/red-team/quickstart/">red-team quickstart</a> and <a href="https://www.promptfoo.dev/docs/red-team/plugins/custom/">custom plugins</a>. Used for custom target and CI evaluation capabilities. Accessed 9 September 2026.
+[^promptfoo-config]: Promptfoo, <a href="https://www.promptfoo.dev/docs/red-team/configuration/">red-team configuration</a>. Used for target, plugin, strategy, context, language, and framework configuration. Accessed 9 September 2026.
+[^garak]: NVIDIA, <a href="https://github.com/NVIDIA/garak">garak repository and documentation</a>. Used for its CLI target and plugin taxonomy. Accessed 9 September 2026.
+[^giskard]: Giskard, <a href="https://docs.giskard.ai/">Giskard documentation</a>. Used for documented agent evaluation, red teaming, collaboration, and continuous enterprise workflows. Accessed 9 September 2026.
+[^guardana-issues]: Guardana, <a href="https://github.com/guardana/guardana/issues">public issue tracker</a>. No open public issues in the review snapshot; used only to state the evidence limitation. Accessed 9 September 2026.</p>
+
+</main>
+</div>
+<footer class="foot"><div class="bar">
+<span>Guardana 0.24.0 · Apache-2.0</span>
+<a href="https://github.com/guardana/guardana/blob/main/docs/design/audit-0.23-market.md">Edit this page on GitHub</a>
+<a href="../../llms.txt">llms.txt</a>
+</div></footer>
+</body>
+</html>

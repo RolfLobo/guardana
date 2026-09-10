@@ -80,12 +80,15 @@
 <h2>Design documents</h2><ul>
 <li><a href="design/README.html">How these are written</a></li>
 </ul>
+<h2>Project direction</h2><ul>
+<li><a href="design/audit-0.23-market.html">The 0.23 repository and market audit<span class="tag">accepted</span></a></li>
+</ul>
 <h2>Maintainers</h2><ul>
 <li><a href="maintainers/github-setup.html">GitHub repository setup</a></li>
 </ul>
 <h2>Also here</h2><ul>
 <li><a href="design/trace-domain-model.html">The Trace domain model<span class="tag">implemented</span></a></li>
-<li><a href="design/trace-producer.html">Producing a trace<span class="tag">accepted</span></a></li>
+<li><a href="design/trace-producer.html">Producing a trace<span class="tag">implemented</span></a></li>
 <li><a href="design/framework-adapters.html">Framework adapters<span class="tag">implemented</span></a></li>
 <li><a href="design/assessment-channel.html">The assessment channel<span class="tag">accepted</span></a></li>
 <li><a href="design/capability-protocols.html">Capability protocols<span class="tag">accepted</span></a></li>
@@ -93,11 +96,11 @@
 <li><a href="design/audit-0.21.html">The 0.21 audit<span class="tag">accepted</span></a></li>
 <li><a href="design/audit-0.22.html">The 0.22 audit<span class="tag">accepted</span></a></li>
 <li><a href="design/security-contracts.html">Security contracts<span class="tag">implemented</span></a></li>
-<li><a href="design/mcp-protocol-eras.html">MCP has two eras<span class="tag">accepted</span></a></li>
-<li><a href="design/mcp-authorization-depth.html">MCP authorization depth<span class="tag">accepted</span></a></li>
-<li><a href="design/taxonomy-editions.html">Taxonomy editions<span class="tag">accepted</span></a></li>
+<li><a href="design/mcp-protocol-eras.html">MCP has two eras<span class="tag">implemented</span></a></li>
+<li><a href="design/mcp-authorization-depth.html">MCP authorization depth<span class="tag">implemented</span></a></li>
+<li><a href="design/taxonomy-editions.html">Taxonomy editions<span class="tag">implemented</span></a></li>
 <li><a href="design/extension-author-tooling.html">Extension author tooling<span class="tag">accepted</span></a></li>
-<li><a href="design/target-locators.html">Target locators<span class="tag">proposed</span></a></li>
+<li><a href="design/target-locators.html">Target locators<span class="tag">implemented</span></a></li>
 <li><a href="design/output-plugins.html">Output plugins<span class="tag">proposed</span></a></li>
 <li><a href="design/quality-suites.html">Quality suites<span class="tag">proposed</span></a></li>
 <li><a href="design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
@@ -152,6 +155,21 @@ hurry, and it should look like one.</p>
 </thead>
 <tbody>
 <tr>
+<td><code>PATH</code> (positional)</td>
+<td>—</td>
+<td>Directory to scan; required unless <code>--target</code> is used</td>
+</tr>
+<tr>
+<td><code>--target SCHEME://LOCATOR</code></td>
+<td>none</td>
+<td>Build a trusted installed artifact target for <code>create</code> or <code>update</code></td>
+</tr>
+<tr>
+<td><code>--target-option KEY=VALUE</code></td>
+<td>none</td>
+<td>Repeatable, non-secret configuration passed to that target</td>
+</tr>
+<tr>
 <td><code>--plugins [all|builtins|allowlist|disabled]</code></td>
 <td><code>all</code></td>
 <td>Which installed plugins to load — same meaning as on <code>probe</code></td>
@@ -163,6 +181,8 @@ hurry, and it should look like one.</p>
 </tr>
 </tbody>
 </table></div>
+<p><code>PATH</code> and <code>--target</code> are mutually exclusive. <code>verify</code> only reads the baseline,
+so target selection applies to <code>create</code> and <code>update</code> only.</p>
 <h2 id="expiry-actually-expires">Expiry actually expires</h2>
 <p>An expired waiver simply stops waiving: the finding comes back and fails the gate
 again. It lapses the day <em>after</em> the date written, so a waiver expiring today is
@@ -213,7 +233,7 @@ strictness exists to prevent.</p>
 </main>
 </div>
 <footer class="foot"><div class="bar">
-<span>Guardana 0.23.0 · Apache-2.0</span>
+<span>Guardana 0.24.0 · Apache-2.0</span>
 <a href="https://github.com/guardana/guardana/blob/main/docs/usage-baseline.md">Edit this page on GitHub</a>
 <a href="../llms.txt">llms.txt</a>
 </div></footer>

@@ -41,7 +41,33 @@ def test_a_well_formed_manifest_loads(tmp_path: Path) -> None:
 
     assert manifest.name == "acme-guardana-rules"
     assert manifest.provides == ("acme.agent.customer_data", "acme.strict_refusal")
-    assert manifest.loadable_by(EXTENSION_API_VERSION)
+    assert manifest.loadable_by()
+
+
+def test_api_one_packs_keep_loading_when_the_build_adds_api_two() -> None:
+    manifest = PackManifest("old", ApiRange(1, 2), "x", rules=("old.rule",))
+
+    assert EXTENSION_API_VERSION == 2
+    assert manifest.loadable_by()
+    assert not manifest.loadable_by(EXTENSION_API_VERSION)
+
+
+def test_a_range_is_compared_with_every_api_the_build_retains() -> None:
+    supported = {1, 2}
+
+    assert ApiRange(1, 2).why_not_any(supported) == ""
+    assert "upgrade Guardana" in ApiRange(3, 4).why_not_any(supported)
+    assert "upgrade the pack" in ApiRange(0, 1).why_not_any(supported)
+    assert "declares no extension API" in ApiRange(1, 2).why_not_any(())
+
+
+def test_pack_validation_refuses_a_range_outside_every_retained_api() -> None:
+    manifest = PackManifest("future", ApiRange(3, 4), "x", rules=("future.rule",))
+
+    check = check_pack(manifest, ["future.rule"])
+
+    assert not check.ok
+    assert "upgrade Guardana" in check.problems[0]
 
 
 @pytest.mark.parametrize(

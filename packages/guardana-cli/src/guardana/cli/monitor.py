@@ -8,17 +8,19 @@ import typer
 from guardana.cli._errors import run_against_endpoint
 from guardana.cli._evaluators import wire_config_evaluators
 from guardana.cli._plugins import resolve_trust
-from guardana.cli._probe_run import Connection, run_probe
+from guardana.cli._probe_run import Connection, run_probe, run_target_probe
 from guardana.cli._profile import resolve_profile
 from guardana.cli._reporting import check_reporter_url, submit_safely
 from guardana.cli._rules_loading import load_custom_rules
 from guardana.cli._run_meta import detect_deployment
+from guardana.cli._target_locator import resolve_target
 from guardana.core.manifest import DeploymentRef
 from guardana.core.monitor import Alert, Monitor, MonitorConfig
 from guardana.core.profile import Profile
 from guardana.core.redaction import EvidenceRedactor
 from guardana.core.registry import Registry
 from guardana.core.runner import DEFAULT_ENDPOINT_CONCURRENCY
+from guardana.core.target import Target, TargetKind
 from guardana.report import get_renderer
 
 _DEFAULT_INTERVAL_SECONDS = 60.0
@@ -95,9 +97,40 @@ def run_monitor(  # noqa: PLR0913 — the test seam needs every hook injectable
     monitor.run(handler, on_error=on_error, sleep=sleep)
 
 
+def run_target_monitor(  # noqa: PLR0913 — mirrors the tested monitor seam
+    registry: Registry,
+    profile: Profile,
+    target_factory: Callable[[], Target],
+    *,
+    source: str,
+    interval_seconds: float = _DEFAULT_INTERVAL_SECONDS,
+    max_cycles: int | None = None,
+    concurrency: int = DEFAULT_ENDPOINT_CONCURRENCY,
+    on_alert: Callable[[Alert], None] | None = None,
+    on_error: Callable[[int, Exception], None] = _warn_cycle_failed,
+    sleep: Callable[[float], None] = time.sleep,
+) -> None:
+    """Sample a freshly built custom endpoint target on every monitor cycle."""
+    handler = (
+        on_alert
+        if on_alert is not None
+        else alert_handler(EvidenceRedactor(profile.privacy), None, source)
+    )
+    monitor = Monitor(
+        scan=lambda: (
+            run_target_probe(registry, profile, target_factory(), concurrency=concurrency).result
+        ),
+        policy=profile.policy,
+        config=MonitorConfig(interval_seconds=interval_seconds, max_cycles=max_cycles),
+    )
+    monitor.run(handler, on_error=on_error, sleep=sleep)
+
+
 def monitor(  # noqa: PLR0913, PLR0917 — one typer.Option per CLI flag; this is the command's surface
-    url: Annotated[str, typer.Option(help="Base URL of the OpenAI-compatible endpoint")],
-    model: Annotated[str, typer.Option(help="Model name")],
+    url: Annotated[
+        str | None, typer.Option(help="Base URL of the OpenAI-compatible endpoint")
+    ] = None,
+    model: Annotated[str | None, typer.Option(help="Model name")] = None,
     api_key_env: Annotated[
         str | None, typer.Option("--api-key-env", help="Env var holding the API key")
     ] = None,
@@ -154,6 +187,14 @@ def monitor(  # noqa: PLR0913, PLR0917 — one typer.Option per CLI flag; this i
         list[str],
         typer.Option("--allow-plugin", help="Distribution to trust; repeatable, needs allowlist."),
     ] = [],  # noqa: B006 — typer builds the option from a literal default
+    target: Annotated[
+        str | None,
+        typer.Option("--target", help="Installed endpoint target as scheme://locator."),
+    ] = None,
+    target_option: Annotated[
+        list[str],
+        typer.Option("--target-option", help="Non-secret key=value for --target; repeatable."),
+    ] = [],  # noqa: B006 — typer builds the option from a literal default
 ) -> None:
     """Continuously sample a live endpoint and alert on new findings."""
     check_reporter_url(reporter)
@@ -161,6 +202,59 @@ def monitor(  # noqa: PLR0913, PLR0917 — one typer.Option per CLI flag; this i
     registry = Registry.discover(resolve_trust(plugins, allow_plugin, no_plugins=False))
     wire_config_evaluators(registry, prof)
     load_custom_rules(registry, prof, rules)
+
+    deployment = detect_deployment(ai_system, environment, deployment_id)
+    if target is not None:
+        used = [
+            name
+            for name, value in {
+                "--url": url,
+                "--model": model,
+                "--api-key-env": api_key_env,
+                "--system-prompt-file": system_prompt_file,
+            }.items()
+            if value is not None
+        ]
+        if used:
+            raise typer.BadParameter(
+                f"--target cannot be combined with {', '.join(used)}; pass target-specific "
+                "configuration through --target-option"
+            )
+        selected = resolve_target(
+            registry,
+            locator=target,
+            options=target_option,
+            kind=TargetKind.ENDPOINT,
+            fallback=_missing_target,
+        )
+        on_alert = alert_handler(
+            EvidenceRedactor(prof.privacy), reporter, source=selected.ref, deployment=deployment
+        )
+        run_against_endpoint(
+            selected.ref,
+            lambda: run_target_monitor(
+                registry,
+                prof,
+                lambda: resolve_target(
+                    registry,
+                    locator=target,
+                    options=target_option,
+                    kind=TargetKind.ENDPOINT,
+                    fallback=_missing_target,
+                ),
+                source=selected.ref,
+                interval_seconds=interval,
+                max_cycles=max_cycles,
+                concurrency=concurrency,
+                on_alert=on_alert,
+            ),
+        )
+        return
+
+    if target_option:
+        raise typer.BadParameter("--target-option needs --target scheme://locator")
+    if url is None or model is None:
+        raise typer.BadParameter("pass --url and --model, or --target scheme://locator")
 
     connection = Connection(
         url=url,
@@ -175,9 +269,8 @@ def monitor(  # noqa: PLR0913, PLR0917 — one typer.Option per CLI flag; this i
         EvidenceRedactor(prof.privacy),
         reporter,
         source=f"{url}#{model}",
-        deployment=detect_deployment(ai_system, environment, deployment_id),
+        deployment=deployment,
     )
-
     run_against_endpoint(
         url,
         lambda: run_monitor(
@@ -190,3 +283,8 @@ def monitor(  # noqa: PLR0913, PLR0917 — one typer.Option per CLI flag; this i
             on_alert=on_alert,
         ),
     )
+
+
+def _missing_target() -> Target:
+    """Type-safe fallback that is unreachable when a custom locator is present."""
+    raise typer.BadParameter("pass --target scheme://locator")

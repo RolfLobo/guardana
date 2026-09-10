@@ -80,12 +80,15 @@
 <h2>Design documents</h2><ul>
 <li><a href="design/README.html">How these are written</a></li>
 </ul>
+<h2>Project direction</h2><ul>
+<li><a href="design/audit-0.23-market.html">The 0.23 repository and market audit<span class="tag">accepted</span></a></li>
+</ul>
 <h2>Maintainers</h2><ul>
 <li><a href="maintainers/github-setup.html">GitHub repository setup</a></li>
 </ul>
 <h2>Also here</h2><ul>
 <li><a href="design/trace-domain-model.html">The Trace domain model<span class="tag">implemented</span></a></li>
-<li><a href="design/trace-producer.html">Producing a trace<span class="tag">accepted</span></a></li>
+<li><a href="design/trace-producer.html">Producing a trace<span class="tag">implemented</span></a></li>
 <li><a href="design/framework-adapters.html">Framework adapters<span class="tag">implemented</span></a></li>
 <li><a href="design/assessment-channel.html">The assessment channel<span class="tag">accepted</span></a></li>
 <li><a href="design/capability-protocols.html">Capability protocols<span class="tag">accepted</span></a></li>
@@ -93,11 +96,11 @@
 <li><a href="design/audit-0.21.html">The 0.21 audit<span class="tag">accepted</span></a></li>
 <li><a href="design/audit-0.22.html">The 0.22 audit<span class="tag">accepted</span></a></li>
 <li><a href="design/security-contracts.html">Security contracts<span class="tag">implemented</span></a></li>
-<li><a href="design/mcp-protocol-eras.html">MCP has two eras<span class="tag">accepted</span></a></li>
-<li><a href="design/mcp-authorization-depth.html">MCP authorization depth<span class="tag">accepted</span></a></li>
-<li><a href="design/taxonomy-editions.html">Taxonomy editions<span class="tag">accepted</span></a></li>
+<li><a href="design/mcp-protocol-eras.html">MCP has two eras<span class="tag">implemented</span></a></li>
+<li><a href="design/mcp-authorization-depth.html">MCP authorization depth<span class="tag">implemented</span></a></li>
+<li><a href="design/taxonomy-editions.html">Taxonomy editions<span class="tag">implemented</span></a></li>
 <li><a href="design/extension-author-tooling.html">Extension author tooling<span class="tag">accepted</span></a></li>
-<li><a href="design/target-locators.html">Target locators<span class="tag">proposed</span></a></li>
+<li><a href="design/target-locators.html">Target locators<span class="tag">implemented</span></a></li>
 <li><a href="design/output-plugins.html">Output plugins<span class="tag">proposed</span></a></li>
 <li><a href="design/quality-suites.html">Quality suites<span class="tag">proposed</span></a></li>
 <li><a href="design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
@@ -122,6 +125,11 @@
 <code>tools</code> array and never call anything; a proxy can drop the system message. Either
 one turns a rule into a check that runs, proves nothing, and reports a pass.</p>
 <pre><code class="language-bash">guardana target inspect --url https://api.example.com --model gpt-4o-mini
+</code></pre>
+<p>An installed endpoint target with a locator uses the same inspection:</p>
+<pre><code class="language-bash">guardana target inspect \
+  --target acme-gateway://llm.internal/v1 \
+  --target-option model=support-v3
 </code></pre>
 <pre><code class="language-text">endpoint https://api.example.com#gpt-4o-mini
 
@@ -151,6 +159,16 @@ This inspection cost 3 request(s).
 </thead>
 <tbody>
 <tr>
+<td><code>--target SCHEME://LOCATOR</code></td>
+<td>none</td>
+<td>Build an installed custom endpoint target instead of <code>--url</code>/<code>--model</code></td>
+</tr>
+<tr>
+<td><code>--target-option KEY=VALUE</code></td>
+<td>none</td>
+<td>Repeatable, non-secret configuration passed to that target</td>
+</tr>
+<tr>
 <td><code>--plugins [all|builtins|allowlist|disabled]</code></td>
 <td><code>all</code></td>
 <td>Which installed plugins to load — same meaning as on <code>probe</code></td>
@@ -162,6 +180,13 @@ This inspection cost 3 request(s).
 </tr>
 </tbody>
 </table></div>
+<p><code>--target</code> is mutually exclusive with the built-in connection flags. The
+selected class comes from the trusted <code>guardana.targets</code> entry points; an unknown
+scheme, conflicting owner, rejected option, or wrong target kind exits <code>3</code> before
+inspection sends a request. <code>guardana doctor</code> lists the schemes that actually
+loaded. Put credentials in an environment variable consumed by the target, never
+in <code>--target-option</code>, because command lines are commonly retained in shell and CI
+history.</p>
 <h2 id="declared-versus-verified">Declared versus verified</h2>
 <p>A target <em>declares</em> capabilities from what its client can do. Inspection reports
 what the endpoint actually <strong>demonstrated</strong>. The gap between the two is the point
@@ -214,7 +239,7 @@ a team paying per token is entitled to know the price of every command.</p>
 </main>
 </div>
 <footer class="foot"><div class="bar">
-<span>Guardana 0.23.0 · Apache-2.0</span>
+<span>Guardana 0.24.0 · Apache-2.0</span>
 <a href="https://github.com/guardana/guardana/blob/main/docs/usage-target.md">Edit this page on GitHub</a>
 <a href="../llms.txt">llms.txt</a>
 </div></footer>

@@ -20,6 +20,7 @@ from guardana.cli._profile import resolve_profile
 from guardana.cli._reporting import check_reporter_url, submit_safely
 from guardana.cli._rules_loading import load_custom_rules
 from guardana.cli._run_meta import build_manifest, detect_deployment, target_identity
+from guardana.cli._target_locator import resolve_target
 from guardana.cli._trace_input import (
     describe_coverage,
     load_trace_or_exit,
@@ -34,13 +35,13 @@ from guardana.core.redaction import EvidenceRedactor
 from guardana.core.registry import Registry
 from guardana.core.report import ScanResult
 from guardana.core.runner import Runner
-from guardana.core.target import TraceTarget
+from guardana.core.target import Target, TargetKind, TraceReader, TraceTarget
 from guardana.core.trace import Dialect, TraceRead, serialize_trace
 from guardana.report import get_renderer
 
 
-def analyze_trace(  # noqa: PLR0913, PLR0917 — one typer.Option per CLI flag; the command's surface
-    trace: Annotated[Path, typer.Argument(help="JSONL trace file to grade")],
+def analyze_trace(  # noqa: C901, PLR0913, PLR0917 — Typer surface plus two target sources
+    trace: Annotated[Path | None, typer.Argument(help="JSONL trace file to grade")] = None,
     dialect: Annotated[
         Dialect | None,
         typer.Option(
@@ -102,22 +103,56 @@ def analyze_trace(  # noqa: PLR0913, PLR0917 — one typer.Option per CLI flag; 
             "framework does not emit can be added by hand.",
         ),
     ] = None,
+    target: Annotated[
+        str | None,
+        typer.Option("--target", help="Installed trace target as scheme://locator."),
+    ] = None,
+    target_option: Annotated[
+        list[str],
+        typer.Option("--target-option", help="Non-secret key=value for --target; repeatable."),
+    ] = [],  # noqa: B006 — typer builds the option from a literal default
 ) -> None:
     """Grade a recorded agent execution (JSONL, OpenTelemetry GenAI or Guardana native)."""
     check_reporter_url(reporter)
     prof = resolve_profile(profile, preset)
-    read = load_trace_or_exit(trace, dialect)
     registry = Registry.discover(resolve_trust(plugins, allow_plugin, no_plugins=False))
     load_custom_rules(registry, prof, rules)
+    if target is not None and trace is not None:
+        raise typer.BadParameter("pass either a trace file or --target, not both")
+    if target is not None and dialect is not None:
+        raise typer.BadParameter("--dialect applies to a trace file, not --target")
+    read: TraceRead | None = None
+
+    def file_target() -> Target:
+        nonlocal read
+        if trace is None:
+            raise typer.BadParameter("pass a trace file, or --target scheme://locator")
+        read = load_trace_or_exit(trace, dialect)
+        return TraceTarget(read.trace)
+
+    selected = resolve_target(
+        registry,
+        locator=target,
+        options=target_option,
+        kind=TargetKind.TRACE,
+        fallback=file_target,
+    )
+    if not isinstance(selected, TraceReader):
+        raise typer.BadParameter(
+            f"{selected.ref} is a trace target but does not implement TraceReader, "
+            "so no recorded execution can be graded"
+        )
+    if read is None:
+        read = TraceRead(selected.trace)
+    trace_view = TraceTarget(read.trace)
     # Before the run, because a contract changes both what runs and what the run is
     # required to have: its assertions become rules, and the dimensions they need
     # join whatever `trace.require` already demanded.
     prof, contracts = wire_contracts(registry, prof, contract_paths(prof, contract), ai_system)
-    target = TraceTarget(read.trace)
     typer.echo(trace_source(read), err=True)
     started_at = datetime.now(UTC)
     try:
-        result = Runner(registry=registry, profile=prof).run(target)
+        result = Runner(registry=registry, profile=prof).run(selected)
     except BudgetExhausted as exc:
         raise refuse_unenforceable_budget(exc) from exc
     # The observations the trace itself supplies — which models actually answered —
@@ -126,7 +161,7 @@ def analyze_trace(  # noqa: PLR0913, PLR0917 — one typer.Option per CLI flag; 
     result = ScanResult.merged(
         [
             result,
-            ScanResult((), (), (), observations=target.observations()),
+            ScanResult((), (), (), observations=trace_view.observations()),
             # A contract about another system contributes its skips and, when *no*
             # contract was about this execution, the shortfall that refuses the run.
             ScanResult(
@@ -141,7 +176,7 @@ def analyze_trace(  # noqa: PLR0913, PLR0917 — one typer.Option per CLI flag; 
     result = EvidenceRedactor(prof.privacy).redact_result(result)
     if write_trace is not None:
         _write_native(read, write_trace)
-    for line in [*describe_coverage(read, target), *describe_contracts(contracts)]:
+    for line in [*describe_coverage(read, trace_view), *describe_contracts(contracts)]:
         typer.echo(line, err=True)
     for gap in result.coverage_shortfall:
         typer.echo(f"error: {gap.detail}", err=True)
@@ -152,11 +187,11 @@ def analyze_trace(  # noqa: PLR0913, PLR0917 — one typer.Option per CLI flag; 
         registry,
         prof,
         result,
-        target_kind=target.kind,
-        target_ref=target.ref,
+        target_kind=selected.kind,
+        target_ref=selected.ref,
         gate=outcome,
         started_at=started_at,
-        identity=target_identity(target, target.ref),
+        identity=target_identity(selected, selected.ref),
         deployment=deployment,
         # A run over an imported trace is not a run against a live system, and the
         # manifest has said so since v2 without anything ever setting it. A dashboard
@@ -165,7 +200,7 @@ def analyze_trace(  # noqa: PLR0913, PLR0917 — one typer.Option per CLI flag; 
     )
     emit(get_renderer(format.value, run=run).render(result), output, format.value)
     if reporter:
-        submit_safely(reporter, result, source=str(trace), deployment=deployment, run=run)
+        submit_safely(reporter, result, source=selected.ref, deployment=deployment, run=run)
     exit_with(outcome, result)
 
 

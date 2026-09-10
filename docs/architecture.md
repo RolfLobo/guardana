@@ -284,7 +284,7 @@ via `guardana.yaml`'s `rules.paths`) on `scan`, `probe`, and `monitor`.
 | `guardana.taxonomies` | one `TaxonomyRef`, or an iterable | **Yes** — `Registry.discover()`, loaded **first**, so a rule pack's own `taxonomy:` references resolve while its own entry point is still loading. |
 | `guardana.rules` | one `Rule`, or an iterable of `Rule`s | **Yes** — `Registry.discover()` |
 | `guardana.evaluators` | one `Evaluator`, or an iterable | **Yes** — `Registry.discover()` |
-| `guardana.targets` | one `Target` subclass, or an iterable | **Yes** — `Registry.discover()`. `Registry.targets()` exposes the discovered classes (types, not instances — targets are parameterized by a path/URL at construction time). The CLI itself still selects its built-in `ArtifactTarget`/`EndpointTarget` by path/URL; discovered custom targets are available to library/embedding use, not yet CLI-selectable — see [`extending.md`](extending.md#adding-a-target). |
+| `guardana.targets` | one `Target` subclass, or an iterable | **Yes** — `Registry.discover()`. `Registry.targets()` exposes the discovered classes; a class declaring a unique `scheme` and `from_locator` is also selectable as `--target scheme://…` by commands accepting its kind. See [`extending.md`](extending.md#adding-a-target). |
 
 ## The Runner
 

@@ -42,8 +42,14 @@ hurry, and it should look like one.
 
 | Flag | Default | Meaning |
 |---|---|---|
+| `PATH` (positional) | — | Directory to scan; required unless `--target` is used |
+| `--target SCHEME://LOCATOR` | none | Build a trusted installed artifact target for `create` or `update` |
+| `--target-option KEY=VALUE` | none | Repeatable, non-secret configuration passed to that target |
 | `--plugins [all\|builtins\|allowlist\|disabled]` | `all` | Which installed plugins to load — same meaning as on `probe` |
 | `--allow-plugin TEXT` | none | Distribution to trust; repeatable, needs `--plugins allowlist` |
+
+`PATH` and `--target` are mutually exclusive. `verify` only reads the baseline,
+so target selection applies to `create` and `update` only.
 
 ## Expiry actually expires
 

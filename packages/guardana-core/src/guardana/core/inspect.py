@@ -13,14 +13,13 @@ back. Each probe answers exactly one thing, and a probe that fails is recorded a
 from dataclasses import dataclass, field
 from enum import StrEnum
 
-from guardana.core.target import Capability, EndpointTarget, Target, TargetKind
+from guardana.core.target import Capability, Target, TargetKind
 from guardana.core.target.endpoint import (
     ChatMessage,
     EndpointError,
-    ToolCallingTransport,
     ToolSpec,
-    UsageReportingTransport,
 )
+from guardana.core.target.protocols import ChatEndpoint, ToolOfferingEndpoint
 
 _PROBE = "Reply with the single word: ok"
 _SYSTEM_MARKER = "GUARDANA_SYSTEM_PROBE"
@@ -95,7 +94,14 @@ class TargetReport:
         )
 
 
-def _probe_chat(target: EndpointTarget) -> CapabilityFinding:
+def _probe_chat(target: Target) -> CapabilityFinding:
+    if not isinstance(target, ChatEndpoint):
+        return CapabilityFinding(
+            str(Capability.CHAT),
+            Support.UNSUPPORTED,
+            "the target does not implement the ChatEndpoint surface",
+            0,
+        )
     try:
         reply = target.chat([ChatMessage(role="user", content=_PROBE)])
     except EndpointError as exc:
@@ -112,7 +118,7 @@ def _probe_chat(target: EndpointTarget) -> CapabilityFinding:
     return CapabilityFinding(str(Capability.CHAT), Support.SUPPORTED, "replied with text", 1)
 
 
-def _probe_system_prompt(base: EndpointTarget, planted: EndpointTarget) -> CapabilityFinding:
+def _probe_system_prompt(base: Target, planted: Target | None) -> CapabilityFinding:
     """Check the system message survives the hop, by asking the model to echo a marker.
 
     A proxy that drops the system message is the case this exists for: every
@@ -120,6 +126,13 @@ def _probe_system_prompt(base: EndpointTarget, planted: EndpointTarget) -> Capab
     confident pass for a model that may leak everything.
     """
     name = str(Capability.PLANT_SYSTEM_PROMPT)
+    if planted is None or not isinstance(planted, ChatEndpoint):
+        return CapabilityFinding(
+            name,
+            Support.UNSUPPORTED,
+            "the target cannot build a view with an additional system prompt",
+            0,
+        )
     try:
         reply = planted.chat([ChatMessage(role="user", content="Reply now.")])
     except EndpointError as exc:
@@ -136,11 +149,13 @@ def _probe_system_prompt(base: EndpointTarget, planted: EndpointTarget) -> Capab
     )
 
 
-def _probe_tools(target: EndpointTarget) -> CapabilityFinding:
+def _probe_tools(target: Target) -> CapabilityFinding:
     name = str(Capability.CALL_TOOLS)
-    if not isinstance(target.transport, ToolCallingTransport):
+    if Capability.CALL_TOOLS not in target.capabilities() or not isinstance(
+        target, ToolOfferingEndpoint
+    ):
         return CapabilityFinding(
-            name, Support.UNSUPPORTED, "this transport does not implement tool calling", 0
+            name, Support.UNSUPPORTED, "this target does not implement tool calling", 0
         )
     try:
         reply = target.offer_tools(
@@ -159,14 +174,14 @@ def _probe_tools(target: EndpointTarget) -> CapabilityFinding:
     )
 
 
-def _probe_usage(target: EndpointTarget) -> CapabilityFinding:
+def _probe_usage(target: Target) -> CapabilityFinding:
     """Report whether token counts come back — which decides if a token budget can hold."""
     usage = target.usage()
-    if not isinstance(target.transport, UsageReportingTransport):
+    if usage is None:
         return CapabilityFinding(
             "usage_metadata",
             Support.UNSUPPORTED,
-            "this transport cannot report token counts, so a token budget cannot be enforced",
+            "this target does not meter itself, so no usage budget can be verified",
             0,
         )
     if usage.input_tokens is None:
@@ -181,7 +196,7 @@ def _probe_usage(target: EndpointTarget) -> CapabilityFinding:
     )
 
 
-def inspect_endpoint(target: EndpointTarget, planted: EndpointTarget) -> TargetReport:
+def inspect_endpoint(target: Target, planted: Target | None) -> TargetReport:
     """Probe one endpoint and report what it supports.
 
     `planted` is the same endpoint with a system prompt set — built by the caller,

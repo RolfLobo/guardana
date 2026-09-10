@@ -1,3 +1,4 @@
+import re
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 from importlib.metadata import entry_points
@@ -23,6 +24,8 @@ _CANARY_EVALUATOR_ID = "canary"
 # Never planted for real: only used to ask a rule whether it participates at all.
 _MARKER = "GUARDANA_CANARY_PARTICIPATION_CHECK"
 _RESERVED_NAMESPACE = "guardana."
+_TARGET_SCHEME = re.compile(r"^[a-z][a-z0-9-]*$")
+_RESERVED_TARGET_SCHEMES = frozenset({"file", "http", "https", "mcp", "trace"})
 
 
 class RegistryConflictError(RuleLoadError):
@@ -93,7 +96,30 @@ class Registry:
         self._origins[f"evaluator:{evaluator.id}"] = origin
 
     def register_target(self, target: type[Target], origin: Origin = UNATTRIBUTED) -> None:
-        """Add a target class a third-party package advertises for its own backend."""
+        """Add a target class, validating its optional command-line locator scheme."""
+        scheme = target.scheme
+        if scheme is not None:
+            if not isinstance(scheme, str) or _TARGET_SCHEME.fullmatch(scheme) is None:
+                raise RegistryConflictError(
+                    f"target {target.__name__} declares invalid scheme {scheme!r}; use a "
+                    "lowercase name matching [a-z][a-z0-9-]*"
+                )
+            if scheme in _RESERVED_TARGET_SCHEMES:
+                raise RegistryConflictError(
+                    f"target {target.__name__} declares reserved scheme {scheme!r}; "
+                    "file, http, https, mcp and trace belong to built-in target forms"
+                )
+            existing = self.target_for(scheme)
+            held = self._origins.get(f"target-scheme:{scheme}")
+            if existing is not None and existing is not target:
+                owner = held.describe() if held is not None else existing.__name__
+                raise RegistryConflictError(
+                    f"target scheme {scheme!r} is already registered by {owner}; "
+                    f"{origin.describe()} cannot make one locator select two targets"
+                )
+            if existing is target:
+                return
+            self._origins[f"target-scheme:{scheme}"] = origin
         self._targets.append(target)
         self._origins[f"target:{target.__name__}"] = origin
 
@@ -139,6 +165,14 @@ class Registry:
     def targets(self) -> tuple[type[Target], ...]:
         """Every registered target class."""
         return tuple(self._targets)
+
+    def target_for(self, scheme: str) -> type[Target] | None:
+        """Return the one target class claiming ``scheme``, if it is loaded."""
+        return next((target for target in self._targets if target.scheme == scheme), None)
+
+    def schemes(self) -> tuple[str, ...]:
+        """Every loaded command-line target scheme, in stable order."""
+        return tuple(sorted(target.scheme for target in self._targets if target.scheme is not None))
 
     def expectation_errors(self) -> tuple[CheckError, ...]:
         """Every rule whose `expect:` block does not satisfy its evaluator's contract.

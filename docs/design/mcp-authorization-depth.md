@@ -2,12 +2,12 @@
 title: "MCP authorization depth"
 nav_order: 50
 summary: "what a live MCP server's authorization surface can be asked with one credential"
-status: accepted
+status: implemented
 ---
 
 # MCP in depth: what a client can prove about a server it does not run
 
-**Status:** accepted, implemented — ships in the next release · **Written:** 2026-08-09 · **Step two**
+**Status:** implemented in 0.13.0 · **Written:** 2026-08-09 · **Step two**
 
 ## The problem, stated precisely
 

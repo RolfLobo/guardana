@@ -275,7 +275,10 @@ def _checks(venv: Path, clean_directory: Path, trace_file: Path) -> list[Check]:
             "the built-in pack ships its manifest and validates",
             [guardana, "pack", "validate"],
             0,
-            expect=("guardana-rules", "extension API implemented by this build: 1"),
+            expect=(
+                "guardana-rules",
+                "extension APIs implemented by this build: 1, 2 (newest 2)",
+            ),
         ),
         # The lock is written from installed metadata, which is precisely what an
         # editable checkout and a real wheel disagree about: the distribution behind a

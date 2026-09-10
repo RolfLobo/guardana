@@ -80,12 +80,15 @@
 <h2>Design documents</h2><ul>
 <li><a href="../design/README.html">How these are written</a></li>
 </ul>
+<h2>Project direction</h2><ul>
+<li><a href="../design/audit-0.23-market.html">The 0.23 repository and market audit<span class="tag">accepted</span></a></li>
+</ul>
 <h2>Maintainers</h2><ul>
 <li><a href="../maintainers/github-setup.html">GitHub repository setup</a></li>
 </ul>
 <h2>Also here</h2><ul>
 <li><a href="../design/trace-domain-model.html">The Trace domain model<span class="tag">implemented</span></a></li>
-<li><a href="../design/trace-producer.html">Producing a trace<span class="tag">accepted</span></a></li>
+<li><a href="../design/trace-producer.html">Producing a trace<span class="tag">implemented</span></a></li>
 <li><a href="../design/framework-adapters.html">Framework adapters<span class="tag">implemented</span></a></li>
 <li><a href="../design/assessment-channel.html">The assessment channel<span class="tag">accepted</span></a></li>
 <li><a href="../design/capability-protocols.html">Capability protocols<span class="tag">accepted</span></a></li>
@@ -93,11 +96,11 @@
 <li><a href="../design/audit-0.21.html">The 0.21 audit<span class="tag">accepted</span></a></li>
 <li><a href="../design/audit-0.22.html">The 0.22 audit<span class="tag">accepted</span></a></li>
 <li><a href="../design/security-contracts.html">Security contracts<span class="tag">implemented</span></a></li>
-<li><a href="../design/mcp-protocol-eras.html">MCP has two eras<span class="tag">accepted</span></a></li>
-<li><a href="../design/mcp-authorization-depth.html">MCP authorization depth<span class="tag">accepted</span></a></li>
-<li><a href="../design/taxonomy-editions.html">Taxonomy editions<span class="tag">accepted</span></a></li>
+<li><a href="../design/mcp-protocol-eras.html">MCP has two eras<span class="tag">implemented</span></a></li>
+<li><a href="../design/mcp-authorization-depth.html">MCP authorization depth<span class="tag">implemented</span></a></li>
+<li><a href="../design/taxonomy-editions.html">Taxonomy editions<span class="tag">implemented</span></a></li>
 <li><a href="../design/extension-author-tooling.html">Extension author tooling<span class="tag">accepted</span></a></li>
-<li><a href="../design/target-locators.html" aria-current="page">Target locators<span class="tag">proposed</span></a></li>
+<li><a href="../design/target-locators.html" aria-current="page">Target locators<span class="tag">implemented</span></a></li>
 <li><a href="../design/output-plugins.html">Output plugins<span class="tag">proposed</span></a></li>
 <li><a href="../design/quality-suites.html">Quality suites<span class="tag">proposed</span></a></li>
 <li><a href="../design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
@@ -118,7 +121,7 @@
 </ul>
 </nav>
 <main>
-<h1>Target locators: a custom target the CLI can build<span class="status proposed">proposed</span></h1><p class="lede">how a discovered third-party target becomes something a command can build — a scheme the target declares, a locator the operator types, and the verb still choosing the kind</p><p><strong>Status:</strong> proposed · <strong>Written:</strong> 2026-09-02 · <strong>Cycle 1 of the extensibility program</strong> (<a href="audit-0.22.html"><code>audit-0.22.md</code></a>)</p>
+<h1>Target locators: a custom target the CLI can build<span class="status implemented">implemented</span></h1><p class="lede">how a discovered third-party target becomes something a command can build — a scheme the target declares, a locator the operator types, and the verb still choosing the kind</p><p><strong>Status:</strong> implemented in 0.24.0 · <strong>Written:</strong> 2026-09-02 · <strong>Cycle 1 of the extensibility program</strong> (<a href="audit-0.22.html"><code>audit-0.22.md</code></a>)</p>
 <h2 id="the-gap">The gap</h2>
 <p><code>guardana.targets</code> has been an entry-point group since 0.1, <code>Registry.discover()</code>
 loads it, <code>pack validate</code> checks it, <code>pack lock</code> pins it — and no command has ever
@@ -141,7 +144,7 @@ $ guardana analyze-trace --target acme-langfuse://exports/2026-09-01.jsonl
 <p>The scheme, the locator and the verb each do one job:</p>
 <ol>
 <li><strong>The scheme is declared on the class.</strong> <code>Target.scheme</code> is a class attribute,
-<code>None</code> by default, and <code>Target.from_locator(locator)</code> is a classmethod that
+<code>None</code> by default, and <code>Target.from_locator(locator, *, options)</code> is a classmethod that
 raises <code>LocatorError</code> by default. A target that sets neither is exactly what it
 is today: discoverable, usable from Python, not selectable. Nothing an existing
 pack implements changes meaning.</li>
@@ -149,7 +152,10 @@ pack implements changes meaning.</li>
 handed to the target untouched — a path, a host and port, an object-store key.
 Options are <code>--target-option key=value</code>, repeatable, and reach the target as a
 mapping. Secrets are named by environment variable, the way <code>--api-key-env</code>
-already works, and never as option values that land in a shell history.</li>
+already works, and never as option values that land in a shell history.
+Construction performs no remote I/O: <code>plan</code> uses the same constructor and
+promises not to contact the target. Connectivity is checked by the command
+that actually inspects or runs it.</li>
 <li><strong>The verb decides the kind, and refuses a mismatch.</strong> <code>scan</code> builds artifact
 targets, <code>probe</code> and <code>monitor</code> endpoint targets, <code>analyze-trace</code> trace targets.
 A locator whose target reports another kind is refused with exit <code>3</code> before a
@@ -208,12 +214,13 @@ reports <code>usage: None</code>, which the manifest records as unknown rather t
 <code>observe()</code> produces no inventory for a target that implements neither
 <code>FileReader</code> nor <code>ChatEndpoint</code>, which the manifest shows as an absence.</p>
 <h2 id="the-example-follows-and-is-held-to-it">The example follows, and is held to it</h2>
-<p><code>examples/custom_rule</code>'s target gains <code>scheme = &quot;acme-prompts&quot;</code>, implements
-<code>FileReader</code> properly (which the audit found it did not), and its isolated test
+<p><code>examples/custom_rule</code>'s target declares <code>scheme = &quot;acme-prompts&quot;</code>, implements
+<code>from_locator</code>, and its isolated test
 suite runs <code>guardana scan --target acme-prompts://…</code> as a subprocess, calls
 <code>assert_target_conforms</code>, and runs the <code>Runner</code> over it with the built-in registry.
-<code>guardana new-pack</code> scaffolds the same shape. A seam nothing exercises is a seam
-nobody has run, and this one has been that for twenty-two releases.</p>
+The planned <code>guardana new-pack</code> command will scaffold the same shape. A seam
+nothing exercises is a seam nobody has run, and this one was that for twenty-two
+releases.</p>
 <h2 id="extension-api">Extension API</h2>
 <p>Nothing an existing pack implements changes, so a pack declaring <code>&gt;=1,&lt;2</code> still
 loads. A pack <em>using</em> <code>scheme</code> and <code>from_locator</code> on a build without them would
@@ -251,7 +258,7 @@ should hold.</p>
 </main>
 </div>
 <footer class="foot"><div class="bar">
-<span>Guardana 0.23.0 · Apache-2.0</span>
+<span>Guardana 0.24.0 · Apache-2.0</span>
 <a href="https://github.com/guardana/guardana/blob/main/docs/design/target-locators.md">Edit this page on GitHub</a>
 <a href="../../llms.txt">llms.txt</a>
 </div></footer>

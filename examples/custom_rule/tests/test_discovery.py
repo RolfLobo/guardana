@@ -40,9 +40,12 @@ def test_acme_evaluator_is_discovered_alongside_the_built_ins() -> None:
 
 
 def test_acme_target_is_discovered_through_the_third_entry_point_group() -> None:
-    names = {target.__name__ for target in Registry.discover().targets()}
+    registry = Registry.discover()
+    names = {target.__name__ for target in registry.targets()}
 
     assert "AcmePromptLibraryTarget" in names
+    assert registry.target_for("acme-prompts") is not None
+    assert registry.schemes() == ("acme-prompts",)
 
 
 def test_acme_control_catalogue_is_registered_before_any_rule_resolves_it() -> None:

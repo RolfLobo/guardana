@@ -133,6 +133,10 @@ configuration on a command line, and the protocols are the prerequisite — a
 factory that built an object every rule then rejected would have been the same
 false seam one level up.
 
+Resolved after this decision by [`target-locators.md`](target-locators.md): the
+class declares a scheme and constructs itself from a locator, so no second
+factory abstraction was added.
+
 **A namespaced `Capability` descriptor.** The enum stays closed: opening it to
 arbitrary strings turns a typo (`requires: [call_tols]`) from a load error into a
 requirement no target can satisfy, which is a rule silently skipped forever. A

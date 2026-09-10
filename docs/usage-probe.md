@@ -21,7 +21,7 @@ speaks Ollama's native `/api/chat` instead, and `--provider tgi` speaks
 Hugging Face TGI's `/generate`.
 
 ```bash
-guardana probe --url <base-url> --model <name> [OPTIONS]
+guardana probe (--url <base-url> --model <name> | --target <scheme://locator>) [OPTIONS]
 ```
 
 ## Flags
@@ -30,6 +30,8 @@ guardana probe --url <base-url> --model <name> [OPTIONS]
 |---|---|---|
 | `--url TEXT` | — | Base URL of the OpenAI-compatible endpoint. Required unless `--mcp` names an MCP server instead |
 | `--model TEXT` | — | Model name to send in each request. Required unless `--mcp` names an MCP server instead |
+| `--target SCHEME://LOCATOR` | none | Build a trusted installed endpoint target instead of the built-in endpoint or MCP flags |
+| `--target-option KEY=VALUE` | none | Repeatable, non-secret configuration passed to that target |
 | `--api-key-env TEXT` | none | Name of an environment variable holding the bearer API key |
 | `--provider [openai\|ollama\|tgi]` | `openai` | Endpoint wire protocol: OpenAI-compatible (default), Ollama's native `/api/chat`, or HF TGI's `/generate` |
 | `--adapter PATH` | none | Adapter file mapping a **guarded product endpoint**'s custom request/response schema — see [Probing a guarded endpoint](#probing-a-guarded-endpoint). Overrides `--provider`. |
@@ -45,6 +47,13 @@ guardana probe --url <base-url> --model <name> [OPTIONS]
 | `--mcp-pin PATH` | none | Approved MCP manifest to compare the live one against |
 | `--write-mcp-pin PATH` | none | Write the server's current manifest as approved, and exit without reporting |
 | `--allow-exec` | off | Permit `--mcp` to **start** an stdio server, which executes the code under examination |
+
+`--target` is mutually exclusive with `--url`, `--model`, adapter, credential,
+system-prompt, and MCP connection flags. The plugin owns construction; Guardana
+still owns rule selection, policy, budgets, evidence, and exit codes. A custom
+endpoint implements `SystemPromptPlanter` to receive isolated canary passes; if
+it does not, canary rules are explicitly skipped rather than graded without a
+marker. See [`extending.md`](extending.md#adding-a-target).
 
 ## Probing an MCP server
 

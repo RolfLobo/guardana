@@ -9,10 +9,16 @@ from guardana.core.rule import Rule, RuleContext, RuleError, RuleLoadError, Rule
 from guardana.core.runner import Runner
 from guardana.core.severity import Severity
 from guardana.core.surface import Surface
-from guardana.core.target import Capability, Target, TargetKind
+from guardana.core.target import (
+    Capability,
+    LocatorError,
+    SystemPromptPlanter,
+    Target,
+    TargetKind,
+)
 from guardana.core.taxonomy import TaxonomyRef
 
-__version__ = "0.23.0"
+__version__ = "0.24.0"
 
 __all__ = [
     "Capability",
@@ -22,6 +28,7 @@ __all__ = [
     "Expectation",
     "FailOn",
     "Finding",
+    "LocatorError",
     "Policy",
     "Profile",
     "ProfileError",
@@ -36,6 +43,7 @@ __all__ = [
     "ScanResult",
     "Severity",
     "Surface",
+    "SystemPromptPlanter",
     "Target",
     "TargetKind",
     "TaxonomyRef",

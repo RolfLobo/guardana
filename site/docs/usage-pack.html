@@ -80,12 +80,15 @@
 <h2>Design documents</h2><ul>
 <li><a href="design/README.html">How these are written</a></li>
 </ul>
+<h2>Project direction</h2><ul>
+<li><a href="design/audit-0.23-market.html">The 0.23 repository and market audit<span class="tag">accepted</span></a></li>
+</ul>
 <h2>Maintainers</h2><ul>
 <li><a href="maintainers/github-setup.html">GitHub repository setup</a></li>
 </ul>
 <h2>Also here</h2><ul>
 <li><a href="design/trace-domain-model.html">The Trace domain model<span class="tag">implemented</span></a></li>
-<li><a href="design/trace-producer.html">Producing a trace<span class="tag">accepted</span></a></li>
+<li><a href="design/trace-producer.html">Producing a trace<span class="tag">implemented</span></a></li>
 <li><a href="design/framework-adapters.html">Framework adapters<span class="tag">implemented</span></a></li>
 <li><a href="design/assessment-channel.html">The assessment channel<span class="tag">accepted</span></a></li>
 <li><a href="design/capability-protocols.html">Capability protocols<span class="tag">accepted</span></a></li>
@@ -93,11 +96,11 @@
 <li><a href="design/audit-0.21.html">The 0.21 audit<span class="tag">accepted</span></a></li>
 <li><a href="design/audit-0.22.html">The 0.22 audit<span class="tag">accepted</span></a></li>
 <li><a href="design/security-contracts.html">Security contracts<span class="tag">implemented</span></a></li>
-<li><a href="design/mcp-protocol-eras.html">MCP has two eras<span class="tag">accepted</span></a></li>
-<li><a href="design/mcp-authorization-depth.html">MCP authorization depth<span class="tag">accepted</span></a></li>
-<li><a href="design/taxonomy-editions.html">Taxonomy editions<span class="tag">accepted</span></a></li>
+<li><a href="design/mcp-protocol-eras.html">MCP has two eras<span class="tag">implemented</span></a></li>
+<li><a href="design/mcp-authorization-depth.html">MCP authorization depth<span class="tag">implemented</span></a></li>
+<li><a href="design/taxonomy-editions.html">Taxonomy editions<span class="tag">implemented</span></a></li>
 <li><a href="design/extension-author-tooling.html">Extension author tooling<span class="tag">accepted</span></a></li>
-<li><a href="design/target-locators.html">Target locators<span class="tag">proposed</span></a></li>
+<li><a href="design/target-locators.html">Target locators<span class="tag">implemented</span></a></li>
 <li><a href="design/output-plugins.html">Output plugins<span class="tag">proposed</span></a></li>
 <li><a href="design/quality-suites.html">Quality suites<span class="tag">proposed</span></a></li>
 <li><a href="design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
@@ -124,9 +127,9 @@ promise is only worth something if you can check whether <em>this</em> build kee
 command answers both questions.</p>
 <pre><code class="language-bash">guardana pack validate
 </code></pre>
-<pre><code>extension API implemented by this build: 1
+<pre><code>extension APIs implemented by this build: 1, 2 (newest 2)
 
-✓ acme-guardana-rules (extension_api &gt;=1,&lt;2) — 6 declared
+✓ acme-guardana-rules (extension_api &gt;=2,&lt;3) — 6 declared
 
 1 pack(s) checked, 0 with problems.
 </code></pre>
@@ -135,7 +138,7 @@ command answers both questions.</p>
 root:</p>
 <pre><code class="language-yaml">schema_version: 2
 name: acme-guardana-rules
-extension_api: &quot;&gt;=1,&lt;2&quot;
+extension_api: &quot;&gt;=2,&lt;3&quot;
 
 description: &gt;
   Acme's private security rules.
@@ -164,7 +167,10 @@ which is also why the declaration is not <code>[tool.guardana]</code> in <code>p
 pack pinned to <code>guardana&gt;=0.17,&lt;0.18</code> would need re-releasing on every minor even
 when nothing it touches has moved. <strong><code>extension_api</code> moves only when <code>Rule</code>,
 <code>Evaluator</code>, <code>Target</code> or <code>Finding</code> actually change shape</strong>, so it is the thing a
-pack can usefully bind to.</p>
+pack can usefully bind to. API 2 adds CLI target locators. Guardana retains API
+1 alongside it, so a rule/evaluator pack declaring <code>&gt;=1,&lt;2</code> continues to load;
+a pack using <code>Target.scheme</code> and <code>from_locator</code> declares <code>&gt;=2,&lt;3</code> and is refused
+by older builds that cannot make its target selectable.</p>
 <p>Both ends are required. An open range claims compatibility with an API nobody has
 written yet.</p>
 <p><strong>Both directions refuse, with different messages and one outcome:</strong></p>
@@ -177,11 +183,11 @@ written yet.</p>
 </thead>
 <tbody>
 <tr>
-<td>the pack needs a <em>newer</em> API than this build has</td>
+<td>the pack needs an API newer than every edition this build implements</td>
 <td>upgrade Guardana</td>
 </tr>
 <tr>
-<td>the pack needs an <em>older</em> API than this build has</td>
+<td>the pack accepts only API editions this build no longer retains</td>
 <td>upgrade the pack — it may rely on behaviour that has changed</td>
 </tr>
 </tbody>
@@ -253,7 +259,7 @@ comparison would blame the model for it.</p>
 guardana pack lock --check        # in CI: fail if the build has drifted
 </code></pre>
 <pre><code class="language-yaml">schema_version: 1
-extension_api: 1
+extension_api: 2
 packs:
   - name: acme-guardana-rules
     distribution: acme-guardana-rules
@@ -391,7 +397,7 @@ tests in an isolated environment on every push.</p>
 </main>
 </div>
 <footer class="foot"><div class="bar">
-<span>Guardana 0.23.0 · Apache-2.0</span>
+<span>Guardana 0.24.0 · Apache-2.0</span>
 <a href="https://github.com/guardana/guardana/blob/main/docs/usage-pack.md">Edit this page on GitHub</a>
 <a href="../llms.txt">llms.txt</a>
 </div></footer>

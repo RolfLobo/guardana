@@ -15,6 +15,14 @@ one turns a rule into a check that runs, proves nothing, and reports a pass.
 guardana target inspect --url https://api.example.com --model gpt-4o-mini
 ```
 
+An installed endpoint target with a locator uses the same inspection:
+
+```bash
+guardana target inspect \
+  --target acme-gateway://llm.internal/v1 \
+  --target-option model=support-v3
+```
+
 ```text
 endpoint https://api.example.com#gpt-4o-mini
 
@@ -38,8 +46,18 @@ This inspection cost 3 request(s).
 
 | Flag | Default | Meaning |
 |---|---|---|
+| `--target SCHEME://LOCATOR` | none | Build an installed custom endpoint target instead of `--url`/`--model` |
+| `--target-option KEY=VALUE` | none | Repeatable, non-secret configuration passed to that target |
 | `--plugins [all\|builtins\|allowlist\|disabled]` | `all` | Which installed plugins to load — same meaning as on `probe` |
 | `--allow-plugin TEXT` | none | Distribution to trust; repeatable, needs `--plugins allowlist` |
+
+`--target` is mutually exclusive with the built-in connection flags. The
+selected class comes from the trusted `guardana.targets` entry points; an unknown
+scheme, conflicting owner, rejected option, or wrong target kind exits `3` before
+inspection sends a request. `guardana doctor` lists the schemes that actually
+loaded. Put credentials in an environment variable consumed by the target, never
+in `--target-option`, because command lines are commonly retained in shell and CI
+history.
 
 ## Declared versus verified
 

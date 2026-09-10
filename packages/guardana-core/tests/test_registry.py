@@ -49,6 +49,14 @@ class _DummyTarget(Target):
         return "dummy"
 
 
+class _CliTarget(_DummyTarget):
+    scheme = "acme-endpoint"
+
+
+class _OtherCliTarget(_DummyTarget):
+    scheme = "acme-endpoint"
+
+
 def test_register_and_lookup() -> None:
     reg = Registry()
     reg.register_rule(_R())
@@ -171,6 +179,34 @@ def test_register_target_and_list() -> None:
     reg = Registry()
     reg.register_target(_DummyTarget)
     assert reg.targets() == (_DummyTarget,)
+
+
+def test_register_target_indexes_a_valid_locator_scheme() -> None:
+    reg = Registry()
+    reg.register_target(_CliTarget, Origin(distribution="acme-targets", version="1.0"))
+
+    assert reg.target_for("acme-endpoint") is _CliTarget
+    assert reg.target_for("missing") is None
+    assert reg.schemes() == ("acme-endpoint",)
+
+
+@pytest.mark.parametrize("scheme", ["HTTP", "two_words", "9bad", "http"])
+def test_register_target_refuses_invalid_or_reserved_schemes(scheme: str) -> None:
+    class _Bad(_DummyTarget):
+        pass
+
+    _Bad.scheme = scheme
+
+    with pytest.raises(RegistryConflictError, match="scheme"):
+        Registry().register_target(_Bad, Origin(distribution="bad-target"))
+
+
+def test_two_targets_cannot_claim_one_locator_scheme() -> None:
+    reg = Registry()
+    reg.register_target(_CliTarget, Origin(distribution="acme-targets", version="1.0"))
+
+    with pytest.raises(RegistryConflictError, match="one locator select two targets"):
+        reg.register_target(_OtherCliTarget, Origin(distribution="other-targets", version="2.0"))
 
 
 def test_load_yaml_rule_dirs_loads_valid_rule(tmp_path: Path) -> None:

@@ -6,6 +6,7 @@ it for *their* package — so a pack says which extension API it was written aga
 and this build refuses to load one it cannot honour rather than hoping.
 """
 
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 
 
@@ -28,8 +29,8 @@ every reader of a `PackManifest` depend on, and a version living in the parser i
 version the parser is free to reinterpret.
 """
 
-EXTENSION_API_VERSION = 1
-"""The version of the extension contract this build implements.
+EXTENSION_API_VERSION = 2
+"""The newest version of the extension contract this build implements.
 
 **Deliberately not the product version.** In 0.x the product's minor breaks API by
 design, so a pack pinned to `guardana>=0.17,<0.18` would need re-releasing on every
@@ -37,6 +38,15 @@ minor even when nothing it touches moved. This integer changes only when `Rule`,
 `Evaluator`, `Target` or `Finding` actually change shape, which is what a pack can
 usefully bind to — and what makes "too old" and "too new" two answerable questions
 instead of one guess about a version range.
+"""
+
+SUPPORTED_EXTENSION_API_VERSIONS = frozenset({1, EXTENSION_API_VERSION})
+"""Every extension API this build still implements.
+
+API 2 adds CLI target locators without changing the API 1 rule, evaluator or
+target contracts. Keeping both is the additive compatibility rule: an older pack
+continues to load, while a locator-aware pack can refuse a build that cannot make
+its target selectable.
 """
 
 
@@ -57,6 +67,10 @@ class ApiRange:
         """Whether this build's extension API falls inside the declared range."""
         return self.minimum <= api < self.below
 
+    def accepts_any(self, apis: Iterable[int]) -> bool:
+        """Whether the range contains at least one API this build implements."""
+        return any(self.accepts(api) for api in apis)
+
     def why_not(self, api: int) -> str:
         """Say which side of the range this build is on, in the author's terms.
 
@@ -73,6 +87,24 @@ class ApiRange:
             f"needs extension API <{self.below} and this build implements {api} — the pack "
             f"is older than Guardana and may rely on behaviour that has since changed; "
             f"upgrade the pack"
+        )
+
+    def why_not_any(self, apis: Iterable[int]) -> str:
+        """Explain incompatibility with a build that implements several API editions."""
+        supported = tuple(sorted(set(apis)))
+        if not supported:
+            return "this build declares no extension API, so it cannot load any pack"
+        if self.accepts_any(supported):
+            return ""
+        shown = ", ".join(str(api) for api in supported)
+        if self.minimum > supported[-1]:
+            return (
+                f"needs extension API >={self.minimum} and this build implements {shown} — "
+                "the pack is newer than Guardana; upgrade Guardana"
+            )
+        return (
+            f"needs extension API <{self.below} and this build implements {shown} — the pack "
+            "is older than every compatible API retained by Guardana; upgrade the pack"
         )
 
     def __str__(self) -> str:
@@ -122,6 +154,8 @@ class PackManifest:
         """Every id this pack claims to register, in one sequence."""
         return (*self.rules, *self.evaluators, *self.targets, *self.taxonomies)
 
-    def loadable_by(self, api: int = EXTENSION_API_VERSION) -> bool:
-        """Whether this build may load the pack at all."""
-        return self.extension_api.accepts(api)
+    def loadable_by(self, apis: int | Iterable[int] = SUPPORTED_EXTENSION_API_VERSIONS) -> bool:
+        """Whether this build may load the pack under any supported API edition."""
+        if isinstance(apis, int):
+            return self.extension_api.accepts(apis)
+        return self.extension_api.accepts_any(apis)

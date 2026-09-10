@@ -2,12 +2,12 @@
 title: "Target locators"
 nav_order: 71
 summary: "how a discovered third-party target becomes something a command can build — a scheme the target declares, a locator the operator types, and the verb still choosing the kind"
-status: proposed
+status: implemented
 ---
 
 # Target locators: a custom target the CLI can build
 
-**Status:** proposed · **Written:** 2026-09-02 · **Cycle 1 of the extensibility program** ([`audit-0.22.md`](audit-0.22.md))
+**Status:** implemented in 0.24.0 · **Written:** 2026-09-02 · **Cycle 1 of the extensibility program** ([`audit-0.22.md`](audit-0.22.md))
 
 ## The gap
 
@@ -38,7 +38,7 @@ $ guardana analyze-trace --target acme-langfuse://exports/2026-09-01.jsonl
 The scheme, the locator and the verb each do one job:
 
 1. **The scheme is declared on the class.** `Target.scheme` is a class attribute,
-   `None` by default, and `Target.from_locator(locator)` is a classmethod that
+   `None` by default, and `Target.from_locator(locator, *, options)` is a classmethod that
    raises `LocatorError` by default. A target that sets neither is exactly what it
    is today: discoverable, usable from Python, not selectable. Nothing an existing
    pack implements changes meaning.
@@ -47,6 +47,9 @@ The scheme, the locator and the verb each do one job:
    Options are `--target-option key=value`, repeatable, and reach the target as a
    mapping. Secrets are named by environment variable, the way `--api-key-env`
    already works, and never as option values that land in a shell history.
+   Construction performs no remote I/O: `plan` uses the same constructor and
+   promises not to contact the target. Connectivity is checked by the command
+   that actually inspects or runs it.
 3. **The verb decides the kind, and refuses a mismatch.** `scan` builds artifact
    targets, `probe` and `monitor` endpoint targets, `analyze-trace` trace targets.
    A locator whose target reports another kind is refused with exit `3` before a
@@ -119,12 +122,13 @@ reports `usage: None`, which the manifest records as unknown rather than free;
 
 ## The example follows, and is held to it
 
-`examples/custom_rule`'s target gains `scheme = "acme-prompts"`, implements
-`FileReader` properly (which the audit found it did not), and its isolated test
+`examples/custom_rule`'s target declares `scheme = "acme-prompts"`, implements
+`from_locator`, and its isolated test
 suite runs `guardana scan --target acme-prompts://…` as a subprocess, calls
 `assert_target_conforms`, and runs the `Runner` over it with the built-in registry.
-`guardana new-pack` scaffolds the same shape. A seam nothing exercises is a seam
-nobody has run, and this one has been that for twenty-two releases.
+The planned `guardana new-pack` command will scaffold the same shape. A seam
+nothing exercises is a seam nobody has run, and this one was that for twenty-two
+releases.
 
 ## Extension API
 

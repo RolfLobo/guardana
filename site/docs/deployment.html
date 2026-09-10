@@ -80,12 +80,15 @@
 <h2>Design documents</h2><ul>
 <li><a href="design/README.html">How these are written</a></li>
 </ul>
+<h2>Project direction</h2><ul>
+<li><a href="design/audit-0.23-market.html">The 0.23 repository and market audit<span class="tag">accepted</span></a></li>
+</ul>
 <h2>Maintainers</h2><ul>
 <li><a href="maintainers/github-setup.html">GitHub repository setup</a></li>
 </ul>
 <h2>Also here</h2><ul>
 <li><a href="design/trace-domain-model.html">The Trace domain model<span class="tag">implemented</span></a></li>
-<li><a href="design/trace-producer.html">Producing a trace<span class="tag">accepted</span></a></li>
+<li><a href="design/trace-producer.html">Producing a trace<span class="tag">implemented</span></a></li>
 <li><a href="design/framework-adapters.html">Framework adapters<span class="tag">implemented</span></a></li>
 <li><a href="design/assessment-channel.html">The assessment channel<span class="tag">accepted</span></a></li>
 <li><a href="design/capability-protocols.html">Capability protocols<span class="tag">accepted</span></a></li>
@@ -93,11 +96,11 @@
 <li><a href="design/audit-0.21.html">The 0.21 audit<span class="tag">accepted</span></a></li>
 <li><a href="design/audit-0.22.html">The 0.22 audit<span class="tag">accepted</span></a></li>
 <li><a href="design/security-contracts.html">Security contracts<span class="tag">implemented</span></a></li>
-<li><a href="design/mcp-protocol-eras.html">MCP has two eras<span class="tag">accepted</span></a></li>
-<li><a href="design/mcp-authorization-depth.html">MCP authorization depth<span class="tag">accepted</span></a></li>
-<li><a href="design/taxonomy-editions.html">Taxonomy editions<span class="tag">accepted</span></a></li>
+<li><a href="design/mcp-protocol-eras.html">MCP has two eras<span class="tag">implemented</span></a></li>
+<li><a href="design/mcp-authorization-depth.html">MCP authorization depth<span class="tag">implemented</span></a></li>
+<li><a href="design/taxonomy-editions.html">Taxonomy editions<span class="tag">implemented</span></a></li>
 <li><a href="design/extension-author-tooling.html">Extension author tooling<span class="tag">accepted</span></a></li>
-<li><a href="design/target-locators.html">Target locators<span class="tag">proposed</span></a></li>
+<li><a href="design/target-locators.html">Target locators<span class="tag">implemented</span></a></li>
 <li><a href="design/output-plugins.html">Output plugins<span class="tag">proposed</span></a></li>
 <li><a href="design/quality-suites.html">Quality suites<span class="tag">proposed</span></a></li>
 <li><a href="design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
@@ -345,7 +348,7 @@ them is worked around silently: each is absent, and says so.</p>
 <pre><code class="language-bash">docker run -d --name guardana-collector \
   -e GUARDANA_DATABASE_URL=&quot;postgresql://guardana:…@db.internal:5432/guardana&quot; \
   -p 127.0.0.1:8000:8000 \
-  ghcr.io/guardana/guardana-collector:0.23
+  ghcr.io/guardana/guardana-collector:0.24
 </code></pre>
 <p>Or without a container at all — <code>pip install &quot;guardana-server[serve]&quot;</code>, then
 <code>guardana-collector migrate</code> and <code>guardana-collector serve</code>. The ASGI server is an
@@ -355,7 +358,7 @@ extra rather than a dependency, so a site that already runs gunicorn points it a
 </main>
 </div>
 <footer class="foot"><div class="bar">
-<span>Guardana 0.23.0 · Apache-2.0</span>
+<span>Guardana 0.24.0 · Apache-2.0</span>
 <a href="https://github.com/guardana/guardana/blob/main/docs/deployment.md">Edit this page on GitHub</a>
 <a href="../llms.txt">llms.txt</a>
 </div></footer>

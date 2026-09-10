@@ -13,11 +13,12 @@ network I/O and invents no capability — a target that cannot answer a question
 declares it cannot, and the runner skips the rules that need it.
 """
 
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from pathlib import Path
+from typing import Self
 
 from guardana.core.source import PythonSource, UnreadSource, read_source
-from guardana.core.target import Capability, Target, TargetKind
+from guardana.core.target import Capability, LocatorError, Target, TargetKind
 
 
 class AcmePromptLibraryTarget(Target):
@@ -29,12 +30,27 @@ class AcmePromptLibraryTarget(Target):
     """
 
     kind = TargetKind.ARTIFACT
+    scheme = "acme-prompts"
 
     def __init__(self, root: Path | str) -> None:
         """Point the target at a directory of prompt templates."""
         self._root = Path(root)
         self._sources: dict[Path, PythonSource | None] = {}
         self._unread: list[UnreadSource] = []
+
+    @classmethod
+    def from_locator(cls, locator: str, *, options: Mapping[str, str]) -> Self:
+        """Build a library selected as ``acme-prompts://path`` from the CLI."""
+        if options:
+            raise LocatorError(
+                f"acme-prompts accepts no target options; unknown: {', '.join(sorted(options))}"
+            )
+        root = Path(locator)
+        if not root.exists():
+            raise LocatorError(f"{root} does not exist")
+        if not root.is_dir():
+            raise LocatorError(f"{root} is not a directory")
+        return cls(root)
 
     def capabilities(self) -> set[Capability]:
         """Files, and only files."""
@@ -43,7 +59,7 @@ class AcmePromptLibraryTarget(Target):
     @property
     def ref(self) -> str:
         """How this target appears in a finding and in a run manifest."""
-        return f"acme-prompts:{self._root}"
+        return f"acme-prompts://{self._root}"
 
     def iter_files(self, suffixes: tuple[str, ...] | None = None) -> Iterator[Path]:
         """Walk the library in a stable order, optionally by suffix; nothing when absent."""

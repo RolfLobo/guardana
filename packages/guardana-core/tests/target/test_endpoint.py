@@ -58,6 +58,19 @@ def test_endpoint_prepends_system_prompt_when_set() -> None:
     assert tx.seen[1].content == "hello"
 
 
+def test_planted_endpoint_keeps_the_base_prompt_and_one_shared_meter() -> None:
+    tx = _FakeTransport("ok")
+    target = EndpointTarget("http://x", "m", system_prompt="base", transport=tx)
+    planted = target.planting("canary")
+
+    target.chat([ChatMessage("user", "first")])
+    planted.chat([ChatMessage("user", "second")])
+
+    assert tx.seen[0].content == "base\ncanary"
+    assert target.usage().requests == 2
+    assert planted.usage().requests == 2
+
+
 def test_trailing_slash_base_url_is_normalized() -> None:
     tx = _FakeTransport("ok")
     target = EndpointTarget("http://x/", "m", transport=tx)

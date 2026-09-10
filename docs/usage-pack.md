@@ -17,9 +17,9 @@ guardana pack validate
 ```
 
 ```
-extension API implemented by this build: 1
+extension APIs implemented by this build: 1, 2 (newest 2)
 
-✓ acme-guardana-rules (extension_api >=1,<2) — 6 declared
+✓ acme-guardana-rules (extension_api >=2,<3) — 6 declared
 
 1 pack(s) checked, 0 with problems.
 ```
@@ -32,7 +32,7 @@ root:
 ```yaml
 schema_version: 2
 name: acme-guardana-rules
-extension_api: ">=1,<2"
+extension_api: ">=2,<3"
 
 description: >
   Acme's private security rules.
@@ -66,7 +66,10 @@ Guardana's own version breaks API on every minor while it is pre-1.0, by design.
 pack pinned to `guardana>=0.17,<0.18` would need re-releasing on every minor even
 when nothing it touches has moved. **`extension_api` moves only when `Rule`,
 `Evaluator`, `Target` or `Finding` actually change shape**, so it is the thing a
-pack can usefully bind to.
+pack can usefully bind to. API 2 adds CLI target locators. Guardana retains API
+1 alongside it, so a rule/evaluator pack declaring `>=1,<2` continues to load;
+a pack using `Target.scheme` and `from_locator` declares `>=2,<3` and is refused
+by older builds that cannot make its target selectable.
 
 Both ends are required. An open range claims compatibility with an API nobody has
 written yet.
@@ -75,8 +78,8 @@ written yet.
 
 | Situation | What you are told |
 |---|---|
-| the pack needs a *newer* API than this build has | upgrade Guardana |
-| the pack needs an *older* API than this build has | upgrade the pack — it may rely on behaviour that has changed |
+| the pack needs an API newer than every edition this build implements | upgrade Guardana |
+| the pack accepts only API editions this build no longer retains | upgrade the pack — it may rely on behaviour that has changed |
 
 A "close enough" acceptance would be worse than no declaration at all, because it is
 the point at which an author stops checking.
@@ -139,7 +142,7 @@ guardana pack lock --check        # in CI: fail if the build has drifted
 
 ```yaml
 schema_version: 1
-extension_api: 1
+extension_api: 2
 packs:
   - name: acme-guardana-rules
     distribution: acme-guardana-rules

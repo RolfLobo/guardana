@@ -21,6 +21,7 @@ from guardana.cli._plugins import resolve_trust, warn_about_load_errors
 from guardana.cli.exit_codes import ExitCode
 from guardana.core.pack import (
     EXTENSION_API_VERSION,
+    SUPPORTED_EXTENSION_API_VERSIONS,
     PackCheck,
     PackError,
     PackManifest,
@@ -271,7 +272,11 @@ def _read_as(manifest: PackManifest) -> str:
 
 
 def _render(checks: list[PackCheck]) -> list[str]:
-    lines = [f"extension API implemented by this build: {EXTENSION_API_VERSION}", ""]
+    supported = ", ".join(str(api) for api in sorted(SUPPORTED_EXTENSION_API_VERSIONS))
+    lines = [
+        f"extension APIs implemented by this build: {supported} (newest {EXTENSION_API_VERSION})",
+        "",
+    ]
     for check in checks:
         mark = "✓" if check.ok else "✖"
         lines.append(

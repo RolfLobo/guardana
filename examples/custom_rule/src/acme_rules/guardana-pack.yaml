@@ -22,7 +22,7 @@ name: acme-guardana-rules
 # the *API*, not the product: in 0.x the product's minor breaks API by design, so a
 # range like `guardana>=0.17,<0.18` would force you to re-release on every minor
 # even when nothing you touch has moved.
-extension_api: ">=1,<2"
+extension_api: ">=2,<3"
 
 description: >
   Acme's private security rules: which model files are approved, what the support

@@ -80,12 +80,15 @@
 <h2>Design documents</h2><ul>
 <li><a href="design/README.html">How these are written</a></li>
 </ul>
+<h2>Project direction</h2><ul>
+<li><a href="design/audit-0.23-market.html">The 0.23 repository and market audit<span class="tag">accepted</span></a></li>
+</ul>
 <h2>Maintainers</h2><ul>
 <li><a href="maintainers/github-setup.html">GitHub repository setup</a></li>
 </ul>
 <h2>Also here</h2><ul>
 <li><a href="design/trace-domain-model.html">The Trace domain model<span class="tag">implemented</span></a></li>
-<li><a href="design/trace-producer.html">Producing a trace<span class="tag">accepted</span></a></li>
+<li><a href="design/trace-producer.html">Producing a trace<span class="tag">implemented</span></a></li>
 <li><a href="design/framework-adapters.html">Framework adapters<span class="tag">implemented</span></a></li>
 <li><a href="design/assessment-channel.html">The assessment channel<span class="tag">accepted</span></a></li>
 <li><a href="design/capability-protocols.html">Capability protocols<span class="tag">accepted</span></a></li>
@@ -93,11 +96,11 @@
 <li><a href="design/audit-0.21.html">The 0.21 audit<span class="tag">accepted</span></a></li>
 <li><a href="design/audit-0.22.html">The 0.22 audit<span class="tag">accepted</span></a></li>
 <li><a href="design/security-contracts.html">Security contracts<span class="tag">implemented</span></a></li>
-<li><a href="design/mcp-protocol-eras.html">MCP has two eras<span class="tag">accepted</span></a></li>
-<li><a href="design/mcp-authorization-depth.html">MCP authorization depth<span class="tag">accepted</span></a></li>
-<li><a href="design/taxonomy-editions.html">Taxonomy editions<span class="tag">accepted</span></a></li>
+<li><a href="design/mcp-protocol-eras.html">MCP has two eras<span class="tag">implemented</span></a></li>
+<li><a href="design/mcp-authorization-depth.html">MCP authorization depth<span class="tag">implemented</span></a></li>
+<li><a href="design/taxonomy-editions.html">Taxonomy editions<span class="tag">implemented</span></a></li>
 <li><a href="design/extension-author-tooling.html">Extension author tooling<span class="tag">accepted</span></a></li>
-<li><a href="design/target-locators.html">Target locators<span class="tag">proposed</span></a></li>
+<li><a href="design/target-locators.html">Target locators<span class="tag">implemented</span></a></li>
 <li><a href="design/output-plugins.html">Output plugins<span class="tag">proposed</span></a></li>
 <li><a href="design/quality-suites.html">Quality suites<span class="tag">proposed</span></a></li>
 <li><a href="design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
@@ -122,7 +125,7 @@
 next to a served model — and alerts when something changes. It is
 explicitly a <strong>sampling observer</strong>, not an inline production sidecar: it
 polls, it doesn't intercept traffic.</p>
-<pre><code class="language-bash">guardana monitor --url &lt;base-url&gt; --model &lt;name&gt; [OPTIONS]
+<pre><code class="language-bash">guardana monitor (--url &lt;base-url&gt; --model &lt;name&gt; | --target &lt;scheme://locator&gt;) [OPTIONS]
 </code></pre>
 <h2 id="flags">Flags</h2>
 <div class="table-wrap"><table>
@@ -135,14 +138,24 @@ polls, it doesn't intercept traffic.</p>
 </thead>
 <tbody>
 <tr>
-<td><code>--url TEXT</code> (required)</td>
+<td><code>--url TEXT</code></td>
 <td>—</td>
-<td>Base URL of the OpenAI-compatible endpoint</td>
+<td>Base URL of the OpenAI-compatible endpoint; required unless <code>--target</code> is used</td>
 </tr>
 <tr>
-<td><code>--model TEXT</code> (required)</td>
+<td><code>--model TEXT</code></td>
 <td>—</td>
-<td>Model name to send in each request</td>
+<td>Model name; required unless <code>--target</code> is used</td>
+</tr>
+<tr>
+<td><code>--target SCHEME://LOCATOR</code></td>
+<td>none</td>
+<td>Build a trusted installed endpoint target for each cycle</td>
+</tr>
+<tr>
+<td><code>--target-option KEY=VALUE</code></td>
+<td>none</td>
+<td>Repeatable, non-secret configuration passed to that target</td>
 </tr>
 <tr>
 <td><code>--api-key-env TEXT</code></td>
@@ -206,6 +219,9 @@ polls, it doesn't intercept traffic.</p>
 </tr>
 </tbody>
 </table></div>
+<p>Each custom-target cycle builds a fresh target from the locator, so per-cycle
+budgets and usage have the same lifetime as the built-in connection. The target
+flags are mutually exclusive with the built-in connection flags.</p>
 <p>Note: <code>monitor</code> has no <code>--format</code> flag — alerts are always printed as human
 text (findings inside an alert use the <code>human</code> renderer); forward to a
 collector for machine-readable persistence.</p>
@@ -274,7 +290,7 @@ with <code>&lt;url&gt;#&lt;model&gt;</code> as the source.</p>
 </main>
 </div>
 <footer class="foot"><div class="bar">
-<span>Guardana 0.23.0 · Apache-2.0</span>
+<span>Guardana 0.24.0 · Apache-2.0</span>
 <a href="https://github.com/guardana/guardana/blob/main/docs/usage-monitor.md">Edit this page on GitHub</a>
 <a href="../llms.txt">llms.txt</a>
 </div></footer>

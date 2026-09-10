@@ -35,6 +35,7 @@ def test_the_manifest_ships_inside_the_wheel() -> None:
 
 
 def test_this_build_can_load_this_pack() -> None:
+    assert _manifest().loadable_by()
     assert _manifest().loadable_by(EXTENSION_API_VERSION)
 
 

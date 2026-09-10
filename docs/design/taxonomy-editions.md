@@ -2,12 +2,12 @@
 title: "Taxonomy editions"
 nav_order: 60
 summary: "why a reference is scheme + edition + id, and never a bare `LLM07`"
-status: accepted
+status: implemented
 ---
 
 # Taxonomy editions: a short id is not an identity
 
-**Status:** accepted, implemented — ships in the next release · **Written:** 2026-08-08
+**Status:** implemented in 0.13.0 · **Written:** 2026-08-08
 
 ## The problem, stated precisely
 

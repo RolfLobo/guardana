@@ -2,12 +2,12 @@
 title: "MCP has two eras"
 nav_order: 40
 summary: "two revisions of MCP, and settling which one a server speaks before asking it anything"
-status: accepted
+status: implemented
 ---
 
 # MCP has two eras, and a client that knows only one grades neither
 
-**Status:** accepted, implemented — ships in the next release · **Written:** 2026-08-10 · **Step four**
+**Status:** implemented in 0.16.0 · **Written:** 2026-08-10 · **Step four**
 
 ## The problem, stated precisely
 

@@ -12,7 +12,7 @@ from guardana.core.target._mcp_authorization import (
 from guardana.core.target._mcp_http import Sender, is_local_address, same_origin
 from guardana.core.target.adapter import AdapterConfig, HttpAdapterTransport
 from guardana.core.target.artifact import ArtifactTarget
-from guardana.core.target.base import Capability, Target, TargetKind
+from guardana.core.target.base import Capability, LocatorError, Target, TargetKind
 from guardana.core.target.endpoint import (
     REQUEST_TIMEOUT_SECONDS,
     ChatMessage,
@@ -36,6 +36,7 @@ from guardana.core.target.protocols import (
     AuthorizationInspector,
     ChatEndpoint,
     FileReader,
+    SystemPromptPlanter,
     ToolListing,
     ToolOfferingEndpoint,
     TraceReader,
@@ -61,6 +62,7 @@ __all__ = [
     "FileReader",
     "ForeignToken",
     "HttpAdapterTransport",
+    "LocatorError",
     "McpAuthorizationView",
     "McpConversation",
     "McpError",
@@ -68,6 +70,7 @@ __all__ = [
     "McpTool",
     "Sender",
     "Sessions",
+    "SystemPromptPlanter",
     "Target",
     "TargetKind",
     "ToolCall",

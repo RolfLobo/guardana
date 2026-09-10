@@ -80,12 +80,15 @@
 <h2>Design documents</h2><ul>
 <li><a href="design/README.html">How these are written</a></li>
 </ul>
+<h2>Project direction</h2><ul>
+<li><a href="design/audit-0.23-market.html">The 0.23 repository and market audit<span class="tag">accepted</span></a></li>
+</ul>
 <h2>Maintainers</h2><ul>
 <li><a href="maintainers/github-setup.html">GitHub repository setup</a></li>
 </ul>
 <h2>Also here</h2><ul>
 <li><a href="design/trace-domain-model.html">The Trace domain model<span class="tag">implemented</span></a></li>
-<li><a href="design/trace-producer.html">Producing a trace<span class="tag">accepted</span></a></li>
+<li><a href="design/trace-producer.html">Producing a trace<span class="tag">implemented</span></a></li>
 <li><a href="design/framework-adapters.html">Framework adapters<span class="tag">implemented</span></a></li>
 <li><a href="design/assessment-channel.html">The assessment channel<span class="tag">accepted</span></a></li>
 <li><a href="design/capability-protocols.html">Capability protocols<span class="tag">accepted</span></a></li>
@@ -93,11 +96,11 @@
 <li><a href="design/audit-0.21.html">The 0.21 audit<span class="tag">accepted</span></a></li>
 <li><a href="design/audit-0.22.html">The 0.22 audit<span class="tag">accepted</span></a></li>
 <li><a href="design/security-contracts.html">Security contracts<span class="tag">implemented</span></a></li>
-<li><a href="design/mcp-protocol-eras.html">MCP has two eras<span class="tag">accepted</span></a></li>
-<li><a href="design/mcp-authorization-depth.html">MCP authorization depth<span class="tag">accepted</span></a></li>
-<li><a href="design/taxonomy-editions.html">Taxonomy editions<span class="tag">accepted</span></a></li>
+<li><a href="design/mcp-protocol-eras.html">MCP has two eras<span class="tag">implemented</span></a></li>
+<li><a href="design/mcp-authorization-depth.html">MCP authorization depth<span class="tag">implemented</span></a></li>
+<li><a href="design/taxonomy-editions.html">Taxonomy editions<span class="tag">implemented</span></a></li>
 <li><a href="design/extension-author-tooling.html">Extension author tooling<span class="tag">accepted</span></a></li>
-<li><a href="design/target-locators.html">Target locators<span class="tag">proposed</span></a></li>
+<li><a href="design/target-locators.html">Target locators<span class="tag">implemented</span></a></li>
 <li><a href="design/output-plugins.html">Output plugins<span class="tag">proposed</span></a></li>
 <li><a href="design/quality-suites.html">Quality suites<span class="tag">proposed</span></a></li>
 <li><a href="design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
@@ -132,7 +135,8 @@ base classes, same discovery mechanism where discovery exists.</p>
 <code>guardana.core</code>, so plugin code needs one import line:</p>
 <pre><code class="language-python">from guardana.core import (
     Capability, Evaluator, Evidence, Finding, Registry, Rule, RuleContext,
-    RuleMeta, Runner, ScanResult, Severity, Target, TargetKind,
+    LocatorError, RuleMeta, Runner, ScanResult, Severity, SystemPromptPlanter,
+    Target, TargetKind,
 )
 </code></pre>
 <p>The deeper module paths used elsewhere in these docs
@@ -141,8 +145,9 @@ valid — the re-exports are the same objects. The full list is
 <code>guardana.core.__all__</code>: <code>Capability</code>, <code>Evaluator</code>, <code>Evidence</code>,
 <code>Exchange</code>, <code>Expectation</code>, <code>FailOn</code>, <code>Finding</code>, <code>Policy</code>, <code>Profile</code>,
 <code>ProfileError</code>, <code>Provenance</code>, <code>Registry</code>, <code>Rule</code>, <code>RuleContext</code>, <code>RuleError</code>,
-<code>RuleLoadError</code>, <code>RuleMeta</code>, <code>Runner</code>, <code>ScanResult</code>, <code>Severity</code>, <code>Surface</code>,
-<code>Target</code>, <code>TargetKind</code>, <code>TaxonomyRef</code>, <code>Verdict</code>, and <code>__version__</code>.</p>
+<code>RuleLoadError</code>, <code>RuleMeta</code>, <code>Runner</code>, <code>ScanResult</code>, <code>Severity</code>, <code>Surface</code>, <code>LocatorError</code>,
+<code>SystemPromptPlanter</code>, <code>Target</code>, <code>TargetKind</code>, <code>TaxonomyRef</code>, <code>Verdict</code>, and
+<code>__version__</code>.</p>
 <h2 id="adding-a-rule">Adding a Rule</h2>
 <p>See <a href="writing-rules.html"><code>writing-rules.md</code></a> for the full guide (YAML schema,
 Python plugin shape, and how <a href="https://github.com/guardana/guardana/tree/main/examples/custom_rule"><code>examples/custom_rule/</code></a>
@@ -207,19 +212,33 @@ talks to a file or a live model:</p>
 a protocol in <code>guardana.core.target.protocols</code> is what a rule will <strong>call</strong>.
 Implement the protocol for every capability you declare, and the built-in rules
 work against your target without knowing it exists:</p>
-<pre><code class="language-python">from collections.abc import Iterator
+<pre><code class="language-python">from collections.abc import Iterator, Mapping
 from pathlib import Path
+from typing import Self
 
+from guardana.core import LocatorError
 from guardana.core.source import PythonSource, UnreadSource, read_source
 from guardana.core.target import Capability, Target, TargetKind
 
 class MyTarget(Target):
     kind = TargetKind.ARTIFACT   # ARTIFACT, ENDPOINT or TRACE
+    scheme = &quot;acme-files&quot;        # optional: makes --target acme-files://... work
 
     def __init__(self, root: Path | str) -&gt; None:
         self._root = Path(root)
         self._sources: dict[Path, PythonSource | None] = {}
         self._unread: list[UnreadSource] = []
+
+    @classmethod
+    def from_locator(cls, locator: str, *, options: Mapping[str, str]) -&gt; Self:
+        # Parse configuration only. `guardana plan` calls this method and must
+        # not contact a remote system.
+        if options:
+            raise LocatorError(f&quot;unsupported option(s): {', '.join(sorted(options))}&quot;)
+        root = Path(locator)
+        if not root.is_dir():
+            raise LocatorError(f&quot;{root} is not a directory&quot;)
+        return cls(root)
 
     def capabilities(self) -&gt; set[Capability]:
         return {Capability.READ_FILES}   # so implement `FileReader`, below
@@ -326,11 +345,24 @@ as rules and evaluators (see
 <a href="architecture.html#current-entry-point-groups"><code>architecture.md</code></a>): register a
 <code>Target</code> subclass (the class itself, not an instance — targets are
 parameterized by a path/URL at construction time) via the <code>guardana.targets</code>
-entry point, and <code>registry.targets()</code> returns it. This is aimed at
-library/embedding use; the CLI's own target selection remains path/URL-based
-(<code>scan</code> always builds an <code>ArtifactTarget</code>, <code>probe</code>/<code>monitor</code> always build an
-<code>EndpointTarget</code> via <code>build_endpoint()</code>) — a discovered custom <code>Target</code> isn't
-yet CLI-selectable, only usable by code that drives a <code>Runner</code> directly.</p>
+entry point, and <code>registry.targets()</code> returns it. Declaring a unique lowercase
+<code>scheme</code> and implementing <code>from_locator</code> also makes it selectable from every
+matching CLI workflow:</p>
+<pre><code class="language-bash">guardana scan --target acme-files://./prompts
+guardana plan scan --target acme-files://./prompts
+</code></pre>
+<p>The command still chooses the kind: an artifact target is refused by <code>probe</code>,
+and an endpoint target is refused by <code>scan</code>. Schemes match
+<code>[a-z][a-z0-9-]*</code>; <code>file</code>, <code>http</code>, <code>https</code>, <code>mcp</code>, and <code>trace</code> are reserved,
+and two installed packs cannot claim the same one. Repeat non-secret settings as
+<code>--target-option key=value</code>; name secrets by environment variable inside your
+target rather than putting them in shell history. <code>guardana doctor</code> lists every
+loaded custom scheme.</p>
+<p>Endpoint targets that want Guardana to run canary rules also implement
+<code>SystemPromptPlanter.planting(system_prompt)</code>. Each planted view must preserve
+one shared usage meter and budget across the whole probe. Without that protocol,
+canary rules are recorded as skipped for a missing construction capability;
+they are never graded against a marker that was not planted.</p>
 <h2 id="the-entry-point-contract-rules-evaluators-targets--taxonomies">The entry-point contract (rules, evaluators, targets &amp; taxonomies)</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -449,7 +481,7 @@ are byte-identical and a renderer test is not also a test about clocks.</p>
 </main>
 </div>
 <footer class="foot"><div class="bar">
-<span>Guardana 0.23.0 · Apache-2.0</span>
+<span>Guardana 0.24.0 · Apache-2.0</span>
 <a href="https://github.com/guardana/guardana/blob/main/docs/extending.md">Edit this page on GitHub</a>
 <a href="../llms.txt">llms.txt</a>
 </div></footer>

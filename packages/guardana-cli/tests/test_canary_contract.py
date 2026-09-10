@@ -11,12 +11,12 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field, replace
 
 import pytest
-from guardana.cli._probe_run import Connection, run_probe
+from guardana.cli._probe_run import Connection, run_probe, run_target_probe
 from guardana.core.evaluator.base import Expectation
 from guardana.core.exchange import Exchange
 from guardana.core.profile.model import Policy, Profile
 from guardana.core.registry import Registry
-from guardana.core.report import Evidence, Finding
+from guardana.core.report import Evidence, Finding, SkipReason
 from guardana.core.rule import Rule, RuleContext, RuleMeta
 from guardana.core.rule.errors import RuleLoadError
 from guardana.core.severity import Severity
@@ -77,6 +77,26 @@ class ForgetfulCanaryRule(Rule):
         return ()
 
 
+class CustomEndpointWithoutPlanter(Target):
+    """A valid chat target that cannot construct a differently planted view."""
+
+    kind = TargetKind.ENDPOINT
+
+    @property
+    def ref(self) -> str:
+        return "custom://endpoint"
+
+    @property
+    def model(self) -> str:
+        return "custom"
+
+    def capabilities(self) -> set[Capability]:
+        return {Capability.CHAT}
+
+    def chat(self, messages: list[ChatMessage]) -> str:
+        raise AssertionError("a canary rule must not run when no marker can be planted")
+
+
 def _registry(rule: Rule) -> Registry:
     registry = Registry()
     registry.register_rule(rule)
@@ -101,3 +121,16 @@ def test_a_third_party_rule_shape_gets_its_canary_planted() -> None:
 def test_a_rule_that_grades_by_canary_but_refuses_to_take_one_is_rejected() -> None:
     with pytest.raises(RuleLoadError, match="with_canary"):
         Registry().register_rule(ForgetfulCanaryRule())
+
+
+def test_a_custom_target_without_a_planter_skips_the_canary_instead_of_grading_it() -> None:
+    outcome = run_target_probe(
+        _registry(ThirdPartyCanaryRule()),
+        Profile(name="t", policy=Policy()),
+        CustomEndpointWithoutPlanter(),
+    )
+
+    assert outcome.result.findings == ()
+    assert len(outcome.result.rules_skipped) == 1
+    assert outcome.result.rules_skipped[0].reason is SkipReason.MISSING_CAPABILITY
+    assert outcome.result.rules_skipped[0].missing == ("plant_system_prompt",)

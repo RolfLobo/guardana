@@ -14,7 +14,15 @@ from guardana.core.registry import Registry
 from guardana.core.rule import Rule
 from guardana.core.runner import Runner
 from guardana.core.source import PythonSource, UnreadSource, read_source
-from guardana.core.target import Capability, ChatMessage, FileReader, Target, TargetKind
+from guardana.core.target import (
+    Capability,
+    ChatMessage,
+    FileReader,
+    LocatorError,
+    SystemPromptPlanter,
+    Target,
+    TargetKind,
+)
 from guardana.core.target.protocols import ChatEndpoint, unmet_surfaces
 from guardana.testing.conformance import TargetContractError, assert_target_conforms
 
@@ -106,6 +114,14 @@ def test_the_same_target_is_recognised_by_the_capability_protocol(tmp_path: Path
     assert not isinstance(_LiarTarget(), FileReader)
 
 
+def test_locator_contract_is_exported_from_the_public_top_level() -> None:
+    from guardana.core import LocatorError as PublicLocatorError  # noqa: PLC0415
+    from guardana.core import SystemPromptPlanter as PublicPlanter  # noqa: PLC0415
+
+    assert PublicLocatorError is LocatorError
+    assert PublicPlanter is SystemPromptPlanter
+
+
 def test_declaring_a_capability_without_its_surface_is_an_error_not_silence() -> None:
     """One error naming the missing surface, instead of nineteen rules failing."""
     result = Runner(Registry.discover(), default_profile()).run(_LiarTarget())
@@ -157,6 +173,12 @@ def test_the_chat_protocol_matches_the_built_in_endpoint_target() -> None:
 
     endpoint = EndpointTarget("http://x", "m", transport=ScriptedTransport("hi"))
     assert isinstance(endpoint, ChatEndpoint)
+    assert isinstance(endpoint, SystemPromptPlanter)
+
+
+def test_a_python_only_target_refuses_cli_construction_by_default() -> None:
+    with pytest.raises(LocatorError, match="does not implement command-line locators"):
+        _FlatFileTarget.from_locator("somewhere", options={})
 
 
 def test_the_flat_target_reads_each_file_once(tmp_path: Path) -> None:

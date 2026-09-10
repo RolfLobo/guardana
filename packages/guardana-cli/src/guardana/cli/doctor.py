@@ -80,6 +80,14 @@ def _plugins(registry: Registry) -> list[Check]:
     rules = registry.rules()
     checks.append(Check("rules discovered", Level.OK if rules else Level.FAIL, str(len(rules))))
     checks.append(Check("evaluators discovered", Level.OK, str(len(registry.evaluators()))))
+    schemes = registry.schemes()
+    checks.append(
+        Check(
+            "target schemes",
+            Level.OK,
+            ", ".join(schemes) if schemes else "none (installed targets are Python-only)",
+        )
+    )
     checks.extend(
         Check(f"plugin {error.source}", Level.FAIL, f"did not load ({error.stage}): {error.reason}")
         for error in registry.load_errors

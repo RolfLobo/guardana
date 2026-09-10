@@ -2,12 +2,12 @@
 title: "Producing a trace"
 nav_order: 15
 summary: "why a producer needs an append-only writer rather than a serializer, which inflated declaration actually leaks a pass, what the model needs before an integrator can record human approval honestly, and why a producer that is not a process changed the contract"
-status: accepted
+status: implemented
 ---
 
 # Producing a trace: the writer, the declaration, and the approving actor
 
-**Status:** accepted, implemented — ships in the next release · **Written:**
+**Status:** implemented in 0.21.0 · **Written:**
 2026-08-15 · **Continuous verification, item 1**
 
 ## The problem, stated precisely

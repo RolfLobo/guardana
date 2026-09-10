@@ -48,11 +48,17 @@ run they are pricing would use, so both take the same plugin-trust flags
 
 | Flag | Default | Meaning |
 |---|---|---|
+| `--target SCHEME://LOCATOR` | none | Build a trusted installed target of the kind selected by `plan scan` or `plan probe` |
+| `--target-option KEY=VALUE` | none | Repeatable, non-secret configuration passed to that target |
 | `--plugins [all\|builtins\|allowlist\|disabled]` | `all` | Which installed plugins to load — same meaning as on `probe` |
 | `--allow-plugin TEXT` | none | Distribution to trust; repeatable, needs `--plugins allowlist` |
 
 `plan scan` also keeps `--no-plugins` as a deprecated alias for `--plugins disabled`,
 exactly like `guardana scan` does.
+
+Target construction is configuration-only: `plan` calls the same
+`from_locator` classmethod as the real command, but a conforming target does not
+contact the system until a run or inspection starts.
 
 ## Where the numbers come from
 

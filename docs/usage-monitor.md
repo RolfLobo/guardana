@@ -13,15 +13,17 @@ explicitly a **sampling observer**, not an inline production sidecar: it
 polls, it doesn't intercept traffic.
 
 ```bash
-guardana monitor --url <base-url> --model <name> [OPTIONS]
+guardana monitor (--url <base-url> --model <name> | --target <scheme://locator>) [OPTIONS]
 ```
 
 ## Flags
 
 | Flag | Default | Meaning |
 |---|---|---|
-| `--url TEXT` (required) | — | Base URL of the OpenAI-compatible endpoint |
-| `--model TEXT` (required) | — | Model name to send in each request |
+| `--url TEXT` | — | Base URL of the OpenAI-compatible endpoint; required unless `--target` is used |
+| `--model TEXT` | — | Model name; required unless `--target` is used |
+| `--target SCHEME://LOCATOR` | none | Build a trusted installed endpoint target for each cycle |
+| `--target-option KEY=VALUE` | none | Repeatable, non-secret configuration passed to that target |
 | `--api-key-env TEXT` | none | Env var holding the bearer API key |
 | `--provider [openai\|ollama\|tgi]` | `openai` | Endpoint wire protocol — same meaning as on `probe` |
 | `--system-prompt-file PATH` | none | File containing the system prompt already deployed in front of the model — same meaning as on `probe` |
@@ -34,6 +36,10 @@ guardana monitor --url <base-url> --model <name> [OPTIONS]
 | `--reporter TEXT` | none | Forward each **alert's** findings to a collector, e.g. `server://https://collector.example.com` |
 | `--plugins [all\|builtins\|allowlist\|disabled]` | `all` | Which installed plugins to load — same meaning as on `probe`. Added in 0.7.1; before that `monitor` was the one command with no way to restrict what it imported. |
 | `--allow-plugin TEXT` | none | Distribution to trust; repeatable, needs `--plugins allowlist` |
+
+Each custom-target cycle builds a fresh target from the locator, so per-cycle
+budgets and usage have the same lifetime as the built-in connection. The target
+flags are mutually exclusive with the built-in connection flags.
 
 Note: `monitor` has no `--format` flag — alerts are always printed as human
 text (findings inside an alert use the `human` renderer); forward to a

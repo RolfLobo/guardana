@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
+from collections.abc import Mapping
 from enum import StrEnum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar, Self
 
 from guardana.core.budget import BudgetExhausted, Budgets
 
@@ -58,10 +59,36 @@ class Capability(StrEnum):
     READ_SIDE_EFFECTS = "read_side_effects"
 
 
+class LocatorError(ValueError):
+    """A target locator or one of its non-secret options is invalid."""
+
+
 class Target(ABC):
     """The thing under test — a set of artifacts or a live model endpoint."""
 
     kind: TargetKind
+    scheme: ClassVar[str | None] = None
+    """CLI locator scheme, or ``None`` when this target is Python-only.
+
+    A third-party target opts into CLI construction by declaring a lowercase
+    scheme and implementing :meth:`from_locator`. Existing targets remain
+    discoverable and usable from Python without becoming command-line inputs.
+    """
+
+    @classmethod
+    def from_locator(cls, locator: str, *, options: Mapping[str, str]) -> Self:
+        """Build this target from the text after ``scheme://`` and named options.
+
+        Override together with :attr:`scheme`. Invalid configuration raises
+        :class:`LocatorError`; connection failures use the target's ordinary
+        endpoint exception so the CLI can distinguish bad input from an
+        unavailable system. Construction must not contact the target: ``plan``
+        uses the same method and promises not to perform remote work.
+        """
+        raise LocatorError(
+            f"{cls.__name__} is discoverable from Python but does not implement "
+            "command-line locators"
+        )
 
     @abstractmethod
     def capabilities(self) -> set[Capability]:

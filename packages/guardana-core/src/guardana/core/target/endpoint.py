@@ -507,6 +507,27 @@ class EndpointTarget(Target):
         """The endpoint and model under test, as it appears in findings."""
         return f"{self._base_url}#{self._model}"
 
+    def planting(self, system_prompt: str) -> "EndpointTarget":
+        """Return this endpoint with an additional prompt and the same run meter.
+
+        A probe builds one view per random canary. Sharing the transport is
+        expected; sharing the meter is required, otherwise a request ceiling is
+        silently multiplied by the number of canary rules.
+        """
+        planted = (
+            system_prompt
+            if self._system_prompt is None
+            else f"{self._system_prompt}\n{system_prompt}"
+        )
+        return EndpointTarget(
+            self._base_url,
+            self._model,
+            api_key=self._api_key,
+            system_prompt=planted,
+            transport=self._transport,
+            meter=self._meter,
+        )
+
     def apply_budgets(self, budgets: Budgets) -> None:
         """Adopt these ceilings, refusing a token ceiling this transport cannot enforce.
 

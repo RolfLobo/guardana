@@ -11,6 +11,7 @@ from guardana.cli._profile import resolve_profile
 from guardana.cli._reporting import check_reporter_url, submit_safely
 from guardana.cli._rules_loading import load_custom_rules
 from guardana.cli._run_meta import build_manifest, detect_deployment, target_identity
+from guardana.cli._target_locator import resolve_target
 from guardana.cli.exit_codes import ExitCode
 from guardana.core.budget import BudgetExhausted
 from guardana.core.gate import gate_outcome
@@ -26,7 +27,7 @@ from guardana.core.report import (
     serialize_baseline,
 )
 from guardana.core.runner import Runner
-from guardana.core.target import ArtifactTarget
+from guardana.core.target import ArtifactTarget, Target, TargetKind
 from guardana.report import get_renderer
 
 _BASELINE_ERROR_EXIT_CODE = ExitCode.INVALID_USAGE
@@ -74,8 +75,16 @@ def _refuse_a_target_that_is_not_there(path: Path) -> None:
         raise typer.Exit(code=ExitCode.INVALID_USAGE)
 
 
+def _path_target(path: Path | None, excludes: tuple[str, ...]) -> ArtifactTarget:
+    """Build the legacy path target, refusing an omitted positional argument."""
+    if path is None:
+        raise typer.BadParameter("pass a path to scan, or --target scheme://locator")
+    _refuse_a_target_that_is_not_there(path)
+    return ArtifactTarget(path, excludes=excludes)
+
+
 def scan(  # noqa: PLR0913, PLR0917 — one typer.Option per CLI flag; this is the command's surface
-    path: Annotated[Path, typer.Argument(help="Directory to scan")],
+    path: Annotated[Path | None, typer.Argument(help="Directory to scan")] = None,
     profile: Annotated[Path | None, typer.Option(help="guardana.yaml path")] = None,
     preset: Annotated[
         str | None, typer.Option(help="Named policy preset: ci|pre-training|monitor")
@@ -137,11 +146,20 @@ def scan(  # noqa: PLR0913, PLR0917 — one typer.Option per CLI flag; this is t
             help="Write the report to this file instead of stdout (needed by `guardana diff`).",
         ),
     ] = None,
+    target: Annotated[
+        str | None,
+        typer.Option("--target", help="Installed artifact target as scheme://locator."),
+    ] = None,
+    target_option: Annotated[
+        list[str],
+        typer.Option("--target-option", help="Non-secret key=value for --target; repeatable."),
+    ] = [],  # noqa: B006 — typer builds the option from a literal default
 ) -> None:
     """Statically scan a path for AI supply-chain risk (no model needed)."""
     if baseline is not None and write_baseline is not None:
         raise typer.BadParameter("pass either --baseline or --write-baseline, not both")
-    _refuse_a_target_that_is_not_there(path)
+    if target is not None and path is not None:
+        raise typer.BadParameter("pass either a path or --target, not both")
     check_reporter_url(reporter)
     prof = resolve_profile(profile, preset)
     # --no-plugins resolves to `--plugins disabled`: discovery below still runs,
@@ -151,10 +169,16 @@ def scan(  # noqa: PLR0913, PLR0917 — one typer.Option per CLI flag; this is t
     # safe degradation, never a crash.
     registry = Registry.discover(resolve_trust(plugins, allow_plugin, no_plugins=no_plugins))
     load_custom_rules(registry, prof, rules)
-    target = ArtifactTarget(path, excludes=prof.path_excludes)
+    selected: Target = resolve_target(
+        registry,
+        locator=target,
+        options=target_option,
+        kind=TargetKind.ARTIFACT,
+        fallback=lambda: _path_target(path, prof.path_excludes),
+    )
     started_at = datetime.now(UTC)
     try:
-        result = Runner(registry=registry, profile=prof).run(target)
+        result = Runner(registry=registry, profile=prof).run(selected)
     except BudgetExhausted as exc:
         raise refuse_unenforceable_budget(exc) from exc
     # Make file paths repo-relative (relative to the checkout root) before we
@@ -205,20 +229,22 @@ def scan(  # noqa: PLR0913, PLR0917 — one typer.Option per CLI flag; this is t
         result = apply_baseline(result, accepted.active())
 
     outcome = gate_outcome(result, prof.policy)
-    target_ref = relativize(target.ref, Path.cwd())
+    # A plugin owns the locator's identity. Treating ``scheme://...`` as a local
+    # path can rewrite it relative to the checkout and corrupt the saved ref.
+    target_ref = selected.ref if target is not None else relativize(selected.ref, Path.cwd())
     deployment = detect_deployment(ai_system, environment, deployment_id)
     run = build_manifest(
         registry,
         prof,
         result,
-        target_kind=target.kind,
+        target_kind=selected.kind,
         target_ref=target_ref,
         gate=outcome,
         started_at=started_at,
-        identity=target_identity(target, target_ref),
+        identity=target_identity(selected, target_ref),
         deployment=deployment,
     )
     emit(get_renderer(format.value, run=run).render(result), output, format.value)
     if reporter:
-        submit_safely(reporter, result, source=str(path), deployment=deployment, run=run)
+        submit_safely(reporter, result, source=selected.ref, deployment=deployment, run=run)
     exit_with(outcome, result)

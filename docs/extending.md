@@ -26,7 +26,8 @@ Everything an extension implements or touches is re-exported at the top of
 ```python
 from guardana.core import (
     Capability, Evaluator, Evidence, Finding, Registry, Rule, RuleContext,
-    RuleMeta, Runner, ScanResult, Severity, Target, TargetKind,
+    LocatorError, RuleMeta, Runner, ScanResult, Severity, SystemPromptPlanter,
+    Target, TargetKind,
 )
 ```
 
@@ -36,8 +37,9 @@ valid — the re-exports are the same objects. The full list is
 `guardana.core.__all__`: `Capability`, `Evaluator`, `Evidence`,
 `Exchange`, `Expectation`, `FailOn`, `Finding`, `Policy`, `Profile`,
 `ProfileError`, `Provenance`, `Registry`, `Rule`, `RuleContext`, `RuleError`,
-`RuleLoadError`, `RuleMeta`, `Runner`, `ScanResult`, `Severity`, `Surface`,
-`Target`, `TargetKind`, `TaxonomyRef`, `Verdict`, and `__version__`.
+`RuleLoadError`, `RuleMeta`, `Runner`, `ScanResult`, `Severity`, `Surface`, `LocatorError`,
+`SystemPromptPlanter`, `Target`, `TargetKind`, `TaxonomyRef`, `Verdict`, and
+`__version__`.
 
 ## Adding a Rule
 
@@ -119,19 +121,33 @@ Implement the protocol for every capability you declare, and the built-in rules
 work against your target without knowing it exists:
 
 ```python
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from pathlib import Path
+from typing import Self
 
+from guardana.core import LocatorError
 from guardana.core.source import PythonSource, UnreadSource, read_source
 from guardana.core.target import Capability, Target, TargetKind
 
 class MyTarget(Target):
     kind = TargetKind.ARTIFACT   # ARTIFACT, ENDPOINT or TRACE
+    scheme = "acme-files"        # optional: makes --target acme-files://... work
 
     def __init__(self, root: Path | str) -> None:
         self._root = Path(root)
         self._sources: dict[Path, PythonSource | None] = {}
         self._unread: list[UnreadSource] = []
+
+    @classmethod
+    def from_locator(cls, locator: str, *, options: Mapping[str, str]) -> Self:
+        # Parse configuration only. `guardana plan` calls this method and must
+        # not contact a remote system.
+        if options:
+            raise LocatorError(f"unsupported option(s): {', '.join(sorted(options))}")
+        root = Path(locator)
+        if not root.is_dir():
+            raise LocatorError(f"{root} is not a directory")
+        return cls(root)
 
     def capabilities(self) -> set[Capability]:
         return {Capability.READ_FILES}   # so implement `FileReader`, below
@@ -211,11 +227,28 @@ as rules and evaluators (see
 [`architecture.md`](architecture.md#current-entry-point-groups)): register a
 `Target` subclass (the class itself, not an instance — targets are
 parameterized by a path/URL at construction time) via the `guardana.targets`
-entry point, and `registry.targets()` returns it. This is aimed at
-library/embedding use; the CLI's own target selection remains path/URL-based
-(`scan` always builds an `ArtifactTarget`, `probe`/`monitor` always build an
-`EndpointTarget` via `build_endpoint()`) — a discovered custom `Target` isn't
-yet CLI-selectable, only usable by code that drives a `Runner` directly.
+entry point, and `registry.targets()` returns it. Declaring a unique lowercase
+`scheme` and implementing `from_locator` also makes it selectable from every
+matching CLI workflow:
+
+```bash
+guardana scan --target acme-files://./prompts
+guardana plan scan --target acme-files://./prompts
+```
+
+The command still chooses the kind: an artifact target is refused by `probe`,
+and an endpoint target is refused by `scan`. Schemes match
+`[a-z][a-z0-9-]*`; `file`, `http`, `https`, `mcp`, and `trace` are reserved,
+and two installed packs cannot claim the same one. Repeat non-secret settings as
+`--target-option key=value`; name secrets by environment variable inside your
+target rather than putting them in shell history. `guardana doctor` lists every
+loaded custom scheme.
+
+Endpoint targets that want Guardana to run canary rules also implement
+`SystemPromptPlanter.planting(system_prompt)`. Each planted view must preserve
+one shared usage meter and budget across the whole probe. Without that protocol,
+canary rules are recorded as skipped for a missing construction capability;
+they are never graded against a marker that was not planted.
 
 ## The entry-point contract (rules, evaluators, targets & taxonomies)
 

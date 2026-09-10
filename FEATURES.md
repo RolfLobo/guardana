@@ -23,6 +23,11 @@ For maturity and known gaps, read [Product status](docs/product-status.md).
 | Re-run checks on a schedule | `guardana monitor ...` | active monitoring against an accepted baseline |
 | Use verification in tests | `guardana.testing.assert_secure(...)` | the same policy as a pytest assertion |
 
+Every target-building workflow also accepts an installed, trusted custom target
+as `--target scheme://locator`. The command retains control of the target kind,
+budgets, policy, evidence, and exit behavior; the extension owns only how its
+locator becomes a target. `guardana doctor` shows which schemes were loaded.
+
 `guardana plan`, `target inspect`, `doctor`, `config explain`, `baseline`, `run
 inspect`, `run migrate`, `rules`, `taxonomy`, `rule test`, and `pack` support those
 main workflows. The [documentation map](docs/index.md) links each command guide.

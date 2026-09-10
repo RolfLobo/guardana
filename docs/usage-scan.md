@@ -13,14 +13,16 @@ the fast, deterministic front door — the one that's safe to run on every
 commit.
 
 ```bash
-guardana scan <path> [OPTIONS]
+guardana scan [PATH] [OPTIONS]
 ```
 
 ## Flags
 
 | Flag | Default | Meaning |
 |---|---|---|
-| `PATH` (positional, required) | — | Directory to scan |
+| `PATH` (positional) | — | Directory to scan; required unless `--target` is used |
+| `--target SCHEME://LOCATOR` | none | Build a trusted installed artifact target instead of the built-in path target |
+| `--target-option KEY=VALUE` | none | Repeatable, non-secret configuration passed to that target |
 | `--profile PATH` | none (built-in default profile) | Path to a `guardana.yaml` policy file — see [`profiles.md`](profiles.md) |
 | `--preset [ci\|pre-training\|monitor]` | none | Named policy preset (mutually exclusive with `--profile`) — see [`profiles.md`](profiles.md#named-presets---preset) |
 | `--format [human\|json\|sarif\|junit]` | `human` | Output format |
@@ -35,6 +37,11 @@ guardana scan <path> [OPTIONS]
 | `--environment TEXT` | none | Where it runs, e.g. `production`. Never guessed from a branch name. |
 | `--deployment-id TEXT` | none | Which version of it, if you have an identifier. |
 | `--output PATH` | stdout | Write the report to a file instead of stdout — needed by `guardana diff`. See [Saving a run for comparison](#saving-a-run-for-comparison). |
+
+`PATH` and `--target` are mutually exclusive. A custom target is installed
+Python, so the plugin trust flags still decide whether its scheme exists;
+`guardana doctor` lists loaded schemes. The command accepts only artifact
+targets and refuses a mismatched kind before any rule runs.
 
 ## What runs
 

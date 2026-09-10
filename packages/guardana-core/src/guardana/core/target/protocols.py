@@ -76,6 +76,20 @@ class ChatEndpoint(Protocol):
 
 
 @runtime_checkable
+class SystemPromptPlanter(Protocol):
+    """Build a view of one endpoint with an additional system instruction.
+
+    ``probe`` uses a fresh view per canary rule. Implementations that meter
+    requests must keep one shared budget and usage tally across those views, so
+    a ceiling applies to the whole probe rather than once per planted marker.
+    """
+
+    def planting(self, system_prompt: str) -> Target:
+        """Return the same endpoint with ``system_prompt`` additionally planted."""
+        raise NotImplementedError
+
+
+@runtime_checkable
 class ToolOfferingEndpoint(ChatEndpoint, Protocol):
     """The surface `Capability.CALL_TOOLS` promises: offer tools, observe the choice.
 
@@ -131,6 +145,7 @@ __all__ = [
     "AuthorizationInspector",
     "ChatEndpoint",
     "FileReader",
+    "SystemPromptPlanter",
     "ToolListing",
     "ToolOfferingEndpoint",
     "TraceReader",

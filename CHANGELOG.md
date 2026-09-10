@@ -7,6 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.24.0] - 2026-09-10 — custom targets become CLI inputs
+
+### Added
+
+- **Installed custom targets are selectable from the CLI.** A target pack may
+  declare a unique lowercase `scheme` and implement
+  `Target.from_locator(locator, *, options)`; users select it with
+  `--target scheme://locator` and repeat non-secret settings with
+  `--target-option key=value`. The same resolver now serves `scan`, baseline
+  create/update, both plan modes, `probe`, `monitor`, `target inspect`, and
+  `analyze-trace`. The command still owns the target kind: malformed, unknown,
+  reserved, conflicting, or mismatched schemes are refused before a rule runs,
+  and `doctor` lists the schemes that passed plugin trust. The isolated reference
+  pack proves the installed entry point through a real CLI subprocess rather
+  than only calling its Python class.
+- **Custom endpoint targets have an explicit canary-construction protocol.**
+  `SystemPromptPlanter.planting()` builds an isolated view per random marker and
+  requires every view to share one budget and usage tally. Targets without the
+  protocol record canary rules as skipped for missing capability instead of
+  grading a marker nobody planted. `EndpointTarget` implements the protocol
+  without changing the legacy probe path.
+- **Extension API 2 names the locator contract while retaining API 1.** A pack
+  using CLI locators declares `>=2,<3`; existing `>=1,<2` packs continue to load
+  because compatibility is checked against every API edition this build still
+  implements, not only the newest number.
+
+### Changed
+
+- **The roadmap now follows the evidence from a repository and market audit.**
+  Target locators remain first; scenario/trajectory fixtures, `new-pack`,
+  versioned suites, and paired statistics move ahead of output plugins. A
+  bounded OpenTelemetry intake spike is accelerated after the measurement
+  shapes settle, while live RAG no longer contradicts the ordered roadmap from
+  the README. The audit records its sources, limitations, competitor baseline,
+  dependencies, and 60-day validation plan in
+  [`docs/design/audit-0.23-market.md`](docs/design/audit-0.23-market.md).
+- Target author and command guides document locator ownership, plugin trust,
+  non-secret options, kind enforcement, planning without remote I/O, and the
+  commands that accept custom artifact, endpoint, and trace targets. Five older
+  design records now name the releases that implemented them instead of still
+  claiming to ship “in the next release.”
+
+### Fixed
+
+- A custom artifact locator is retained verbatim in the run manifest. It is no
+  longer passed through local-path relativization, which could reinterpret
+  `scheme://…` as a checkout path and corrupt the target identity.
+
 ## [0.23.0] - 2026-09-02 — the extension surface held to its own contract
 
 ### Added

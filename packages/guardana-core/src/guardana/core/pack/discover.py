@@ -13,7 +13,11 @@ from dataclasses import dataclass
 from importlib import metadata, resources
 
 from guardana.core.pack.load import MANIFEST_NAME, load_manifest
-from guardana.core.pack.model import EXTENSION_API_VERSION, PackError, PackManifest
+from guardana.core.pack.model import (
+    SUPPORTED_EXTENSION_API_VERSIONS,
+    PackError,
+    PackManifest,
+)
 
 _ENTRY_POINT_GROUPS = (
     "guardana.rules",
@@ -148,8 +152,8 @@ def check_pack(manifest: PackManifest, registered: Iterable[str]) -> PackCheck:
     *can this build load it at all*, and *does it do what its manifest says*.
     """
     problems: list[str] = []
-    if not manifest.loadable_by(EXTENSION_API_VERSION):
-        problems.append(manifest.extension_api.why_not(EXTENSION_API_VERSION))
+    if not manifest.loadable_by():
+        problems.append(manifest.extension_api.why_not_any(SUPPORTED_EXTENSION_API_VERSIONS))
     available = set(registered)
     missing = [declared for declared in manifest.provides if declared not in available]
     if missing:

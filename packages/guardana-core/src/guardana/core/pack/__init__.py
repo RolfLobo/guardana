@@ -23,6 +23,7 @@ from guardana.core.pack.lock import (
 from guardana.core.pack.model import (
     EXTENSION_API_VERSION,
     PACK_SCHEMA_VERSION,
+    SUPPORTED_EXTENSION_API_VERSIONS,
     ApiRange,
     PackError,
     PackManifest,
@@ -34,6 +35,7 @@ __all__ = [
     "LOCK_SCHEMA_VERSION",
     "MANIFEST_NAME",
     "PACK_SCHEMA_VERSION",
+    "SUPPORTED_EXTENSION_API_VERSIONS",
     "ApiRange",
     "Drift",
     "DriftKind",

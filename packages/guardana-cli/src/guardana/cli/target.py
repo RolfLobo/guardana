@@ -9,6 +9,7 @@ from guardana.cli._endpoint import build_endpoint
 from guardana.cli._errors import run_against_endpoint
 from guardana.cli._formats import OutputFormat
 from guardana.cli._plugins import resolve_trust, warn_about_load_errors
+from guardana.cli._target_locator import resolve_target
 from guardana.cli.exit_codes import ExitCode
 from guardana.core.inspect import (
     SYSTEM_PROBE,
@@ -19,6 +20,7 @@ from guardana.core.inspect import (
     unrunnable_rules,
 )
 from guardana.core.registry import Registry
+from guardana.core.target import SystemPromptPlanter, Target, TargetKind
 
 _MARK = {Support.SUPPORTED: "✓", Support.UNSUPPORTED: "✖", Support.UNKNOWN: "?"}
 
@@ -84,8 +86,10 @@ def _render_json(report: TargetReport, unrunnable: tuple[str, ...]) -> str:
 
 
 def inspect_target(  # noqa: PLR0913, PLR0917 — one typer.Option per CLI flag; this is the command's surface
-    url: Annotated[str, typer.Option(help="Base URL of the OpenAI-compatible endpoint")],
-    model: Annotated[str, typer.Option(help="Model name")],
+    url: Annotated[
+        str | None, typer.Option(help="Base URL of the OpenAI-compatible endpoint")
+    ] = None,
+    model: Annotated[str | None, typer.Option(help="Model name")] = None,
     api_key_env: Annotated[
         str | None, typer.Option("--api-key-env", help="Env var holding the API key")
     ] = None,
@@ -108,6 +112,14 @@ def inspect_target(  # noqa: PLR0913, PLR0917 — one typer.Option per CLI flag;
         list[str],
         typer.Option("--allow-plugin", help="Distribution to trust; repeatable, needs allowlist."),
     ] = [],  # noqa: B006 — typer builds the option from a literal default
+    target: Annotated[
+        str | None,
+        typer.Option("--target", help="Installed endpoint target as scheme://locator."),
+    ] = None,
+    target_option: Annotated[
+        list[str],
+        typer.Option("--target-option", help="Non-secret key=value for --target; repeatable."),
+    ] = [],  # noqa: B006 — typer builds the option from a literal default
 ) -> None:
     """Report what this endpoint really supports, and which rules it leaves unrunnable.
 
@@ -119,23 +131,44 @@ def inspect_target(  # noqa: PLR0913, PLR0917 — one typer.Option per CLI flag;
     trust = resolve_trust(plugins, allow_plugin, no_plugins=False)
     registry = Registry.discover(trust)
     warn_about_load_errors(registry, what="rule")
+    if target is not None:
+        used = [
+            name
+            for name, value in {
+                "--url": url,
+                "--model": model,
+                "--api-key-env": api_key_env,
+            }.items()
+            if value is not None
+        ]
+        if used:
+            raise typer.BadParameter(
+                f"--target cannot be combined with {', '.join(used)}; pass target-specific "
+                "configuration through --target-option"
+            )
     api_key = os.environ.get(api_key_env) if api_key_env else None
-    plain = build_endpoint(url, model, api_key=api_key, provider=provider, transport=None)
-    planted = build_endpoint(
-        url,
-        model,
-        api_key=api_key,
-        system_prompt=SYSTEM_PROBE,
-        provider=provider,
-        transport=None,
+    plain = resolve_target(
+        registry,
+        locator=target,
+        options=target_option,
+        kind=TargetKind.ENDPOINT,
+        fallback=lambda: _endpoint(url, model, api_key, provider),
     )
-    report = run_against_endpoint(url, lambda: inspect_endpoint(plain, planted))
+    planted = plain.planting(SYSTEM_PROBE) if isinstance(plain, SystemPromptPlanter) else None
+    report = run_against_endpoint(plain.ref, lambda: inspect_endpoint(plain, planted))
     unrunnable = unrunnable_rules(report, registry)
     if format is OutputFormat.json:
         typer.echo(_render_json(report, unrunnable))
     else:
         typer.echo(_render_human(report, unrunnable, endpoint_rule_count(registry)))
     _enforce_requirements(report, require)
+
+
+def _endpoint(url: str | None, model: str | None, api_key: str | None, provider: str) -> Target:
+    """Build the legacy endpoint selected by --url and --model."""
+    if url is None or model is None:
+        raise typer.BadParameter("pass --url and --model, or --target scheme://locator")
+    return build_endpoint(url, model, api_key=api_key, provider=provider, transport=None)
 
 
 def _enforce_requirements(report: TargetReport, require: str | None) -> None:

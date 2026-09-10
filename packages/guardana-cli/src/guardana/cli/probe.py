@@ -19,17 +19,27 @@ from guardana.cli._mcp_run import (
 )
 from guardana.cli._output import emit
 from guardana.cli._plugins import resolve_trust
-from guardana.cli._probe_run import Connection, run_probe
+from guardana.cli._probe_run import Connection, run_probe, run_target_probe
 from guardana.cli._profile import resolve_profile
 from guardana.cli._reporting import check_reporter_url, submit_safely
 from guardana.cli._rules_loading import load_custom_rules
-from guardana.cli._run_meta import build_manifest, detect_deployment
+from guardana.cli._run_meta import ProbeOutcome, build_manifest, detect_deployment
 from guardana.cli._safety_flags import parse_impact
+from guardana.cli._target_locator import resolve_target
 from guardana.core.budget import BudgetExhausted
 from guardana.core.gate import gate_outcome
+from guardana.core.manifest import DeploymentRef
+from guardana.core.profile import Profile
 from guardana.core.redaction import EvidenceRedactor
 from guardana.core.registry import Registry
-from guardana.core.target import ChatTransport, EndpointError, HttpAdapterTransport, TargetKind
+from guardana.core.target import (
+    ChatTransport,
+    EndpointError,
+    EndpointTarget,
+    HttpAdapterTransport,
+    Target,
+    TargetKind,
+)
 from guardana.report import get_renderer
 
 # Four in flight is a meaningful speed-up on a probe that is almost entirely
@@ -39,7 +49,7 @@ from guardana.report import get_renderer
 _DEFAULT_CONCURRENCY = 4
 
 
-def probe(  # noqa: PLR0913, PLR0917 — one typer.Option per CLI flag; this is the command's surface
+def probe(  # noqa: C901, PLR0913, PLR0915, PLR0917 — Typer surface plus target modes
     url: Annotated[
         str | None, typer.Option(help="Base URL of the OpenAI-compatible endpoint")
     ] = None,
@@ -161,6 +171,14 @@ def probe(  # noqa: PLR0913, PLR0917 — one typer.Option per CLI flag; this is 
         list[str],
         typer.Option("--allow-plugin", help="Distribution to trust; repeatable, needs allowlist."),
     ] = [],  # noqa: B006 — typer builds the option from a literal default
+    target: Annotated[
+        str | None,
+        typer.Option("--target", help="Installed endpoint target as scheme://locator."),
+    ] = None,
+    target_option: Annotated[
+        list[str],
+        typer.Option("--target-option", help="Non-secret key=value for --target; repeatable."),
+    ] = [],  # noqa: B006 — typer builds the option from a literal default
 ) -> None:
     """Run dynamic security checks against a live model endpoint, or an MCP server."""
     check_reporter_url(reporter)
@@ -183,9 +201,60 @@ def probe(  # noqa: PLR0913, PLR0917 — one typer.Option per CLI flag; this is 
     wire_config_evaluators(registry, prof)
     load_custom_rules(registry, prof, rules)
 
+    if target is not None:
+        conflicting = {
+            "--url": url,
+            "--model": model,
+            "--api-key-env": api_key_env,
+            "--adapter": adapter,
+            "--system-prompt-file": system_prompt_file,
+            "--mcp": mcp,
+            "--mcp-token-env": mcp_token_env,
+            "--mcp-pin": mcp_pin,
+            "--write-mcp-pin": write_mcp_pin,
+        }
+        used = [name for name, value in conflicting.items() if value is not None]
+        if allow_exec:
+            used.append("--allow-exec")
+        if used:
+            raise typer.BadParameter(
+                f"--target cannot be combined with {', '.join(used)}; pass target-specific "
+                "configuration through --target-option"
+            )
+        selected = resolve_target(
+            registry,
+            locator=target,
+            options=target_option,
+            kind=TargetKind.ENDPOINT,
+            fallback=_missing_target,
+        )
+        try:
+            custom_probed = run_against_endpoint(
+                selected.ref,
+                lambda: run_target_probe(registry, prof, selected, concurrency=concurrency),
+            )
+        except BudgetExhausted as exc:
+            raise refuse_unenforceable_budget(exc) from exc
+        _finish_probe(
+            registry,
+            prof,
+            custom_probed,
+            selected,
+            started_at=started_at,
+            deployment=deployment,
+            concurrency=concurrency,
+            format=format,
+            output=output,
+            reporter=reporter,
+        )
+        return
+
+    if target_option:
+        raise typer.BadParameter("--target-option needs --target scheme://locator")
+
     if mcp is not None:
         try:
-            probed = run_mcp_probe(
+            mcp_probed = run_mcp_probe(
                 registry,
                 prof,
                 McpConnection(
@@ -199,9 +268,9 @@ def probe(  # noqa: PLR0913, PLR0917 — one typer.Option per CLI flag; this is 
             )
         except BudgetExhausted as exc:
             raise refuse_unenforceable_budget(exc) from exc
-        if probed is None:
+        if mcp_probed is None:
             return
-        result = EvidenceRedactor(prof.privacy).redact_result(probed.result)
+        result = EvidenceRedactor(prof.privacy).redact_result(mcp_probed.result)
         outcome = gate_outcome(result, prof.policy)
         run = build_manifest(
             registry,
@@ -211,7 +280,7 @@ def probe(  # noqa: PLR0913, PLR0917 — one typer.Option per CLI flag; this is 
             target_ref=mcp,
             gate=outcome,
             started_at=started_at,
-            identity=probed.identity,
+            identity=mcp_probed.identity,
             concurrency=concurrency,
             deployment=deployment,
         )
@@ -241,19 +310,60 @@ def probe(  # noqa: PLR0913, PLR0917 — one typer.Option per CLI flag; this is 
     )
 
     try:
-        probed = run_against_endpoint(
+        endpoint_probed = run_against_endpoint(
             endpoint_url, lambda: run_probe(registry, prof, connection, concurrency=concurrency)
         )
     except BudgetExhausted as exc:
         raise refuse_unenforceable_budget(exc) from exc
-    result = EvidenceRedactor(prof.privacy).redact_result(probed.result)
-    outcome = gate_outcome(result, prof.policy)
-    run = build_manifest(
+    selected = EndpointTarget(
+        endpoint_url,
+        model_name,
+        api_key=connection.api_key,
+        system_prompt=connection.system_prompt,
+        provider=connection.provider,
+        transport=connection.transport,
+    )
+    _finish_probe(
         registry,
         prof,
+        endpoint_probed,
+        selected,
+        started_at=started_at,
+        deployment=deployment,
+        concurrency=concurrency,
+        format=format,
+        output=output,
+        reporter=reporter,
+    )
+
+
+def _missing_target() -> Target:
+    """Type-safe fallback that is unreachable when a custom locator is present."""
+    raise typer.BadParameter("pass --target scheme://locator")
+
+
+def _finish_probe(  # noqa: PLR0913 — one value per persisted execution fact
+    registry: Registry,
+    profile: Profile,
+    probed: ProbeOutcome,
+    target: Target,
+    *,
+    started_at: datetime,
+    deployment: DeploymentRef | None,
+    concurrency: int,
+    format: OutputFormat,
+    output: Path | None,
+    reporter: str | None,
+) -> None:
+    """Redact, persist, emit and gate one endpoint probe result."""
+    result = EvidenceRedactor(profile.privacy).redact_result(probed.result)
+    outcome = gate_outcome(result, profile.policy)
+    run = build_manifest(
+        registry,
+        profile,
         result,
-        target_kind=TargetKind.ENDPOINT,
-        target_ref=f"{endpoint_url}#{model_name}",
+        target_kind=target.kind,
+        target_ref=target.ref,
         gate=outcome,
         started_at=started_at,
         identity=probed.identity,
@@ -262,7 +372,5 @@ def probe(  # noqa: PLR0913, PLR0917 — one typer.Option per CLI flag; this is 
     )
     emit(get_renderer(format.value, run=run).render(result), output, format.value)
     if reporter:
-        submit_safely(
-            reporter, result, source=f"{endpoint_url}#{model_name}", deployment=deployment, run=run
-        )
+        submit_safely(reporter, result, source=target.ref, deployment=deployment, run=run)
     exit_with(outcome, result)

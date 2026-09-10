@@ -7,7 +7,7 @@ status: implemented
 
 # Framework adapters: translators into the model, and the field they found missing
 
-**Status:** accepted, implemented — ships in the next release · **Written:** 2026-08-10 · **Step four**
+**Status:** implemented in 0.15.0 · **Written:** 2026-08-10 · **Step four**
 
 ## The problem, stated precisely
 

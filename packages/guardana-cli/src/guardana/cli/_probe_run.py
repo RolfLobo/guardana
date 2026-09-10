@@ -6,9 +6,16 @@ from guardana.cli._run_meta import ProbeOutcome, target_identity
 from guardana.core.profile import Profile
 from guardana.core.registry import Registry
 from guardana.core.report import ScanResult
+from guardana.core.report.skipped import SkippedRule, SkipReason
 from guardana.core.rule import Rule
-from guardana.core.runner import DEFAULT_ENDPOINT_CONCURRENCY, Runner
-from guardana.core.target import Capability, ChatTransport, EndpointTarget
+from guardana.core.runner import DEFAULT_ENDPOINT_CONCURRENCY, Runner, safety_refusal
+from guardana.core.target import (
+    Capability,
+    ChatTransport,
+    EndpointTarget,
+    SystemPromptPlanter,
+    Target,
+)
 from guardana.core.usage import UsageMeter
 
 _CANARY_SYSTEM_PROMPT_TEMPLATE = (
@@ -98,38 +105,60 @@ def run_probe(
     hundred requests as many times as there were canary rules installed, which is
     the number a plan had already promised was the whole run.
     """
+    meter = UsageMeter(profile.budgets)
+    target = _target(connection, connection.system_prompt, meter)
+    probed = run_target_probe(registry, profile, target, concurrency=concurrency)
+    # Every planted EndpointTarget shares this meter. Taking the one snapshot
+    # after all passes avoids summing cumulative snapshots once per canary.
+    return ProbeOutcome(replace(probed.result, usage=meter.snapshot()), probed.identity)
+
+
+def run_target_probe(
+    registry: Registry,
+    profile: Profile,
+    target: Target,
+    *,
+    concurrency: int = DEFAULT_ENDPOINT_CONCURRENCY,
+) -> ProbeOutcome:
+    """Run endpoint rules against any CLI-selectable target.
+
+    A target implementing :class:`SystemPromptPlanter` gets one isolated view per
+    random canary. Without that protocol, canary rules are skipped rather than
+    graded against a marker nobody planted.
+    """
     canary_rules: list[tuple[Rule, str]] = []
     normal_rules: list[Rule] = []
+    unplantable: list[Rule] = []
+    planter = target if isinstance(target, SystemPromptPlanter) else None
     for rule in registry.rules():
         planted = _with_random_canary(rule)
         if planted is None:
             normal_rules.append(rule)
+        elif planter is None:
+            unplantable.append(rule)
         else:
             canary_rules.append(planted)
 
-    meter = UsageMeter(profile.budgets)
     results: list[ScanResult] = []
-    # Built before the passes and read for the manifest afterwards. Every pass
-    # points at the same endpoint with the same transport, so one identity
-    # describes all of them; taking it from whichever pass happened to run would
-    # make it depend on which rules the profile selected.
-    reference = f"{connection.url}#{connection.model}"
-    identity = target_identity(_target(connection, connection.system_prompt, meter), reference)
+    reference = target.ref
+    identity = target_identity(target, reference)
 
-    if normal_rules:
-        normal_target = _target(connection, connection.system_prompt, meter)
+    if normal_rules or unplantable:
         results.append(
             Runner(
                 registry=_sub_registry(normal_rules, registry),
                 profile=profile,
                 concurrency=concurrency,
-            ).run(normal_target)
+            ).run(target)
         )
+        skipped = _unplantable_skips(unplantable, target, profile)
+        if skipped:
+            results.append(ScanResult((), (), skipped))
 
     for rule, canary in canary_rules:
-        canary_target = _target(
-            connection, _canary_system_prompt(canary, connection.system_prompt), meter
-        )
+        if planter is None:  # defensive: canary_rules is populated only with a planter
+            raise RuntimeError("canary rules were planned without a SystemPromptPlanter")
+        canary_target = planter.planting(_canary_system_prompt(canary, None))
         results.append(
             Runner(
                 registry=_sub_registry([rule], registry),
@@ -140,10 +169,39 @@ def run_probe(
 
     if not results:
         return ProbeOutcome(ScanResult((), (), ()), identity)
-    # The bill comes from the shared meter, not from summing the passes: each pass
-    # reports the same meter's running total, so adding them up would charge the
-    # first pass's requests once per pass that followed it.
-    return ProbeOutcome(replace(ScanResult.merged(results), usage=meter.snapshot()), identity)
+    merged = ScanResult.merged(results)
+    if planter is not None:
+        # The planter contract requires one shared tally across views. Each pass
+        # therefore reports a cumulative snapshot; summing those would overstate
+        # the bill once per canary just as surely as separate meters understate it.
+        merged = replace(merged, usage=target.usage())
+    return ProbeOutcome(merged, identity)
+
+
+def _unplantable_skips(
+    rules: list[Rule], target: Target, profile: Profile
+) -> tuple[SkippedRule, ...]:
+    """Record why canary rules did not run when a target cannot build planted views."""
+    skipped: list[SkippedRule] = []
+    for rule in rules:
+        if rule.meta.target_kind is not target.kind or not profile.policy.matches(rule.meta.id):
+            continue
+        refusal = safety_refusal(profile, rule)
+        if refusal is not None:
+            skipped.append(refusal)
+            continue
+        skipped.append(
+            SkippedRule(
+                rule_id=rule.meta.id,
+                reason=SkipReason.MISSING_CAPABILITY,
+                missing=("plant_system_prompt",),
+                detail=(
+                    f"{target.ref} cannot build a freshly planted target, which "
+                    f"{rule.meta.id} needs; implement SystemPromptPlanter"
+                ),
+            )
+        )
+    return tuple(skipped)
 
 
 def _target(connection: Connection, system_prompt: str | None, meter: UsageMeter) -> EndpointTarget:
@@ -156,3 +214,6 @@ def _target(connection: Connection, system_prompt: str | None, meter: UsageMeter
         transport=connection.transport,
         meter=meter,
     )
+
+
+__all__ = ["Connection", "run_probe", "run_target_probe"]
