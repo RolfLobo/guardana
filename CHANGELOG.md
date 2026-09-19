@@ -43,6 +43,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   fixture double, and a classification matching the declared outcome in this
   run. Every omission is counted by reason in the summary line, avoiding rows
   that cannot represent the fixture or its result.
+- **Move project contact to contact@guardana.dev, with
+  https://karauda.com/contact as the alternative.** This replaces hello@,
+  security@, conduct@, and maintainers@guardana.io in the README, SECURITY.md,
+  CODE_OF_CONDUCT.md, and package metadata so contact details stay consistent.
 - **The agent setup is rebuilt for daily agentic work, and it is gated.**
   `CLAUDE.md` shrinks from 512 lines to a budget of 150 and now holds only what
   every session needs; the traps of each code area moved to path-scoped

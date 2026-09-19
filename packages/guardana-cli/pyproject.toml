@@ -7,10 +7,10 @@ requires-python = ">=3.11"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
 authors = [
-    { name = "Guardana contributors", email = "maintainers@guardana.io" },
+    { name = "Guardana contributors", email = "contact@guardana.dev" },
 ]
 maintainers = [
-    { name = "Guardana contributors", email = "maintainers@guardana.io" },
+    { name = "Guardana contributors", email = "contact@guardana.dev" },
 ]
 keywords = ["ai-security", "llm", "prompt-injection", "security-scanner", "mlsecops"]
 classifiers = [

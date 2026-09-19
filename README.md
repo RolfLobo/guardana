@@ -330,8 +330,8 @@ issues go through [`SECURITY.md`](SECURITY.md), never public issues.
   [Discussions](https://github.com/guardana/guardana/discussions) genuinely move
   this forward.
 
-**hello@guardana.io** · [guardana.dev](https://guardana.dev) ·
-[github.com/guardana](https://github.com/guardana)
+**contact@guardana.dev** · [karauda.com/contact](https://karauda.com/contact) ·
+[guardana.dev](https://guardana.dev) · [github.com/guardana](https://github.com/guardana)
 
 > On PyPI: [`guardana-cli`](https://pypi.org/project/guardana-cli/) ·
 > [`guardana-core`](https://pypi.org/project/guardana-core/) ·

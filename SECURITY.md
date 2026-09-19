@@ -10,7 +10,8 @@ public.
 This keeps the report, discussion, and fix coordination in one private
 place tied directly to the repository.
 
-If you'd rather not use GitHub, email **security@guardana.io** instead.
+If you'd rather not use GitHub, email **contact@guardana.dev** or use
+[karauda.com/contact](https://karauda.com/contact) instead.
 
 Either way, include:
 
