@@ -17,13 +17,6 @@ roadmap row or a `superseded by` line.
 - `docs/design/namespaced-extension-ids.md` — an open id registry for third-party extensions;
   the `guardana.*` reservation is enforced, the registry is not built.
 
-## Dependencies
-
-- `uv audit` reports three advisories against `anyio 4.14.1` in `uv.lock`, all fixed in
-  4.14.2 (`uv lock --upgrade-package anyio`, then `uv sync --locked`). It is a CI gate, so
-  `main` is red on it until the lock moves; a dependency change is its own commit with its own
-  justification, which is why the setup rebuild did not carry it.
-
 ## Tooling debt
 
 - Four scripts have no argument parser and run for real when handed `--help`:

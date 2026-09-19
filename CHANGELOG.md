@@ -34,6 +34,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The collector page's "see also" no longer links the superseded domain-model
   design document; the persistence document it points at is the current one.
 
+### Security
+
+- `anyio` moves from 4.14.1 to 4.14.2 in `uv.lock`. The dependency audit that
+  runs on every push reported three advisories against 4.14.1 (a process-pool
+  worker that can block on undrained stderr, IDNA 2003 host-name encoding in
+  `TLSStream`, and `open_process` retaining the parent's supplementary groups).
+  Whether any of them is reachable through the collector was not assessed; a
+  security scanner whose own audit is red has no standing to fail anyone else's
+  build on theirs.
+
 ## [0.24.0] - 2026-09-10 — custom targets become CLI inputs
 
 ### Added
