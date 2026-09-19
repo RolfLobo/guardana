@@ -307,6 +307,14 @@ def _checks(venv: Path, clean_directory: Path, trace_file: Path) -> list[Check]:
             2,
             expect=("declares no fixtures",),
         ),
+        # An agent rule's fixture plays through the scripted agent double, which the
+        # installed wheel has to carry beside the rule file that declares it.
+        Check(
+            "an agent rule's scripted run plays from the installed wheel",
+            [guardana, "rule", "test", "guardana.agent.tool_result_injection"],
+            0,
+            expect=("3 fixture(s) passed", "0 rule(s) not fully sampled"),
+        ),
         Check(
             "trace inspect prints the evidence matrix and no coverage percentage",
             [guardana, "trace", "inspect", str(trace_file)],

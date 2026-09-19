@@ -7,6 +7,7 @@ from guardana.core.exchange import Exchange
 from guardana.core.report import Evidence, Finding
 from guardana.core.rule.base import Rule, RuleContext, RuleMeta
 from guardana.core.rule.errors import RuleError, RuleLoadError
+from guardana.core.rule.fixture import DeclaredFixture, RuleFixture, materialise
 from guardana.core.target import ChatMessage, Target
 from guardana.core.target.protocols import ChatEndpoint
 
@@ -37,6 +38,13 @@ class ScenarioRule(Rule):
     conversation_expect: Expectation | None = None
     source_digest: str = ""
     """Hash of the declaration this rule was parsed from; see `Rule.digest`."""
+
+    declared_fixtures: tuple[RuleFixture | DeclaredFixture, ...] = ()
+    """Samples from the rule file's `fixtures:` block, one reply per step."""
+
+    def fixtures(self) -> Iterable[RuleFixture]:
+        """Build this rule file's samples, each with a double that has played nothing."""
+        return materialise(self.declared_fixtures)
 
     def digest(self) -> str:
         """Return the declaration hash, falling back to the metadata-only default.

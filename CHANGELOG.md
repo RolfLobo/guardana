@@ -7,8 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Scenario fixtures can script one `replies:` string for every step.** The rule
+  refuses a bare string or a reply count that differs from its step count, so
+  each scripted conversation has a complete, unambiguous shape.
+- **Agent-run fixtures can script one `turns:` entry per round trip.** Each turn
+  records `say`, one offered tool in `call`, and mapping-valued `arguments`
+  passed as compact JSON. Rules with `then:` require `then_turns:` for the
+  second session, while rules without `then:` refuse that key. Scripts must end
+  as the real run would: a turn without `call` or a call in
+  `expect.forbidden_tools` must be last, and any other final call requires
+  exactly `max_steps` turns. Missing turns raise `ScriptExhaustedError` and are
+  reported as "could not run" with exit 2, preventing an omitted turn from
+  repeating until truncation changes the intended outcome.
+- **`guardana.core.testing` exposes `ScriptedAgentTransport` and
+  `ScriptExhaustedError`.** `ScriptedAgentTransport` plays one written reply per
+  round trip and one script per session, allowing agent runs to be tested from
+  explicit scripts.
+- **11 of 51 built-in rules are now fully sampled, up from 5.** Both scenarios
+  and four of the five agent rules gained finding, clean, and inconclusive
+  fixtures. `guardana.agent.tool_argument_scope` has finding and inconclusive
+  fixtures but no clean one because `/tmp/session-42.log` contains `/tmp/`; an
+  honest clean sample is graded as over-broad, while working around the path
+  would test nothing.
+- **Scenario and agent-run fixtures stay out of a rule's digest, as single-turn
+  fixtures already did.** Sampling a rule is not a different test, so
+  `guardana diff` does not report the sampled rules as changed definitions.
+
 ### Changed
 
+- **`guardana rule test --write-corpus` writes only fixtures that produced a
+  usable, confirmed corpus row.** A row now requires a `finding` or `clean`
+  outcome, exactly one graded expectation, exactly one scripted reply from the
+  fixture double, and a classification matching the declared outcome in this
+  run. Every omission is counted by reason in the summary line, avoiding rows
+  that cannot represent the fixture or its result.
 - **The agent setup is rebuilt for daily agentic work, and it is gated.**
   `CLAUDE.md` shrinks from 512 lines to a budget of 150 and now holds only what
   every session needs; the traps of each code area moved to path-scoped
@@ -33,6 +67,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   process this repository no longer uses.
 - The collector page's "see also" no longer links the superseded domain-model
   design document; the persistence document it points at is the current one.
+
+### Fixed
+
+- **`--write-corpus` no longer writes a wrongly classified fixture with its
+  declared label.** The fixture is left out instead of producing a mislabelled
+  row while the command exits 1.
+- **Corpus writing no longer takes the first scripted reply from a fixture that
+  scripts several.** This prevents an innocuous opening turn from receiving the
+  verdict produced for the final turn.
+- **`guardana rule test` now reports refused rule sources and exits `2`.** A
+  refusal previously appeared only as a warning, so passing loaded rules could make
+  the whole pack appear to pass with exit `0`.
+- **Two-session agent rules now grade failures in the first session.** A clean
+  second session after the first was cut short or saved nothing is now
+  `inconclusive`. This changes `guardana.agent.memory_poisoning` verdicts for
+  those runs in the safe direction.
+- **`--write-corpus` now records the first prompt the rule actually sent.** It
+  previously wrote `fixture: <name>`, exposing the expected result to the judge
+  and making `amplification` regrade a `guardana.prompt.cost_asymmetry` finding
+  row as a pass.
+- **An empty fixture `note:` is now treated as no note.** It previously became
+  the text `None`.
 
 ### Security
 

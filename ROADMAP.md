@@ -33,25 +33,27 @@ collector. See [FEATURES.md](FEATURES.md) for the concise overview and
 
 ## Now: repeatable application assurance
 
-Target locators are complete for 0.24.0. The remaining milestone turns a
-one-off extension into something a team can scaffold, repeat, compare, and
+Target locators are complete for 0.24.0, and every declarative rule shape can
+ship its own positive, negative, and inconclusive samples. The remaining milestone
+turns a one-off extension into something a team can scaffold, repeat, compare, and
 operate. The order below reflects the
 [0.23 repository and market audit](docs/design/audit-0.23-market.md): author
 workflow and honest measurement come before additional output destinations.
 
 | Order | Deliverable | Done when |
 |---:|---|---|
-| 1 | YAML fixtures for scenario and trajectory rules | declarative rules can ship positive, negative, and inconclusive samples just like Python rules |
-| 2 | `guardana new-pack` | one command creates an installable pack with manifest, entry points, fixtures, locator target, and tests |
-| 3 | Suites, versioned datasets, and assessors | a run records the sample, assessor, denominator, and uncertainty rather than only findings |
-| 4 | Paired statistical diff | comparison refuses unequal or undersized samples and gates only on a declared minimum effect |
-| 5 | Renderer and reporter plugins | outputs are discoverable entry points and every output remains behind the common redaction boundary |
-| 6 | Provider conformance matrix | documented endpoint support is backed by repeatable capability tests |
-| 7 | Assessments in the collector | trends are keyed by system, deployment, dataset, and assessor version; findings and quality measurements stay separate |
+| 1 | `guardana new-pack` | one command creates an installable pack with manifest, entry points, fixtures, locator target, and tests |
+| 2 | Suites, versioned datasets, and assessors | a run records the sample, assessor, denominator, and uncertainty rather than only findings |
+| 3 | Paired statistical diff | comparison refuses unequal or undersized samples and gates only on a declared minimum effect |
+| 4 | Renderer and reporter plugins | outputs are discoverable entry points and every output remains behind the common redaction boundary |
+| 5 | Provider conformance matrix | documented endpoint support is backed by repeatable capability tests |
+| 6 | Assessments in the collector | trends are keyed by system, deployment, dataset, and assessor version; findings and quality measurements stay separate |
 
-Design inputs already exist for the shipped locator and the first five remaining items:
+Design inputs already exist for the shipped locators and fixtures and for the first
+four remaining items:
 
 - [target locators](docs/design/target-locators.md)
+- [declarative fixtures](docs/design/declarative-fixtures.md)
 - [output plugins](docs/design/output-plugins.md)
 - [extension author tooling](docs/design/extension-author-tooling.md)
 - [quality suites](docs/design/quality-suites.md)
@@ -59,7 +61,7 @@ Design inputs already exist for the shipped locator and the first five remaining
 
 The full OTLP intake remains in the next milestone because the OpenTelemetry
 GenAI agent conventions are still changing. A compatibility spike may proceed
-after items 3 and 4, in parallel with items 5 and 6, but it must normalize an
+after items 2 and 3, in parallel with items 4 and 5, but it must normalize an
 explicit supported subset behind an adapter rather than make a development
 convention a persisted Guardana schema.
 

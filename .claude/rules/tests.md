@@ -13,7 +13,8 @@ Why: `docs/maintainers/lessons.md` § False green, § Gates.
   (`guardana.core.testing`) so they are readable in review.
 - **A test that cannot fail is not a test.** Invert the behaviour, not the branch, and watch it
   go red; delete `__pycache__` after a same-size edit. `getattr(x, "thing", ())` where nothing
-  has `thing` is vacuous and looks thorough.
+  has `thing` is vacuous and looks thorough. A replay test needs input a replay would answer
+  differently: a scripted double repeats its last reply, so grading the last turn agrees by luck.
 - **Assert at the seam where the value has to arrive**, not on a log line, a document or a
   mock's call count — those measure what the code said, not what it did.
 - **Cost gates count operations** (`test_scan_cost.py` tree walks and parses,

@@ -119,8 +119,10 @@ without guessing from a short id.
 ## Extension surface
 
 Third-party packages can provide rules, evaluators, targets, and taxonomies through
-Python entry points. YAML rules cover static, scenario, and trajectory shapes. Pack
-manifests declare API compatibility and locks pin the exact installed extensions.
+Python entry points. YAML rules cover static, scenario, and trajectory shapes, and
+every shape can declare the finding, clean, and inconclusive samples that `guardana
+rule test` runs without a network. Pack manifests declare API compatibility and locks
+pin the exact installed extensions.
 The shipped conformance helpers verify capability claims and fail closed on an
 incomplete implementation.
 

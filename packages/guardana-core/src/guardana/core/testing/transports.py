@@ -186,3 +186,74 @@ class FailingTransport:
     ) -> str:
         """Fail the way an unreachable endpoint fails."""
         raise self._error
+
+
+class ScriptExhaustedError(RuntimeError):
+    """Raised when a run asks a scripted double for a turn or a session nobody wrote."""
+
+
+class ScriptedAgentTransport:
+    """Plays a written agent run: one reply per round trip, one script per session.
+
+    The tool-calling counterpart of `ScriptedTransport`, and the double a
+    declarative fixture's `turns:` builds. A fresh session — a history the harness
+    has not put an assistant turn in yet — advances to the next script.
+
+    **Nothing repeats and nothing is invented.** A turn or a session past the end
+    of the script raises, because the alternative is a run that keeps calling the
+    last tool until the step budget is gone: it truncates, the verdict becomes
+    `inconclusive`, and a sample passes for a reason its author never wrote.
+    """
+
+    def __init__(self, *sessions: Sequence[ToolCallReply]) -> None:
+        if not sessions or not all(sessions):
+            raise ValueError("ScriptedAgentTransport needs at least one non-empty session")
+        self.sessions: tuple[tuple[ToolCallReply, ...], ...] = tuple(
+            tuple(session) for session in sessions
+        )
+        self._session = 0
+        self._turn = 0
+        self.offered: list[Sequence[ToolSpec]] = []
+
+    def send(
+        self,
+        base_url: str,
+        model: str,
+        messages: Sequence[ChatMessage],
+        api_key: str | None,
+    ) -> str:
+        """Refuse a plain chat turn: this double plays a run, and a run offers tools."""
+        raise NotImplementedError("ScriptedAgentTransport plays an agent run, not a chat turn")
+
+    def send_tools(
+        self,
+        base_url: str,
+        model: str,
+        messages: Sequence[ChatMessage],
+        api_key: str | None,
+        tools: Sequence[ToolSpec],
+    ) -> ToolCallReply:
+        """Return this session's next scripted reply, advancing on a fresh history."""
+        self.offered.append(list(tools))
+        if not any(message.role == "assistant" for message in messages):
+            self._advance()
+        script = self.sessions[self._session]
+        if self._turn >= len(script):
+            raise ScriptExhaustedError(
+                f"session {self._session + 1} scripts {len(script)} turn(s) and the run "
+                f"asked for turn {self._turn + 1}"
+            )
+        reply = script[self._turn]
+        self._turn += 1
+        return reply
+
+    def _advance(self) -> None:
+        if self._turn == 0 and self._session == 0:
+            return  # the first session's first turn, not a boundary
+        self._session += 1
+        self._turn = 0
+        if self._session >= len(self.sessions):
+            raise ScriptExhaustedError(
+                f"the run opened session {self._session + 1} and the script covers "
+                f"{len(self.sessions)}"
+            )

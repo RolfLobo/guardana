@@ -11,6 +11,7 @@ from typing import Any
 
 from guardana.core.evaluator.base import Expectation, check_expectation
 from guardana.core.rule._digest import declaration_digest
+from guardana.core.rule._fixture_schema import parse_scenario_fixtures
 from guardana.core.rule._yaml_schema import (
     _BUILTIN_EXPECTS,
     _parse_capabilities,
@@ -37,6 +38,7 @@ _ALLOWED_SCENARIO_KEYS = frozenset(
         "steps",
         "stateful",
         "expect",
+        "fixtures",
     }
 )
 _ALLOWED_STEP_KEYS = frozenset({"send", "expect"})
@@ -80,6 +82,7 @@ def parse_scenario(raw: dict[str, Any], path: Path) -> ScenarioRule:
         conversation_evaluator=conv_evaluator,
         conversation_expect=conv_expect,
         source_digest=declaration_digest(raw),
+        declared_fixtures=parse_scenario_fixtures(raw.get("fixtures"), path, steps=len(steps)),
     )
 
 

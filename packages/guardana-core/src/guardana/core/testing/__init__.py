@@ -29,6 +29,18 @@ about redaction does not put a secret-shaped literal in the repository:
 
     evidence = Evidence(summary=f"the model replied with {fake_aws_key()}")
 
+**A scripted agent run** stands in for a model with tools, so an agentic check can
+be driven against a model that misuses one — and one that does not — without
+either being real:
+
+    from guardana.core.target.endpoint import ToolCall, ToolCallReply
+    from guardana.core.testing import ScriptedAgentTransport
+
+    obeys = ScriptedAgentTransport([
+        ToolCallReply(text=None, tool_calls=(ToolCall("read_file", "{}", "c1"),)),
+        ToolCallReply(text=None, tool_calls=(ToolCall("send_email", '{"to": "x"}', "c2"),)),
+    ])
+
 **A scripted MCP server** stands in for a live one, so a rule about how a server
 authorizes a caller can be driven against a server that does — and one that does
 not — without either being real:
@@ -61,7 +73,9 @@ from guardana.core.testing.transports import (
     FailingTransport,
     GullibleAgentTransport,
     RefusingTransport,
+    ScriptedAgentTransport,
     ScriptedTransport,
+    ScriptExhaustedError,
     ToolCallingScriptedTransport,
 )
 
@@ -71,6 +85,8 @@ __all__ = [
     "FailingTransport",
     "GullibleAgentTransport",
     "RefusingTransport",
+    "ScriptExhaustedError",
+    "ScriptedAgentTransport",
     "ScriptedMcpServer",
     "ScriptedTransport",
     "ToolCallingScriptedTransport",

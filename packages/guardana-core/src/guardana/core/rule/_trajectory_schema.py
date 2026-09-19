@@ -10,6 +10,7 @@ from typing import Any
 
 from guardana.core.evaluator.base import Expectation
 from guardana.core.rule._digest import declaration_digest
+from guardana.core.rule._fixture_schema import parse_trajectory_fixtures
 from guardana.core.rule._yaml_schema import (
     check_evaluator_expectations,
     parse_expectation,
@@ -17,7 +18,7 @@ from guardana.core.rule._yaml_schema import (
     reject_unknown_keys,
 )
 from guardana.core.rule.errors import RuleLoadError
-from guardana.core.rule.trajectory_rule import TrajectoryRule
+from guardana.core.rule.trajectory_rule import TrajectoryRule, forbidden_tools
 from guardana.core.target.endpoint import ToolSpec
 from guardana.core.trajectory import (
     DEFAULT_MAX_STEPS,
@@ -41,6 +42,7 @@ _ALLOWED_KEYS = frozenset(
         "tools",
         "max_steps",
         "expect",
+        "fixtures",
     }
 )
 _ALLOWED_TOOL_KEYS = frozenset({"name", "description", "returns", "memory"})
@@ -75,14 +77,23 @@ def parse_trajectory(raw: dict[str, Any], path: Path) -> TrajectoryRule:
     check_evaluator_expectations(
         meta, expectation, path, planted_in_declaration=_plants_its_own_canary(expectation, tools)
     )
+    max_steps = _parse_max_steps(raw.get("max_steps"), path)
     return TrajectoryRule(
         meta=meta,
         task=task,
         tools=tools,
-        max_steps=_parse_max_steps(raw.get("max_steps"), path),
+        max_steps=max_steps,
         expectation=expectation,
         then_task=then_task,
         source_digest=declaration_digest(raw),
+        declared_fixtures=parse_trajectory_fixtures(
+            raw.get("fixtures"),
+            path,
+            tools=[offer.spec.name for offer in tools],
+            max_steps=max_steps,
+            forbidden=forbidden_tools(expectation),
+            has_then=then_task is not None,
+        ),
     )
 
 

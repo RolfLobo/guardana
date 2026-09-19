@@ -1,9 +1,10 @@
 """How many built-in rules carry their own samples, pinned so the number can only rise.
 
-51 rules ship and 5 of them are fully sampled. Writing the other 46 in one sitting
-would mean writing fixtures to make a counter move, and a fixture written for that
-reason is a test that cannot fail — which this repository treats as worse than no
-test at all.
+Every declarative built-in that can honestly declare all three outcomes does. The
+remainder are Python plugins still to be sampled, plus one declarative rule whose
+honest clean sample is a finding today. Writing the rest in one sitting would mean
+writing fixtures to make a counter move, and a fixture written for that reason is a
+test that cannot fail — which this repository treats as worse than no test at all.
 
 So the migration is ratcheted instead of declared finished. This test states the real
 number, fails when it drops, and tells whoever raised it to raise the number here in
@@ -20,7 +21,7 @@ from guardana.core.rule import RuleContext
 from guardana.core.rule.verify import verify_rule
 from guardana.rules import provide_rules
 
-_FULLY_SAMPLED = 5
+_FULLY_SAMPLED = 11
 """Built-in rules declaring a finding, a clean *and* an inconclusive fixture.
 
 Raise this when you sample another rule. Never lower it: a rule whose samples were
@@ -53,15 +54,15 @@ def test_the_pinned_number_is_the_real_one() -> None:
     """A ratchet nobody raises is a ratchet that stops meaning anything.
 
     The lower bound above would still pass if every rule in the catalogue gained
-    fixtures and nobody updated it, and the count in `ROADMAP.md` beside it would
-    quietly become wrong. This is what makes raising the number part of the change
-    that earns it.
+    fixtures and nobody updated it, and the count `docs/usage-rule-test.md` quotes
+    would quietly become wrong. This is what makes raising the number part of the
+    change that earns it.
     """
     proven, _unsampled = _sampled()
 
     assert len(proven) == _FULLY_SAMPLED, (
         f"{len(proven)} built-in rule(s) are now fully sampled and this file still "
-        f"says {_FULLY_SAMPLED} — raise it, and update the count in ROADMAP.md"
+        f"says {_FULLY_SAMPLED} — raise it, and the count in docs/usage-rule-test.md"
     )
 
 

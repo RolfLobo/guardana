@@ -11,6 +11,7 @@ turns them into a labelled set an evaluator can be measured against, and a rule 
 declares none is *reported as unchecked* rather than passing quietly.
 """
 
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from enum import StrEnum
 
@@ -59,3 +60,35 @@ class RuleFixture:
     outcome: FixtureOutcome
     note: str = ""
     """Why this sample is the shape it is, when that is not obvious from the name."""
+
+
+@dataclass(frozen=True, slots=True)
+class DeclaredFixture:
+    """A fixture as a rule file declares it: a script, not yet a double.
+
+    A scripted double is an iterator, so a `RuleFixture` built once at parse time
+    would hand a second verification a double that had already played its replies
+    — a three-step scenario verified twice would grade the second run against its
+    last reply on every turn. The declaration keeps the script and builds a fresh
+    target each time the rule is asked for its fixtures.
+    """
+
+    name: str
+    outcome: FixtureOutcome
+    build: Callable[[], Target]
+    """Builds the target this sample runs against; called once per `materialise`."""
+
+    note: str = ""
+
+    def materialise(self) -> RuleFixture:
+        """Build this sample's double afresh and return it as a `RuleFixture`."""
+        return RuleFixture(self.name, self.build(), self.outcome, self.note)
+
+
+def materialise(declared: Iterable[RuleFixture | DeclaredFixture]) -> tuple[RuleFixture, ...]:
+    """Build every declared sample with a fresh double.
+
+    A rule assembled by hand may hold finished `RuleFixture`s instead of
+    declarations; those pass through unchanged.
+    """
+    return tuple(d.materialise() if isinstance(d, DeclaredFixture) else d for d in declared)

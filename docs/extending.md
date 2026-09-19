@@ -298,8 +298,8 @@ pattern end-to-end for a rule package, including a discovery-proving test
 you can copy.
 
 `guardana.core.testing` ships every double behind that, so a fixture is a
-few lines of Python instead of a network call or a hand-crafted binary.
-Sixteen exports, five families:
+few lines of Python instead of a network call or a hand-crafted binary, in
+five families:
 
 **Transports** plug into `EndpointTarget`'s `ChatTransport` seam, so a
 dynamic rule is graded end-to-end against a scripted model with no network:
@@ -317,6 +317,13 @@ dynamic rule is graded end-to-end against a scripted model with no network:
   output); pair with `RefusingTransport` for the negative.
 - `FailingTransport` — an unreachable endpoint: every call raises the
   given error.
+- `ScriptedAgentTransport` — plays a written agent run: one reply per round
+  trip, one script per session, nothing repeated. What a declarative fixture's
+  `turns:` builds, and what a Python fixture uses to script a run by hand.
+- `ScriptExhaustedError` — raised when a run asks a scripted double for a turn
+  or a session nobody wrote. It is an error rather than a repeated turn because
+  a repeat loops until the step budget is gone, and the run is then graded as
+  cut short — a sample passing for a reason its author never wrote.
 
 Worked example:
 [`writing-rules.md`](writing-rules.md#testing-a-dynamic-rule-without-a-model).

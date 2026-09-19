@@ -108,6 +108,7 @@
 <li><a href="design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
 <li><a href="design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
 <li><a href="design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
+<li><a href="design/declarative-fixtures.html">Declarative fixtures for scenarios and agent runs<span class="tag">accepted</span></a></li>
 <li><a href="design/documentation-site.html">A documentation site<span class="tag">implemented</span></a></li>
 <li><a href="design/run-manifest-v2.html">Run manifest v2<span class="tag">implemented</span></a></li>
 <li><a href="design/collector-domain-model.html">Collector domain model<span class="tag">superseded</span></a></li>
@@ -429,8 +430,8 @@ needs a test that <code>capabilities()</code> and its read/interaction surface b
 pattern end-to-end for a rule package, including a discovery-proving test
 you can copy.</p>
 <p><code>guardana.core.testing</code> ships every double behind that, so a fixture is a
-few lines of Python instead of a network call or a hand-crafted binary.
-Sixteen exports, five families:</p>
+few lines of Python instead of a network call or a hand-crafted binary, in
+five families:</p>
 <p><strong>Transports</strong> plug into <code>EndpointTarget</code>'s <code>ChatTransport</code> seam, so a
 dynamic rule is graded end-to-end against a scripted model with no network:</p>
 <ul>
@@ -447,6 +448,13 @@ acts on it (the positive fixture for prompt injection through tool
 output); pair with <code>RefusingTransport</code> for the negative.</li>
 <li><code>FailingTransport</code> — an unreachable endpoint: every call raises the
 given error.</li>
+<li><code>ScriptedAgentTransport</code> — plays a written agent run: one reply per round
+trip, one script per session, nothing repeated. What a declarative fixture's
+<code>turns:</code> builds, and what a Python fixture uses to script a run by hand.</li>
+<li><code>ScriptExhaustedError</code> — raised when a run asks a scripted double for a turn
+or a session nobody wrote. It is an error rather than a repeated turn because
+a repeat loops until the step budget is gone, and the run is then graded as
+cut short — a sample passing for a reason its author never wrote.</li>
 </ul>
 <p>Worked example:
 <a href="writing-rules.html#testing-a-dynamic-rule-without-a-model"><code>writing-rules.md</code></a>.</p>

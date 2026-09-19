@@ -14,6 +14,10 @@ page is free to describe a subset in words.
 import re
 from pathlib import Path
 
+from guardana.core.registry import Registry
+from guardana.core.rule import RuleContext, TrajectoryRule, YamlRule
+from guardana.core.rule.scenario_rule import ScenarioRule
+from guardana.core.rule.verify import verify_rule
 from guardana.core.surface import Surface
 from guardana.rules import provide_rules
 
@@ -127,6 +131,9 @@ def _repo_file(name: str) -> str:
 
 
 _SAMPLED_RE = re.compile(r"(\d+) rules ship and \*\*(\d+) are fully sampled\*\*")
+_UNSAMPLED_YAML_RE = re.compile(
+    r"YAML rules in the default catalog that are not fully sampled:\s*((?:`[^`]+`(?:,\s*)?)+)\."
+)
 
 
 def test_the_roadmap_delegates_rule_counts_to_generated_docs() -> None:
@@ -154,4 +161,29 @@ def test_the_rule_test_page_states_how_many_rules_are_really_sampled() -> None:
     assert (int(stated[0]), int(stated[1])) == (total, _FULLY_SAMPLED), (
         f"docs/usage-rule-test.md says {stated[0]} ship and {stated[1]} are sampled; "
         f"the registry has {total} and the ratchet pins {_FULLY_SAMPLED}"
+    )
+
+
+def test_the_rule_test_page_names_every_yaml_rule_left_short_of_all_three_samples() -> None:
+    """A named exception is a coverage claim too, and it goes stale the same way a count does.
+
+    The page lists the declarative built-ins that are not fully sampled. The day one
+    of them gains its missing sample — or another one loses one — the list is wrong,
+    and nothing but this reads it.
+    """
+    registry = Registry.discover()
+    ctx = RuleContext(evaluators=registry.evaluators())
+    declarative = (YamlRule, ScenarioRule, TrajectoryRule)
+    unsampled = sorted(
+        rule.meta.id
+        for rule in provide_rules()
+        if isinstance(rule, declarative) and verify_rule(rule, ctx).gaps
+    )
+
+    stated = _UNSAMPLED_YAML_RE.findall(_read("usage-rule-test.md"))
+    named = sorted(re.findall(r"`([^`]+)`", stated[0])) if stated else []
+
+    assert named == unsampled, (
+        f"docs/usage-rule-test.md names {named} as the YAML rules not fully sampled; "
+        f"the registry says {unsampled}"
     )

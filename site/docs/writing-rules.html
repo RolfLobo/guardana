@@ -108,6 +108,7 @@
 <li><a href="design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
 <li><a href="design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
 <li><a href="design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
+<li><a href="design/declarative-fixtures.html">Declarative fixtures for scenarios and agent runs<span class="tag">accepted</span></a></li>
 <li><a href="design/documentation-site.html">A documentation site<span class="tag">implemented</span></a></li>
 <li><a href="design/run-manifest-v2.html">Run manifest v2<span class="tag">implemented</span></a></li>
 <li><a href="design/collector-domain-model.html">Collector domain model<span class="tag">superseded</span></a></li>
@@ -236,6 +237,12 @@ expect:
 <td>mapping</td>
 <td>Passed straight to the evaluator as an <code>Expectation</code>: <code>canary</code> (string, the marker the <code>canary</code> evaluator looks for) and <code>goal</code> (string, free-text used by <code>llm_judge</code>'s prompt template). Unknown keys are rejected.</td>
 </tr>
+<tr>
+<td><code>fixtures</code></td>
+<td>no</td>
+<td>list of mappings</td>
+<td>The rule's own samples — a finding, a clean and an inconclusive one — each a scripted <code>reply</code> and the <code>outcome</code> the rule must reach. <a href="usage-rule-test.html"><code>guardana rule test</code></a> runs them; a rule without all three is reported as not fully sampled.</td>
+</tr>
 </tbody>
 </table></div>
 <p>A YAML file may contain a single rule mapping or a <strong>list</strong> of rule
@@ -302,6 +309,11 @@ expect:                  # optional: grade the conversation as a whole
 <td>no</td>
 <td>Grades the <strong>whole conversation</strong> after the last step; <code>llm_judge</code> sees the full transcript. An <code>expect</code> block (step-level or conversation-level) holds <code>evaluator</code>, <code>goal</code>, and/or <code>canary</code>, exactly like a single-turn rule.</td>
 </tr>
+<tr>
+<td><code>fixtures</code></td>
+<td>no</td>
+<td>Samples scripted with <code>replies:</code>, one reply per step — see <a href="usage-rule-test.html#a-scenario-one-reply-per-step"><code>usage-rule-test.md</code></a>.</td>
+</tr>
 </tbody>
 </table></div>
 <p>At least one <code>expect</code> — a step's or the conversation's — is required: an
@@ -354,12 +366,22 @@ expect:
 <tr>
 <td><code>tools</code></td>
 <td>yes</td>
-<td>Each entry needs <code>name</code>, <code>description</code> and <code>returns</code>. A duplicate name is a load error — whichever double lost would be dead configuration.</td>
+<td>Each entry needs <code>name</code>, <code>description</code> and <code>returns</code> — or <code>memory: write</code> / <code>memory: read</code> instead of <code>returns</code>, which binds the tool to one store that outlives the session. A duplicate name is a load error — whichever double lost would be dead configuration.</td>
+</tr>
+<tr>
+<td><code>then</code></td>
+<td>no</td>
+<td>A second task, run in a fresh session that shares nothing with the first but the memory store; one tool must declare <code>memory: read</code>. The question is asked of the second session, but the first still counts: a failure already made there is a finding, and a first session that was cut short or saved nothing turns a clean second one into <code>inconclusive</code>.</td>
 </tr>
 <tr>
 <td><code>max_steps</code></td>
 <td>no (default <code>6</code>)</td>
-<td>Model round trips. Capped at 12; a rule cannot raise its own cost without bound.</td>
+<td>Model round trips per session. Capped at 12; a rule cannot raise its own cost without bound.</td>
+</tr>
+<tr>
+<td><code>fixtures</code></td>
+<td>no</td>
+<td>Samples scripted with <code>turns:</code> — what the model says and which tool it calls on each round trip — and <code>then_turns:</code> for a rule with <code>then:</code>. See <a href="usage-rule-test.html#an-agent-run-one-turn-per-round-trip"><code>usage-rule-test.md</code></a>.</td>
 </tr>
 </tbody>
 </table></div>
@@ -583,7 +605,11 @@ never happened.</p>
 <p>Every rule needs at least a positive fixture (proves it fires) and a
 negative fixture (proves it stays silent on clean input) — this is the
 project's main defense against the false-positive/false-negative failure
-mode dynamic security checks are prone to. See
+mode dynamic security checks are prone to.</p>
+<p>A YAML rule of any shape declares them in its own file, together with the
+third one — a sample the rule has to decline — and
+<a href="usage-rule-test.html"><code>guardana rule test</code></a> runs all three with no network. A
+Python plugin returns them from <code>fixtures()</code>. See
 <code>packages/guardana-rules/tests/supply_chain/test_pickle_opcode.py</code> for the
 pattern on a plugin rule, or
 <a href="https://github.com/guardana/guardana/blob/main/examples/custom_rule/tests/test_discovery.py"><code>examples/custom_rule/tests/test_discovery.py</code></a>
@@ -625,9 +651,13 @@ graded end-to-end against a scripted model — no network, no model process:</p>
 <td><code>FailingTransport(error)</code></td>
 <td>An unreachable endpoint: every call raises <code>error</code></td>
 </tr>
+<tr>
+<td><code>ScriptedAgentTransport([reply, ...], ...)</code></td>
+<td>A model playing a written agent run, one reply per round trip and one script per session — what a YAML fixture's <code>turns:</code> builds; a turn nobody wrote raises <code>ScriptExhaustedError</code></td>
+</tr>
 </tbody>
 </table></div>
-<p>These six are what a rule author testing without a model needs. The kit ships ten
+<p>These seven are what a rule author testing without a model needs. The kit ships ten
 more doubles for other concerns — artifact builders (see
 <a href="#testing-a-rule-that-reads-a-model-file">below</a>), fake credentials for a
 redaction test, a scripted MCP server for an authorization rule, and a

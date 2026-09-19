@@ -19,7 +19,7 @@ from guardana.core.rule._yaml_schema import (
 )
 from guardana.core.rule.base import Rule, RuleContext, RuleMeta
 from guardana.core.rule.errors import RuleError, RuleLoadError
-from guardana.core.rule.fixture import RuleFixture
+from guardana.core.rule.fixture import DeclaredFixture, RuleFixture, materialise
 from guardana.core.target import ChatMessage, Target
 from guardana.core.target.protocols import ChatEndpoint
 
@@ -34,7 +34,7 @@ class YamlRule(Rule):
     source_digest: str = ""
     """Hash of the declaration this rule was parsed from; see `Rule.digest`."""
 
-    declared_fixtures: tuple[RuleFixture, ...] = ()
+    declared_fixtures: tuple[RuleFixture | DeclaredFixture, ...] = ()
     """Samples from the rule file's `fixtures:` block, if it has one.
 
     Named `declared_fixtures` because `fixtures()` is the contract every rule
@@ -43,8 +43,12 @@ class YamlRule(Rule):
     """
 
     def fixtures(self) -> Iterable[RuleFixture]:
-        """Return the samples this rule file declared."""
-        return self.declared_fixtures
+        """Build this rule file's samples, each with a double that has played nothing.
+
+        A scripted double is an iterator, so handing out the same one twice would
+        grade a second verification against replies the first consumed.
+        """
+        return materialise(self.declared_fixtures)
 
     def digest(self) -> str:
         """Return the declaration hash, falling back to the metadata-only default.
