@@ -2,10 +2,10 @@ __pycache__/
 *.py[cod]
 .venv/
 .uv/
-dist/
+/dist/
 # Written by scripts/generate_sbom.py; published as release assets, never committed.
 sbom/
-build/
+/build/
 *.egg-info/
 **/*.egg-info/
 .mypy_cache/
@@ -33,15 +33,12 @@ Thumbs.db
 # Logs
 *.log
 
-# AI-agent tooling and internal working docs (not part of the published project).
-# `.claude/settings.json`, `.claude/skills/` and `.claude/agents/` ARE checked in on
-# purpose: CLAUDE.md promises every agent working here gets the auto-format hook and
-# the project's own procedures, and an ignored hook is a promise nobody keeps. The
-# skills encode what has actually gone wrong — the cache traps that produced two
-# false greens, the tag-before-CI ordering that cost two approval clicks — and that
-# knowledge belongs with the repository rather than in one person's setup. Only
-# machine-local state stays out.
+# Agent tooling. `.claude/settings.json`, `.claude/skills/`, `.claude/agents/` and
+# `.claude/rules/` ARE checked in on purpose: every agent working here gets the hooks
+# and the project's own procedures, and an ignored hook is a promise nobody keeps.
+# Only machine-local state and gate logs stay out.
 .claude/settings.local.json
 .claude/scheduled_tasks.lock
-docs/superpowers/
+.claude/worktrees/
 .playwright-mcp/
+cache/

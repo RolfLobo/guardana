@@ -69,8 +69,8 @@ def read_pages(docs: Path) -> list[Page]:
 
 
 def _ignored(relative: Path) -> bool:
-    """`docs/superpowers/` is a gitignored scratch area, not documentation."""
-    return relative.parts[0] == "superpowers"
+    """`docs/work/` holds work in flight, not documentation."""
+    return relative.parts[0] == "work"
 
 
 def _page(path: Path, relative: Path) -> Page:

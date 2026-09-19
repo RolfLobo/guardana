@@ -86,5 +86,7 @@ This file is generated from the documentation map; do not edit it by hand.
 - [../CONTRIBUTING.md](https://raw.githubusercontent.com/guardana/guardana/refs/heads/main/CONTRIBUTING.md): setup, quality gates, and review rules
 - [../RELEASING.md](https://raw.githubusercontent.com/guardana/guardana/refs/heads/main/RELEASING.md): versioning and publishing
 - [maintainers/github-setup.md](https://raw.githubusercontent.com/guardana/guardana/refs/heads/main/docs/maintainers/github-setup.md): repository settings
+- [maintainers/ops-catalogue.md](https://raw.githubusercontent.com/guardana/guardana/refs/heads/main/docs/maintainers/ops-catalogue.md): which script, is it safe, what it needs
+- [maintainers/lessons.md](https://raw.githubusercontent.com/guardana/guardana/refs/heads/main/docs/maintainers/lessons.md): why the rules are what they are
 - [../SECURITY.md](https://raw.githubusercontent.com/guardana/guardana/refs/heads/main/SECURITY.md): report vulnerabilities and understand support
 - [../CODE_OF_CONDUCT.md](https://raw.githubusercontent.com/guardana/guardana/refs/heads/main/CODE_OF_CONDUCT.md): community expectations

@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **The agent setup is rebuilt for daily agentic work, and it is gated.**
+  `CLAUDE.md` shrinks from 512 lines to a budget of 150 and now holds only what
+  every session needs; the traps of each code area moved to path-scoped
+  `.claude/rules/`, the procedures to skills (`work`, `plan`, `build`, `gate`,
+  `review`, `ship`, `auto`, `debug`, `refactor`, `research`, `docs`,
+  `content-model`, `site-check`, `stack`, `release`), and the incidents behind
+  every rule to `docs/maintainers/lessons.md` in their original wording. The
+  subagents are tiered by cost (`scout`, `runner` on Haiku; `text-broker`,
+  `browser` on Sonnet; `coder`, `reviewer`, `false-green-hunter` on Opus).
+  `scripts/ci_local.sh` mirrors CI with one verdict line per gate and reports a
+  gate it could not run as NOT RUN rather than green; `scripts/check_claude_setup.py`
+  and `scripts/check_ops_catalogue.py` keep the setup and the new
+  `docs/maintainers/ops-catalogue.md` in step with the tree; `scripts/guard_hook.py`
+  refuses whole-tree staging, staged env files, attribution trailers and a push
+  to `main` while the generated site is stale (the push is the deploy), and asks
+  before a tag push or a direct `codex`/`agy` call; `scripts/text_model.py` is the
+  one door to GPT and Gemini for reader-facing wording. Why: the file that is
+  project law was loading 28 KB into every subagent, and nothing noticed when
+  an instruction pointed at a path that had moved.
+- `docs/work/` holds work in flight and is excluded from the documentation
+  site; the `docs/superpowers/` exclusion it replaces was a leftover of a
+  process this repository no longer uses.
+- The collector page's "see also" no longer links the superseded domain-model
+  design document; the persistence document it points at is the current one.
+
 ## [0.24.0] - 2026-09-10 — custom targets become CLI inputs
 
 ### Added

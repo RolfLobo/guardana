@@ -608,7 +608,6 @@ protocol and fails on any method that does not take a tenant scope first.
 
 ## See also
 
-- [`design/collector-domain-model.md`](design/collector-domain-model.md) — the model the next items build
 - [`design/collector-persistence.md`](design/collector-persistence.md) — why persistence is shaped the way it is
 - [`design/collector-tenancy.md`](design/collector-tenancy.md) — the organization/project boundary that is being built next
 - [`architecture.md`](architecture.md#the-coreserver-boundary) — why the engine never imports this

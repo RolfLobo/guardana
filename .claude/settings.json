@@ -1,6 +1,84 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(uv sync:*)",
+      "Bash(uv lock:*)",
+      "Bash(uv run pytest:*)",
+      "Bash(uv run ruff:*)",
+      "Bash(uv run mypy:*)",
+      "Bash(uv run lint-imports)",
+      "Bash(uv run guardana --help)",
+      "Bash(uv run guardana scan:*)",
+      "Bash(uv run guardana rules:*)",
+      "Bash(uv run guardana rule test:*)",
+      "Bash(uv run guardana taxonomy:*)",
+      "Bash(uv run guardana doctor:*)",
+      "Bash(uv run guardana plan:*)",
+      "Bash(uv run guardana config:*)",
+      "Bash(uv run guardana run inspect:*)",
+      "Bash(uv run guardana trace inspect:*)",
+      "Bash(uv run guardana pack validate:*)",
+      "Bash(uv run python scripts/generate_docs.py --check)",
+      "Bash(uv run python scripts/sync_site.py --check)",
+      "Bash(uv run python scripts/build_site.py --check)",
+      "Bash(uv run python scripts/generate_llms_txt.py --check)",
+      "Bash(uv run python scripts/check_ops_catalogue.py)",
+      "Bash(uv run python scripts/check_claude_setup.py)",
+      "Bash(uv run python scripts/critical_coverage.py:*)",
+      "Bash(uv run python scripts/text_model.py --detect)",
+      "Bash(uv run python scripts/bump_version.py * --dry-run)",
+      "Bash(scripts/ci_local.sh:*)",
+      "Bash(./scripts/ci_local.sh:*)",
+      "Bash(docker compose -f deploy/docker-compose.dev.yml up:*)",
+      "Bash(docker compose -f deploy/docker-compose.dev.yml ps:*)",
+      "Bash(docker ps:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git grep:*)",
+      "Bash(git ls-files:*)",
+      "Bash(git blame:*)",
+      "Bash(git branch:*)",
+      "Bash(git tag -l:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)",
+      "Bash(gh run watch:*)",
+      "Bash(gh pr list:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh issue list:*)",
+      "Bash(gh issue view:*)",
+      "Bash(python3 -m http.server -d site:*)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./deploy/.env)",
+      "Read(./deploy/.env.*)"
+    ]
+  },
+  "enabledPlugins": {
+    "atlassian@claude-plugins-official": false,
+    "sentry@claude-plugins-official": false,
+    "cloudflare@claude-plugins-official": false,
+    "railway@claude-plugins-official": false,
+    "ralph-loop@claude-plugins-official": false,
+    "chrome-devtools-mcp@claude-plugins-official": false
+  },
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Write|Edit|MultiEdit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PROJECT_DIR:-.}/scripts/guard_hook.py\"",
+            "timeout": 90
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write|NotebookEdit",
@@ -10,6 +88,18 @@
             "command": "python3 \"${CLAUDE_PROJECT_DIR:-.}/scripts/ruff_on_edit.py\"",
             "statusMessage": "ruff check --fix + format",
             "timeout": 60
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup|clear",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR:-.}/scripts/session_start.sh\"",
+            "timeout": 10
           }
         ]
       }

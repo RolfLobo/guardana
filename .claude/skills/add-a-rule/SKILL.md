@@ -75,7 +75,7 @@ test pins it to the registry, so it will tell you.
 
 ## Verify it the way the project verifies things
 
-Run the gate (`full-gate` skill), and then **run the documented command against a
+Run the gate (`gate` skill), and then **run the documented command against a
 real target and read what it wrote**. A fake OpenAI-compatible endpoint is three
 lines of `http.server`. More real defects in this repository have been found that
 way than by any test.

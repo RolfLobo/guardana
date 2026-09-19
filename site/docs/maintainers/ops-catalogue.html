@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Operations catalogue — Guardana documentation</title>
+<meta name="description" content="One row per script under scripts/: what it writes, its safe mode, what it needs. Exact flags come from each script&#x27;s own --help or docstring.">
+<link rel="canonical" href="https://guardana.dev/docs/maintainers/ops-catalogue.html">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+<link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+<header class="top"><div class="bar">
+<a class="mark" href="../../">guard<span>ana</span></a>
+<nav>
+<a href="../index.html">Documentation</a>
+<a href="../rules/index.html">Rules</a>
+<a href="https://github.com/guardana/guardana">GitHub</a>
+</nav>
+</div></header>
+<div class="shell">
+<nav class="side">
+<ul class="home"><li><a href="../index.html">Overview</a></li></ul>
+<h2>First run</h2><ul>
+<li><a href="../how-it-works.html">How Guardana works</a></li>
+<li><a href="../install.html">Installing</a></li>
+<li><a href="../usage-testing.html">In your test suite</a></li>
+<li><a href="../usage-scan.html">guardana scan</a></li>
+<li><a href="../usage-probe.html">guardana probe</a></li>
+</ul>
+<h2>Run and policy</h2><ul>
+<li><a href="../safe-testing.html">Safe active testing</a></li>
+<li><a href="../usage-doctor.html">guardana doctor</a></li>
+<li><a href="../usage-target.html">guardana target inspect</a></li>
+<li><a href="../usage-plan.html">guardana plan</a></li>
+<li><a href="../exit-codes.html">Exit codes</a></li>
+<li><a href="../profiles.html">Profiles — guardana.yaml</a></li>
+</ul>
+<h2>Evidence and regression</h2><ul>
+<li><a href="../usage-baseline.html">guardana baseline</a></li>
+<li><a href="../usage-diff.html">guardana diff</a></li>
+<li><a href="../usage-monitor.html">guardana monitor</a></li>
+<li><a href="../usage-run.html">guardana run</a></li>
+<li><a href="../usage-calibrate.html">guardana calibrate</a></li>
+<li><a href="../privacy.html">Evidence and redaction</a></li>
+</ul>
+<h2>Recorded applications</h2><ul>
+<li><a href="../usage-analyze-trace.html">guardana analyze-trace</a></li>
+<li><a href="../usage-trace-inspect.html">guardana trace inspect</a></li>
+<li><a href="../usage-contracts.html">Security contracts</a></li>
+<li><a href="../usage-import-observations.html">guardana import-observations</a></li>
+<li><a href="../writing-an-integrator.html">Writing an integrator<span class="tag">beta</span></a></li>
+</ul>
+<h2>Rules and extensions</h2><ul>
+<li><a href="../usage-rules.html">guardana rules</a></li>
+<li><a href="../usage-taxonomy.html">guardana taxonomy</a></li>
+<li><a href="../writing-rules.html">Writing rules</a></li>
+<li><a href="../usage-rule-test.html">guardana rule test</a></li>
+<li><a href="../usage-pack.html">guardana pack</a></li>
+<li><a href="../extending.html">Extending Guardana</a></li>
+<li><a href="../model-formats.html">Reading model formats</a></li>
+</ul>
+<h2>Collector and deployment</h2><ul>
+<li><a href="../integrations.html">CI and pre-commit</a></li>
+<li><a href="../deployment.html">Deploying the collector<span class="tag">beta</span></a></li>
+<li><a href="../usage-collector.html">The collector<span class="tag">beta</span></a></li>
+</ul>
+<h2>Architecture and security</h2><ul>
+<li><a href="../product-status.html">Product status</a></li>
+<li><a href="../threat-model.html">Threat model</a></li>
+<li><a href="../architecture.html">Architecture</a></li>
+</ul>
+<h2>Reference</h2><ul>
+<li><a href="../rules/index.html">Rule explorer</a></li>
+<li><a href="../generated/rule-summary.html">Rule summary</a></li>
+<li><a href="../generated/rule-catalog.html">Rule catalog</a></li>
+<li><a href="../generated/evaluator-catalog.html">Evaluator catalog</a></li>
+<li><a href="../generated/taxonomy-coverage.html">Taxonomy coverage</a></li>
+</ul>
+<h2>Design documents</h2><ul>
+<li><a href="../design/README.html">How these are written</a></li>
+</ul>
+<h2>Project direction</h2><ul>
+<li><a href="../design/audit-0.23-market.html">The 0.23 repository and market audit<span class="tag">accepted</span></a></li>
+</ul>
+<h2>Maintainers</h2><ul>
+<li><a href="../maintainers/github-setup.html">GitHub repository setup</a></li>
+<li><a href="../maintainers/ops-catalogue.html" aria-current="page">Operations catalogue</a></li>
+<li><a href="../maintainers/lessons.html">Lessons</a></li>
+</ul>
+<h2>Also here</h2><ul>
+<li><a href="../design/trace-domain-model.html">The Trace domain model<span class="tag">implemented</span></a></li>
+<li><a href="../design/trace-producer.html">Producing a trace<span class="tag">implemented</span></a></li>
+<li><a href="../design/framework-adapters.html">Framework adapters<span class="tag">implemented</span></a></li>
+<li><a href="../design/assessment-channel.html">The assessment channel<span class="tag">accepted</span></a></li>
+<li><a href="../design/capability-protocols.html">Capability protocols<span class="tag">accepted</span></a></li>
+<li><a href="../design/production-intake.html">Production intake<span class="tag">proposed</span></a></li>
+<li><a href="../design/audit-0.21.html">The 0.21 audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-0.22.html">The 0.22 audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/security-contracts.html">Security contracts<span class="tag">implemented</span></a></li>
+<li><a href="../design/mcp-protocol-eras.html">MCP has two eras<span class="tag">implemented</span></a></li>
+<li><a href="../design/mcp-authorization-depth.html">MCP authorization depth<span class="tag">implemented</span></a></li>
+<li><a href="../design/taxonomy-editions.html">Taxonomy editions<span class="tag">implemented</span></a></li>
+<li><a href="../design/extension-author-tooling.html">Extension author tooling<span class="tag">accepted</span></a></li>
+<li><a href="../design/target-locators.html">Target locators<span class="tag">implemented</span></a></li>
+<li><a href="../design/output-plugins.html">Output plugins<span class="tag">proposed</span></a></li>
+<li><a href="../design/quality-suites.html">Quality suites<span class="tag">proposed</span></a></li>
+<li><a href="../design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
+<li><a href="../design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
+<li><a href="../design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
+<li><a href="../design/documentation-site.html">A documentation site<span class="tag">implemented</span></a></li>
+<li><a href="../design/run-manifest-v2.html">Run manifest v2<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-domain-model.html">Collector domain model<span class="tag">superseded</span></a></li>
+<li><a href="../design/privacy-and-redaction.html">Privacy and redaction<span class="tag">implemented</span></a></li>
+<li><a href="../design/exit-codes.html">Exit codes and gate semantics<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-persistence.html">Collector persistence<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-tenancy.html">Collector tenancy<span class="tag">implemented</span></a></li>
+<li><a href="../design/ai-systems-and-deployments.html">AI systems and deployments<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-runs-and-findings.html">Runs and findings<span class="tag">accepted</span></a></li>
+<li><a href="../design/finding-lifecycle-and-waivers.html">Finding lifecycle and waivers<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-retention-and-deletion.html">Audit, retention and deletion<span class="tag">accepted</span></a></li>
+<li><a href="../design/panel-sessions.html">Panel sessions<span class="tag">accepted</span></a></li>
+</ul>
+</nav>
+<main>
+<h1>Operations catalogue</h1><p class="lede">One row per script under scripts/: what it writes, its safe mode, what it needs. Exact flags come from each script's own --help or docstring.</p><p>One row per script under <code>scripts/</code>. This page answers &quot;which script, is it safe,
+what does it need&quot;; exact flags come from the script's own <code>--help</code> or module
+docstring, never from memory. <code>scripts/check_ops_catalogue.py</code> fails the gate
+when a script has no row or a row has no script.</p>
+<p>Columns: <strong>Writes</strong> = what a default run changes (<code>-</code> nothing · <code>repo</code> tracked
+files · <code>local</code> untracked or temporary files · <code>docker</code> images and containers ·
+<code>git</code> commits, tags, pushes). <strong>Safe mode</strong> = the flag that verifies without
+writing (<code>-</code> = nothing to guard, <code>NONE</code> = no such flag, the script always does its
+thing). <strong>Net</strong> = network it uses. <strong>Needs</strong> = tools or state it requires.</p>
+<p>⚠ prefixes a purpose that pushes, tags, publishes, deletes a tree, or reaches
+the network with no safe mode.</p>
+<p>Four scripts have no argument parser and run for real when handed <code>--help</code>:
+<code>release.py</code>, <code>clean_install_check.py</code>, <code>generate_sbom.py</code>, <code>image_smoke.py</code>.
+Read their docstring instead of asking them.</p>
+<h2 id="scripts--scripts">Scripts — <code>scripts/</code></h2>
+<h3 id="the-gate">The gate</h3>
+<p>Run through <code>scripts/ci_local.sh --quiet</code>; the gates below are what it runs, every one of
+them on every CI push as well.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>script</th>
+<th>purpose</th>
+<th>Writes</th>
+<th>Safe mode</th>
+<th>Net</th>
+<th>Needs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ci_local.sh</code></td>
+<td>mirror every CI job, one verdict line per gate; <code>--fast</code> reports the slow jobs as NOT RUN</td>
+<td><code>local</code> (<code>cache/ci/</code>, <code>.coverage*</code>, <code>sbom/</code>)</td>
+<td><code>-</code></td>
+<td><code>uv audit</code>, <code>uv sync --locked</code></td>
+<td>docker for PostgreSQL and the images</td>
+</tr>
+<tr>
+<td><code>critical_coverage.py</code></td>
+<td>per-area coverage floors over a coverage JSON report</td>
+<td><code>-</code></td>
+<td><code>-</code></td>
+<td><code>-</code></td>
+<td><code>.coverage.json</code> from pytest</td>
+</tr>
+<tr>
+<td><code>clean_install_check.py</code></td>
+<td>install the five distributions into an empty venv and run the documented commands</td>
+<td><code>local</code> (temp venv outside the repo)</td>
+<td><code>NONE</code> (no <code>--help</code>)</td>
+<td>package resolution</td>
+<td>~40 s</td>
+</tr>
+<tr>
+<td><code>generate_sbom.py</code></td>
+<td>one CycloneDX SBOM per distribution, verified against its metadata</td>
+<td><code>local</code> (<code>sbom/</code>, gitignored)</td>
+<td><code>--check</code> (writes to a temp dir)</td>
+<td><code>uv export</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>image_smoke.py</code></td>
+<td>⚠ build both container images and run them against the documented behaviour</td>
+<td><code>docker</code></td>
+<td><code>NONE</code> (no <code>--help</code>; <code>--no-build</code> reuses images)</td>
+<td>base-image pull</td>
+<td>docker running</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="documentation-and-the-site">Documentation and the site</h3>
+<p>Every generated file has a <code>--check</code> mode, and <code>test_generated_truth_is_current</code>
+runs three of them inside pytest.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>script</th>
+<th>purpose</th>
+<th>Writes</th>
+<th>Safe mode</th>
+<th>Net</th>
+<th>Needs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>generate_docs.py</code></td>
+<td><code>docs/generated/*</code> and the built-in pack manifest from the live registry</td>
+<td><code>repo</code></td>
+<td><code>--check</code></td>
+<td><code>-</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>sync_site.py</code></td>
+<td>rewrite the landing page's rule counts from the registry</td>
+<td><code>repo</code> (<code>site/index.html</code>)</td>
+<td><code>--check</code></td>
+<td><code>-</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>build_site.py</code></td>
+<td>⚠ delete and rewrite <code>site/docs/</code> from <code>docs/**.md</code></td>
+<td><code>repo</code> (<code>site/docs/</code>)</td>
+<td><code>--check</code></td>
+<td><code>-</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>generate_llms_txt.py</code></td>
+<td><code>site/llms.txt</code> from <code>docs/index.md</code></td>
+<td><code>repo</code></td>
+<td><code>--check</code></td>
+<td><code>-</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>og_card.html</code></td>
+<td>the source of <code>site/og.png</code>, rendered by hand (<code>site/README.md</code>)</td>
+<td><code>-</code></td>
+<td><code>-</code></td>
+<td><code>-</code></td>
+<td>a browser</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="release">Release</h3>
+<p><code>RELEASING.md</code> is the runbook; the <code>release</code> skill is the order that has gone
+wrong before.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>script</th>
+<th>purpose</th>
+<th>Writes</th>
+<th>Safe mode</th>
+<th>Net</th>
+<th>Needs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>bump_version.py</code></td>
+<td>set all five versions, every inter-package pin, the Action and image pins, then <code>uv lock</code></td>
+<td><code>repo</code></td>
+<td><code>--dry-run</code></td>
+<td><code>uv lock</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>release.py</code></td>
+<td>⚠ gate → bump → changelog roll → commit → push <code>main</code> → wait for green CI → push the tag (PyPI publish) → move the marketplace tag</td>
+<td><code>git</code> + <code>repo</code></td>
+<td><code>--dry-run</code> (no <code>--help</code>)</td>
+<td><code>git</code>, <code>gh</code>, PyPI via CI</td>
+<td><code>gh</code> authenticated, push rights</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="agent-tooling">Agent tooling</h3>
+<p>Wired in <code>.claude/settings.json</code>; never invoked by hand except the checks.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>script</th>
+<th>purpose</th>
+<th>Writes</th>
+<th>Safe mode</th>
+<th>Net</th>
+<th>Needs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ruff_on_edit.py</code></td>
+<td>PostToolUse hook: <code>ruff check --fix</code> + <code>ruff format</code> on the file just written</td>
+<td><code>repo</code> (that one file)</td>
+<td><code>-</code></td>
+<td><code>-</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>guard_hook.py</code></td>
+<td>PreToolUse hook: deny/ask for the commands a prompt cannot be trusted to hold</td>
+<td><code>-</code></td>
+<td><code>-</code></td>
+<td><code>-</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>session_start.sh</code></td>
+<td>SessionStart hook: work in flight, uncommitted paths, text engines</td>
+<td><code>-</code></td>
+<td><code>-</code></td>
+<td><code>-</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>check_claude_setup.py</code></td>
+<td>gate: frontmatter, rule globs, quoted paths, hook paths, CLAUDE.md budget</td>
+<td><code>-</code></td>
+<td><code>-</code></td>
+<td><code>-</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>check_ops_catalogue.py</code></td>
+<td>gate: every script has one row here, every row has a script</td>
+<td><code>-</code></td>
+<td><code>-</code></td>
+<td><code>-</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>text_model.py</code></td>
+<td>the one door to GPT (<code>codex</code>) and Gemini (<code>agy</code>) for reader-facing wording and verdicts about it</td>
+<td><code>local</code> (the <code>--out</code> file)</td>
+<td><code>--detect</code></td>
+<td>GPT / Gemini</td>
+<td><code>codex</code> or <code>agy</code> installed</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="for-decision">For decision</h2>
+<ul>
+<li>The four scripts without an argument parser run for real on <code>--help</code>.
+<code>release.py</code> fetches from <code>origin</code> and runs the whole gate before it notices
+that <code>--help</code> is not a version. A five-line <code>argparse</code> in each would close
+this; it is a change to release tooling, so it waits for a maintainer's yes.</li>
+<li><code>og_card.html</code> is rendered by hand and <code>site/og.png</code> is committed; nothing
+checks that the two still agree.</li>
+</ul>
+
+</main>
+</div>
+<footer class="foot"><div class="bar">
+<span>Guardana 0.24.0 · Apache-2.0</span>
+<a href="https://github.com/guardana/guardana/blob/main/docs/maintainers/ops-catalogue.md">Edit this page on GitHub</a>
+<a href="../../llms.txt">llms.txt</a>
+</div></footer>
+</body>
+</html>

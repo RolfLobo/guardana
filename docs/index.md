@@ -98,6 +98,8 @@ not task guides and may describe rejected or superseded alternatives.
 - [`../CONTRIBUTING.md`](../CONTRIBUTING.md) — setup, quality gates, and review rules
 - [`../RELEASING.md`](../RELEASING.md) — versioning and publishing
 - [`maintainers/github-setup.md`](maintainers/github-setup.md) — repository settings
+- [`maintainers/ops-catalogue.md`](maintainers/ops-catalogue.md) — which script, is it safe, what it needs
+- [`maintainers/lessons.md`](maintainers/lessons.md) — why the rules are what they are
 
 ## Governance
 
