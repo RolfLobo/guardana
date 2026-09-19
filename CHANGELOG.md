@@ -47,6 +47,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   https://karauda.com/contact as the alternative.** This replaces hello@,
   security@, conduct@, and maintainers@guardana.io in the README, SECURITY.md,
   CODE_OF_CONDUCT.md, and package metadata so contact details stay consistent.
+- **Rewrite the README as a shorter, simpler introduction to Guardana.** It now
+  leads with the product's value, evidence model, and quickstart so new readers can
+  decide faster whether it fits their security workflow.
 - **The agent setup is rebuilt for daily agentic work, and it is gated.**
   `CLAUDE.md` shrinks from 512 lines to a budget of 150 and now holds only what
   every session needs; the traps of each code area moved to path-scoped
