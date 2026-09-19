@@ -148,7 +148,7 @@ jobs:
       security-events: write   # to upload SARIF
     steps:
       - uses: actions/checkout@v4
-      - uses: guardana/guardana@v0.24   # moving tag → latest 0.24.x
+      - uses: guardana/guardana@v0.25   # moving tag → latest 0.25.x
         # with:
         #   args: --preset ci --baseline guardana-baseline.yaml
 ```
@@ -257,7 +257,8 @@ planned boundary for a managed service, as recorded in the project
 | **0.21** | Distinguished human and automated approvers, marked incomplete traces, and stopped all-declined runs from exiting `0`. |
 | **0.22** | Recorded passes as assessments, rejected comparisons when test definitions changed, enabled built-in rules on third-party targets, recorded rule ownership, and added parser property tests. |
 | **0.23** | Completed reference-package conformance fixtures, centralized plugin trust, corrected refusal handling, and added enforced layering, CodeQL, and ten more coverage floors. |
-| **0.24** *(current)* | Made installed custom target locators work across target-building commands with shared trust, kind, budget, evidence, and exit behavior. Extension API 2 defines the contract while API 1 remains compatible. |
+| **0.24** | Made installed custom target locators work across target-building commands with shared trust, kind, budget, evidence, and exit behavior. Extension API 2 defines the contract while API 1 remains compatible. |
+| **0.25** *(current)* | Shipped finding, clean, and inconclusive samples for scenario and agent rules, played by `guardana rule test`; 11 of 51 built-ins are fully sampled. Refused scripts that could not play and fixed false greens exposed by writing the samples. |
 | **next** | Add `guardana new-pack`, then suites with versioned datasets and assessors, paired statistical diff, and renderer and reporter plugins. |
 | **1.0** | Define the compatibility contract that makes third-party rule packs a stable investment. |
 

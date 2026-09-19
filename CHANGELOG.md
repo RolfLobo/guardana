@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.25.0] - 2026-09-19 — declarative rule samples expose false greens
+
 ### Added
 
 - **Scenario fixtures can script one `replies:` string for every step.** The rule

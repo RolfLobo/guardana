@@ -23,7 +23,7 @@ Every roadmap item must preserve these properties:
 5. Application-specific risk remains expressible without forking the engine.
 6. Public schemas are versioned and migratable.
 
-## What ships today (0.24.0)
+## What ships today (0.25.0)
 
 The current release is beta. It provides artifact scanning, controlled endpoint
 and MCP probing, recorded-trace analysis, regression comparison, policy and
@@ -33,8 +33,9 @@ collector. See [FEATURES.md](FEATURES.md) for the concise overview and
 
 ## Now: repeatable application assurance
 
-Target locators are complete for 0.24.0, and every declarative rule shape can
-ship its own positive, negative, and inconclusive samples. The remaining milestone
+Target locators are complete since 0.24.0 and declarative fixtures since 0.25.0:
+every declarative rule shape can ship its own positive, negative, and inconclusive
+samples. The remaining milestone
 turns a one-off extension into something a team can scaffold, repeat, compare, and
 operate. The order below reflects the
 [0.23 repository and market audit](docs/design/audit-0.23-market.md): author
