@@ -1,8 +1,12 @@
 from pathlib import Path
 
+import pytest
 from guardana.cli.exit_codes import ExitCode
 from guardana.cli.main import app
 from guardana.core.registry import Registry
+from guardana.core.rule import RuleContext
+from guardana.core.rule.verify import verify_rules
+from guardana.core.rule.yaml_rule import load_yaml_rules
 from typer.testing import CliRunner
 
 runner = CliRunner()
@@ -57,3 +61,26 @@ def test_scaffolded_canary_rule_loads(tmp_path: Path) -> None:
 
     assert outcome.errors == ()
     assert outcome.loaded == ("acme.leak.demo",)
+
+
+@pytest.mark.parametrize("evaluator", ["keyword", "canary"])
+def test_the_scaffolded_rule_grades_its_own_samples(tmp_path: Path, evaluator: str) -> None:
+    """The scaffold's first verification has to be green, or it teaches distrust.
+
+    `guardana rule test` counts a rule with no samples as unchecked and exits 2, so
+    a scaffold without them handed the author a red run before they had written
+    anything to be wrong about.
+    """
+    runner.invoke(
+        app,
+        ["new-rule", f"acme.prompt.{evaluator}", "--dir", str(tmp_path), "--evaluator", evaluator],
+    )
+    rules = load_yaml_rules(tmp_path / f"{evaluator}.yaml")
+    ctx = RuleContext(evaluators=Registry.discover().evaluators())
+
+    verified = list(verify_rules(rules, ctx))
+
+    assert verified, "the scaffold wrote no rule at all"
+    assert all(v.is_proven for v in verified), [
+        (v.rule_id, list(v.gaps), [r.fixture for r in v.failed]) for v in verified
+    ]

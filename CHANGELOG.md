@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`guardana new-rule` no longer scaffolds a rule that `guardana rule test`
+  refuses.** Since 0.25.0 a declarative rule can carry its samples and an unsampled
+  rule is reported as unchecked with exit `2`, so the one command that shows an
+  author what a rule looks like was handing them a red first run and a rule
+  without samples as the shape to copy. The template now writes a finding, a clean
+  and an inconclusive sample for both evaluators, and the canary template plants a
+  concrete placeholder marker so its positive sample is gradable.
+
 ### Changed
 
 - **The ordered milestone was re-read against its sources and no item moved.**

@@ -38,8 +38,20 @@ guardana new-rule acme.prompt.demo --dir ./team-rules   # default --dir: ./guard
 This writes a ready-to-edit endpoint YAML rule (named after the last segment
 of the id, e.g. `demo.yaml`) with `TODO` markers for the title, prompts, and
 expectation; it refuses to overwrite an existing file. `--evaluator` accepts
-`keyword` or `canary`. Point a run at the directory with the repeatable
-`--rules` flag — no packaging required:
+`keyword` or `canary`.
+
+It also writes the three samples, and they pass: `guardana rule test` over the
+fresh file grades a finding, a clean result and a decline, and says nothing is
+unsampled. That matters because a rule declaring no samples is reported as
+unchecked and exits `2` — the scaffold would otherwise hand you a red run before
+you had written anything to be wrong about. Rewrite the samples with the prompt,
+not after it.
+
+For a whole installable package rather than one file — manifest, entry points, a
+rule per shape, a target and tests — see [`guardana new-pack`](usage-new-pack.md).
+
+Point a run at the directory with the repeatable `--rules` flag — no packaging
+required:
 
 ```bash
 guardana probe --url http://localhost:11434 --model llama3 --rules ./team-rules
