@@ -45,6 +45,14 @@ changes rather than fixture changes (`docs/design/declarative-fixtures.md`, Deci
   scripted fixture cannot see it: `tool_result_injection` with its notice deleted still
   passes all three samples, so only the rule file can be checked for it.
 
+- A single-turn rule with several `prompts:` scripts one `reply:`, and the double
+  repeats it, so every prompt is graded against the same answer and `rule test` counts
+  one passing sample per fixture whatever the prompt list holds. That is a coherent
+  double — a model that answers this way to anything — and it is not what a reader of
+  "3 fixture(s) passed" necessarily assumes. `_scenario_script` refuses the analogous
+  mismatch for steps because there the order matters. Either the single-turn parser
+  gains a way to say which prompt a sample is about, or the vocabulary says plainly
+  that one reply answers them all.
 - A way for a fixture to say *why* a rule must decline or *which* turn must fire —
   `verify_rule` folds every result into one of three outcomes, for Python fixtures too. An
   additive field on `RuleFixture`, so a change to the contract every fixture shares.

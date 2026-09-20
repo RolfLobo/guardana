@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scaffolding a pack — Guardana documentation</title>
+<meta name="description" content="what guardana new-pack writes, why it writes a working pack rather than a skeleton, and the gate step that proves an author never has to copy a file out of this repository">
+<link rel="canonical" href="https://guardana.dev/docs/design/pack-scaffolding.html">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+<link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+<header class="top"><div class="bar">
+<a class="mark" href="../../">guard<span>ana</span></a>
+<nav>
+<a href="../index.html">Documentation</a>
+<a href="../rules/index.html">Rules</a>
+<a href="https://github.com/guardana/guardana">GitHub</a>
+</nav>
+</div></header>
+<div class="shell">
+<nav class="side">
+<ul class="home"><li><a href="../index.html">Overview</a></li></ul>
+<h2>First run</h2><ul>
+<li><a href="../how-it-works.html">How Guardana works</a></li>
+<li><a href="../install.html">Installing</a></li>
+<li><a href="../usage-testing.html">In your test suite</a></li>
+<li><a href="../usage-scan.html">guardana scan</a></li>
+<li><a href="../usage-probe.html">guardana probe</a></li>
+</ul>
+<h2>Run and policy</h2><ul>
+<li><a href="../safe-testing.html">Safe active testing</a></li>
+<li><a href="../usage-doctor.html">guardana doctor</a></li>
+<li><a href="../usage-target.html">guardana target inspect</a></li>
+<li><a href="../usage-plan.html">guardana plan</a></li>
+<li><a href="../exit-codes.html">Exit codes</a></li>
+<li><a href="../profiles.html">Profiles — guardana.yaml</a></li>
+</ul>
+<h2>Evidence and regression</h2><ul>
+<li><a href="../usage-baseline.html">guardana baseline</a></li>
+<li><a href="../usage-diff.html">guardana diff</a></li>
+<li><a href="../usage-monitor.html">guardana monitor</a></li>
+<li><a href="../usage-run.html">guardana run</a></li>
+<li><a href="../usage-calibrate.html">guardana calibrate</a></li>
+<li><a href="../privacy.html">Evidence and redaction</a></li>
+</ul>
+<h2>Recorded applications</h2><ul>
+<li><a href="../usage-analyze-trace.html">guardana analyze-trace</a></li>
+<li><a href="../usage-trace-inspect.html">guardana trace inspect</a></li>
+<li><a href="../usage-contracts.html">Security contracts</a></li>
+<li><a href="../usage-import-observations.html">guardana import-observations</a></li>
+<li><a href="../writing-an-integrator.html">Writing an integrator<span class="tag">beta</span></a></li>
+</ul>
+<h2>Rules and extensions</h2><ul>
+<li><a href="../usage-rules.html">guardana rules</a></li>
+<li><a href="../usage-taxonomy.html">guardana taxonomy</a></li>
+<li><a href="../writing-rules.html">Writing rules</a></li>
+<li><a href="../usage-rule-test.html">guardana rule test</a></li>
+<li><a href="../usage-new-pack.html">guardana new-pack</a></li>
+<li><a href="../usage-pack.html">guardana pack</a></li>
+<li><a href="../extending.html">Extending Guardana</a></li>
+<li><a href="../model-formats.html">Reading model formats</a></li>
+</ul>
+<h2>Collector and deployment</h2><ul>
+<li><a href="../integrations.html">CI and pre-commit</a></li>
+<li><a href="../deployment.html">Deploying the collector<span class="tag">beta</span></a></li>
+<li><a href="../usage-collector.html">The collector<span class="tag">beta</span></a></li>
+</ul>
+<h2>Architecture and security</h2><ul>
+<li><a href="../product-status.html">Product status</a></li>
+<li><a href="../threat-model.html">Threat model</a></li>
+<li><a href="../architecture.html">Architecture</a></li>
+</ul>
+<h2>Reference</h2><ul>
+<li><a href="../rules/index.html">Rule explorer</a></li>
+<li><a href="../generated/rule-summary.html">Rule summary</a></li>
+<li><a href="../generated/rule-catalog.html">Rule catalog</a></li>
+<li><a href="../generated/evaluator-catalog.html">Evaluator catalog</a></li>
+<li><a href="../generated/taxonomy-coverage.html">Taxonomy coverage</a></li>
+</ul>
+<h2>Design documents</h2><ul>
+<li><a href="../design/README.html">How these are written</a></li>
+</ul>
+<h2>Project direction</h2><ul>
+<li><a href="../design/audit-0.23-market.html">The 0.23 repository and market audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-0.25-market.html">The 0.25 roadmap and market audit<span class="tag">accepted</span></a></li>
+</ul>
+<h2>Maintainers</h2><ul>
+<li><a href="../maintainers/github-setup.html">GitHub repository setup</a></li>
+<li><a href="../maintainers/ops-catalogue.html">Operations catalogue</a></li>
+<li><a href="../maintainers/lessons.html">Lessons</a></li>
+</ul>
+<h2>Also here</h2><ul>
+<li><a href="../design/trace-domain-model.html">The Trace domain model<span class="tag">implemented</span></a></li>
+<li><a href="../design/trace-producer.html">Producing a trace<span class="tag">implemented</span></a></li>
+<li><a href="../design/framework-adapters.html">Framework adapters<span class="tag">implemented</span></a></li>
+<li><a href="../design/assessment-channel.html">The assessment channel<span class="tag">accepted</span></a></li>
+<li><a href="../design/capability-protocols.html">Capability protocols<span class="tag">accepted</span></a></li>
+<li><a href="../design/production-intake.html">Production intake<span class="tag">proposed</span></a></li>
+<li><a href="../design/audit-0.21.html">The 0.21 audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-0.22.html">The 0.22 audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/security-contracts.html">Security contracts<span class="tag">implemented</span></a></li>
+<li><a href="../design/mcp-protocol-eras.html">MCP has two eras<span class="tag">implemented</span></a></li>
+<li><a href="../design/mcp-authorization-depth.html">MCP authorization depth<span class="tag">implemented</span></a></li>
+<li><a href="../design/taxonomy-editions.html">Taxonomy editions<span class="tag">implemented</span></a></li>
+<li><a href="../design/extension-author-tooling.html">Extension author tooling<span class="tag">accepted</span></a></li>
+<li><a href="../design/target-locators.html">Target locators<span class="tag">implemented</span></a></li>
+<li><a href="../design/output-plugins.html">Output plugins<span class="tag">proposed</span></a></li>
+<li><a href="../design/quality-suites.html">Quality suites<span class="tag">proposed</span></a></li>
+<li><a href="../design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
+<li><a href="../design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
+<li><a href="../design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
+<li><a href="../design/declarative-fixtures.html">Declarative fixtures for scenarios and agent runs<span class="tag">accepted</span></a></li>
+<li><a href="../design/pack-scaffolding.html" aria-current="page">Scaffolding a pack<span class="tag">accepted</span></a></li>
+<li><a href="../design/documentation-site.html">A documentation site<span class="tag">implemented</span></a></li>
+<li><a href="../design/run-manifest-v2.html">Run manifest v2<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-domain-model.html">Collector domain model<span class="tag">superseded</span></a></li>
+<li><a href="../design/privacy-and-redaction.html">Privacy and redaction<span class="tag">implemented</span></a></li>
+<li><a href="../design/exit-codes.html">Exit codes and gate semantics<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-persistence.html">Collector persistence<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-tenancy.html">Collector tenancy<span class="tag">implemented</span></a></li>
+<li><a href="../design/ai-systems-and-deployments.html">AI systems and deployments<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-runs-and-findings.html">Runs and findings<span class="tag">accepted</span></a></li>
+<li><a href="../design/finding-lifecycle-and-waivers.html">Finding lifecycle and waivers<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-retention-and-deletion.html">Audit, retention and deletion<span class="tag">accepted</span></a></li>
+<li><a href="../design/panel-sessions.html">Panel sessions<span class="tag">accepted</span></a></li>
+</ul>
+</nav>
+<main>
+<h1>Scaffolding a pack<span class="status accepted">accepted</span></h1><p class="lede">what <code>guardana new-pack</code> writes, why it writes a working pack rather than a skeleton, and the gate step that proves an author never has to copy a file out of this repository</p><p><strong>Status:</strong> accepted · <strong>Written:</strong> 2026-09-20 · <strong>Roadmap &quot;Now&quot;, row 1</strong></p>
+<h2 id="the-problem-measured">The problem, measured</h2>
+<p>Guardana has had an extension contract since 0.18.0 and target locators since 0.24.0, and
+since 0.25.0 every declarative rule shape can ship its own samples. What it has never had is a
+way to start. <code>guardana init</code> writes one policy file. <code>guardana new-rule</code> writes one rule file
+with no tests, no fixtures, no manifest and no entry points. Everything else an author needs
+exists only as an example in this repository: twenty-three files and 1225 lines, which they
+copy and then edit until the names stop saying Acme.</p>
+<p>That is the gap, and it is the milestone's first row: a pack that is <em>possible</em> but expensive
+to prove will not create an ecosystem. The <a href="audit-0.25-market.html">0.25 audit</a> confirmed it is
+also the one hypothesis about adoption this project can measure without telemetry.</p>
+<h2 id="what-already-works-so-this-document-does-not-rebuild-it">What already works, so this document does not rebuild it</h2>
+<ul>
+<li>The manifest, its schema version and the separately versioned extension API range —
+<a href="extension-author-tooling.html">extension author tooling</a>, shipped in 0.18.0 and 0.20.0.</li>
+<li><code>guardana pack validate</code>, which compares what a manifest declares against what the entry
+points actually register, and <code>guardana pack lock</code>.</li>
+<li><code>guardana rule test</code>, and the three declared samples every rule shape can carry —
+<a href="declarative-fixtures.html">declarative fixtures</a>.</li>
+<li>Target locators, so a pack's target is reachable from the CLI —
+<a href="target-locators.html">target locators</a>.</li>
+</ul>
+<p><code>new-pack</code> writes files that use all four. It adds no engine capability.</p>
+<h2 id="decision-1--the-command-is-guardana-new-pack-beside-new-rule">Decision 1 — the command is <code>guardana new-pack</code>, beside <code>new-rule</code></h2>
+<p>The <code>pack</code> group exists, and both of its verbs — <code>validate</code>, <code>lock</code> — act on a pack that is
+already there. Creation lives at the top level in this CLI: <code>init</code> writes a policy, <code>new-rule</code>
+writes a rule, <code>new-pack</code> writes a pack. <code>ROADMAP.md</code> and <code>README.md</code> have promised the name
+in that form since 0.22, and a CLI name is a protected contract, so the published promise wins
+over the tidier grouping.</p>
+<p>Rejected: <code>guardana pack new</code>, which reads better next to its siblings and would rename a
+promise nobody has been given a reason to relearn.</p>
+<h2 id="decision-2--it-writes-a-pack-that-passes-not-a-skeleton-that-compiles">Decision 2 — it writes a pack that passes, not a skeleton that compiles</h2>
+<p>The generated pack must satisfy <code>guardana pack validate</code> and <code>guardana rule test</code> with zero
+edits, before the author has renamed anything. A scaffold whose first run is red teaches the
+author to distrust the tooling at the exact moment they have the least context to judge it,
+and it makes the fifteen-minute threshold unmeasurable — the clock would be measuring their
+debugging, not the path.</p>
+<p>This also fixes what the command is allowed to leave out. Anything that cannot be generated in
+a passing state does not ship in the scaffold; it ships as a commented block in the generated
+README with the command that adds it.</p>
+<h2 id="decision-3--all-three-declarative-shapes-each-with-its-three-samples">Decision 3 — all three declarative shapes, each with its three samples</h2>
+<p>One rule per shape: a single-prompt rule, a multi-step <code>steps:</code> scenario, and an agent run with
+<code>task:</code> and <code>tools:</code>. Each carries the full sample set — one that must produce a finding, one
+that must stay clean, one that must decline — because that triple is what <code>rule test</code> grades
+and what the milestone's exit criterion names.</p>
+<p>Three rules is more than a minimum, and that is deliberate: the shapes differ in how their
+scripts are written (<code>reply</code>, <code>replies</code>, <code>turns</code>), and an author who starts from the one shape
+they happened to ask for will write the other two by guessing. <code>--shape</code> narrows the set when
+somebody knows what they want.</p>
+<p><strong>The positive sample of each generated rule is evidence, not an absence.</strong> A keyword-graded
+rule whose finding sample is any reply without a refusal marker passes trivially, and a
+scaffold built to be green on the first run selects for exactly that: the author's first green
+would certify a tautology and teach them that this is what a sample looks like. The generated
+rules therefore plant a marker and grade its appearance, so the finding sample is proof and
+the clean sample fails to fire for a stated reason.</p>
+<p>Because <code>--shape</code> produces a combination the default run never installs, the gate runs the
+default <em>and</em> at least one narrowed invocation. A flag whose output is never executed is
+machinery nothing verifies.</p>
+<h2 id="decision-4--the-id-namespace-comes-from-the-name-and-guardana-is-refused">Decision 4 — the id namespace comes from the name, and <code>guardana.*</code> is refused</h2>
+<p><code>guardana new-pack acme-rules</code> produces the distribution <code>acme-rules</code>, the importable module
+<code>acme_rules</code> and rule ids under <code>acme.*</code>. Four names are refused at the argument, before
+anything is written, because a scaffold that emits an invalid pack and relies on a second
+command to notice is a false green in its documentation form:</p>
+<ul>
+<li>one that would place ids in the reserved <code>guardana.*</code> namespace;</li>
+<li>one whose prefix is a reserved target scheme — <code>file</code>, <code>http</code>, <code>https</code>, <code>mcp</code>, <code>trace</code> —
+because the generated locator target would then raise at discovery and the pack would not
+load at all;</li>
+<li>one that is not a valid distribution name, or whose module form is not a Python identifier;</li>
+<li>one already installed in this environment, because two origins claiming one id is a registry
+error and the author would meet it as a broken install rather than as a naming mistake.</li>
+</ul>
+<p>Each refusal names what it refused and why, and exits 3.</p>
+<h2 id="decision-5--the-generated-rules-map-to-a-published-framework">Decision 5 — the generated rules map to a published framework</h2>
+<p>Principle 5 says every rule maps to a public framework in edition form, and a scaffold that
+emitted <code>taxonomy: [ACME-01]</code> would teach the opposite on the author's first read. The three
+generated rules therefore map to entries of a shipped catalogue, in edition form. The
+<code>guardana.taxonomies</code> entry point is still declared and still wired, returning nothing, with
+the README explaining that a private control set goes there and how <code>provides.taxonomies</code>
+names the framework rather than each control.</p>
+<h2 id="decision-6--the-manifest-is-written-not-generated-from-the-code">Decision 6 — the manifest is written, not generated from the code</h2>
+<p>Guardana's own manifest is generated from the registry because it lists fifty-six ids.
+A third party's is short, and <code>pack validate</code> is what keeps it honest. The scaffold writes the
+manifest with the ids it just generated, and the generated test suite includes the accuracy
+test — a pack that promises a check it does not register is a false green arriving through
+documentation.</p>
+<p>One constraint makes that test evidence rather than a mirror: <strong>the manifest is rendered from
+the catalogue files on disk, after they are written, not from the id list the generator holds
+in memory.</strong> Rendered from one list, the manifest and the catalogue agree by construction and
+every test comparing them passes whatever the generator does. Rendered from the files, a
+catalogue that failed to write is a manifest that does not claim it.</p>
+<h2 id="decision-7--the-templates-are-data-not-string-literals">Decision 7 — the templates are data, not string literals</h2>
+<p>A template is the text of somebody else's package, and it contains code that would be
+wrong inside this one. The generated test suite discovers plugins the way a third
+party's test does; a command in this package may not, and a check in this repository
+reads every command module looking for exactly that. Keeping the templates as data
+files inside the package means the check is right about both: a command that
+discovers without a trust policy is still caught, and a template that shows a third
+party how to write their own test is not mistaken for one.</p>
+<p>It costs one thing, which is worth stating: data has to reach the wheel. The clean
+installation gate runs <code>new-pack</code> from built distributions in an empty environment,
+so a template that stopped shipping is a red build rather than a broken command in
+somebody else's terminal.</p>
+<h2 id="decision-8--it-refuses-a-directory-that-is-not-empty">Decision 8 — it refuses a directory that is not empty</h2>
+<p>Writing into an occupied directory risks overwriting an author's work to save them one
+argument. The command refuses with exit code 3 — invalid configuration or CLI usage — naming
+the path and what it found. <code>--force</code> is not offered; <code>rm -rf</code> is the author's decision to
+state out loud.</p>
+<p>&quot;Not empty&quot; ignores <code>.git</code> and the editor and platform droppings that would otherwise refuse
+the most likely real invocation: <code>mkdir mypack &amp;&amp; cd mypack &amp;&amp; git init &amp;&amp; guardana new-pack mypack --dir .</code>. The ignore set is written down in the usage page rather than discovered by
+whoever hits it.</p>
+<h2 id="decision-9--the-proof-is-a-gate-step-and-it-is-the-point">Decision 9 — the proof is a gate step, and it is the point</h2>
+<p>Row 1's done-criterion now reads that the pack is proven from an empty directory by a step
+that uses no file from this repository. That step:</p>
+<ol>
+<li>runs <code>guardana new-pack</code> into a temporary empty directory, and once more with <code>--shape</code>
+narrowed, so the flag's output is executed rather than merely written;</li>
+<li>installs each result in an isolated environment with no cache, alongside this checkout's own
+packages by path — the same way the three existing example suites install <code>guardana-core</code>
+and its siblings. <strong>This is deliberate.</strong> Installing the published engine instead would
+test the last release rather than this commit, so the step would go red one release after
+the contract moved, and it would put a network fetch inside a gate that runs offline;</li>
+<li>runs <code>guardana pack validate</code> <strong>against the generated manifest by path</strong>, and requires the
+generated pack's name in the output. Validating whatever happens to be installed is the
+hole described below;</li>
+<li>runs <code>guardana rule test</code> scoped to the generated pack's id prefix, and asserts the rendered
+counts — fixtures passed, rules not fully sampled — rather than the exit code alone;</li>
+<li>runs the generated test suite.</li>
+</ol>
+<p><strong>Step 3 exists in that shape because of a real hole.</strong> <code>installed_manifests()</code> drops an
+installed distribution that ships no manifest, and <code>pack validate</code> reports itself
+indeterminate only when it found <em>no</em> manifest at all. In an environment where any other pack
+is installed, a generated pack whose <code>guardana-pack.yaml</code> never made it into the wheel is
+therefore not a failure — it is a pack the validator never saw, reported as &quot;0 with problems&quot;.
+Naming the manifest and requiring the pack's own name in the output is what turns that silence
+back into an answer. The generated test suite carries the same check from the inside.</p>
+<p>&quot;Uses no file from this repository&quot; is a claim about <strong>the generated pack</strong>: no path into
+<code>examples/</code>, no import of a private module, nothing an author would have had to copy. The
+engine is a dependency, and in this gate it is this checkout's copy of it.</p>
+<p><code>guardana-core</code> is the only dependency the generated <code>pyproject.toml</code> declares, because that is
+where the evaluators and the taxonomy catalogues the generated rules resolve against live. The
+commands that verify the pack — <code>pack validate</code>, <code>rule test</code> — ship in <code>guardana-cli</code>, which an
+author already has if they are running <code>guardana</code> at all; the generated README says so rather
+than adding a dependency a pack does not import.</p>
+<p>The template pins the extension API range the build supports, and a test asserts that the range
+in the template still accepts <code>EXTENSION_API_VERSION</code>. Without it the scaffold keeps emitting a
+range that was right once, and every pack generated after the API moves is refused in both
+directions with nothing to point at.</p>
+<p>A fourth isolated suite costs roughly what the existing three cost, and it is the only
+mechanism that keeps the scaffold honest as the extension contract moves.</p>
+<h2 id="deferred-with-the-reason">Deferred, with the reason</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Deferred</th>
+<th>Reason</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>A generated Python rule</strong></td>
+<td>the three declarative shapes plus a locator target already exercise both halves of the contract; a fourth example adds a file to read without adding a mechanism to learn</td>
+</tr>
+<tr>
+<td><strong>A generated evaluator</strong></td>
+<td>an evaluator worth shipping encodes a judgement, and a scaffolded one would be a keyword matcher wearing a new name — the entry point is wired and empty, which is the honest form of &quot;yours goes here&quot;</td>
+</tr>
+<tr>
+<td><strong>Publishing the pack</strong></td>
+<td>naming a registry, a version policy and a signing story is its own decision; the scaffold stops at a pack that installs from a path</td>
+</tr>
+<tr>
+<td><strong>A cookiecutter-style template repository</strong></td>
+<td>a template drifts from the contract silently, and nothing runs it; a command in the CLI is covered by the same gate as the contract it writes for</td>
+</tr>
+</tbody>
+</table></div>
+
+</main>
+</div>
+<footer class="foot"><div class="bar">
+<span>Guardana 0.25.0 · Apache-2.0</span>
+<a href="https://github.com/guardana/guardana/blob/main/docs/design/pack-scaffolding.md">Edit this page on GitHub</a>
+<a href="../../llms.txt">llms.txt</a>
+</div></footer>
+</body>
+</html>

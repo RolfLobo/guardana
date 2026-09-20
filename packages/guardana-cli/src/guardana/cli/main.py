@@ -9,6 +9,7 @@ from guardana.cli.exit_codes import ExitCode
 from guardana.cli.import_observations import import_observations
 from guardana.cli.init import init
 from guardana.cli.monitor import monitor
+from guardana.cli.new_pack import new_pack
 from guardana.cli.new_rule import new_rule
 from guardana.cli.pack import pack_app
 from guardana.cli.plan import plan_app
@@ -93,6 +94,7 @@ app.command()(monitor)
 app.command(name="analyze-trace")(analyze_trace)
 app.command(name="import-observations")(import_observations)
 app.command(name="new-rule")(new_rule)
+app.command(name="new-pack")(new_pack)
 app.command(name="calibrate")(calibrate_command)
 app.add_typer(run_app, name="run")
 app.add_typer(plan_app, name="plan")

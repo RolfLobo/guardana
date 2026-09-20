@@ -216,3 +216,9 @@ jobs:
           --with ./examples/shell_hook_integrator
           --with pytest
           pytest examples/shell_hook_integrator/tests -q
+
+      # The three steps above prove a hand-written pack still works. This one proves
+      # the command that writes a pack from nothing does — installed, validated and
+      # graded, with its own detector checked against a manifest that lies.
+      - name: Scaffold a pack and prove it installs, validates and grades
+        run: uv run python scripts/new_pack_check.py

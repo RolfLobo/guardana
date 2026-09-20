@@ -25,6 +25,10 @@ Why: `docs/maintainers/lessons.md` § CLI and outputs. Contract: `docs/exit-code
 - A new command or flag: `docs/usage-<command>.md`, `docs/index.md`, `FEATURES.md`,
   `CHANGELOG.md`, and `scripts/clean_install_check.py` runs the documented invocation in an empty
   environment — the only gate that sees an undeclared import.
+- **A `.tmpl` under `cli/pack_templates/` is code nothing lints.** Ruff and mypy do not look
+  inside it and the unit tests only read the tree it produces, so a template edit is proven
+  only by `scripts/new_pack_check.py`, which installs the generated pack and runs its suite.
+  Run it after touching one.
 - `probe`, `monitor`, `target inspect` and `calibrate` contact whatever endpoint the user names;
   `plan probe` never does. A budget bounds requests before the first one is sent, and sending
   more than `--max-requests` is a defect that has shipped once.

@@ -124,6 +124,10 @@ step "Example shell_hook"  uv run --isolated --no-cache \
   --with ./packages/guardana-core --with ./packages/guardana-rules \
   --with ./examples/shell_hook_integrator --with pytest pytest examples/shell_hook_integrator/tests
 
+# The fourth: the three above prove a hand-written pack still works, this one proves
+# the command that writes one from nothing does.
+step "New pack"           uv run python scripts/new_pack_check.py
+
 # Local-only: CI has no job for the agent setup or the ops catalogue.
 step "Ops catalogue"       uv run python scripts/check_ops_catalogue.py
 step "Agent setup"         uv run python scripts/check_claude_setup.py

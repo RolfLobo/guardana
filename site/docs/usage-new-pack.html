@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>guardana new-pack — Guardana documentation</title>
+<meta name="description" content="one command writes an installable pack — manifest, entry points, three sampled rules, a target and tests — that passes pack validate and rule test before you edit anything">
+<link rel="canonical" href="https://guardana.dev/docs/usage-new-pack.html">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+<link rel="stylesheet" href="docs.css">
+</head>
+<body>
+<header class="top"><div class="bar">
+<a class="mark" href="../">guard<span>ana</span></a>
+<nav>
+<a href="index.html">Documentation</a>
+<a href="rules/index.html">Rules</a>
+<a href="https://github.com/guardana/guardana">GitHub</a>
+</nav>
+</div></header>
+<div class="shell">
+<nav class="side">
+<ul class="home"><li><a href="index.html">Overview</a></li></ul>
+<h2>First run</h2><ul>
+<li><a href="how-it-works.html">How Guardana works</a></li>
+<li><a href="install.html">Installing</a></li>
+<li><a href="usage-testing.html">In your test suite</a></li>
+<li><a href="usage-scan.html">guardana scan</a></li>
+<li><a href="usage-probe.html">guardana probe</a></li>
+</ul>
+<h2>Run and policy</h2><ul>
+<li><a href="safe-testing.html">Safe active testing</a></li>
+<li><a href="usage-doctor.html">guardana doctor</a></li>
+<li><a href="usage-target.html">guardana target inspect</a></li>
+<li><a href="usage-plan.html">guardana plan</a></li>
+<li><a href="exit-codes.html">Exit codes</a></li>
+<li><a href="profiles.html">Profiles — guardana.yaml</a></li>
+</ul>
+<h2>Evidence and regression</h2><ul>
+<li><a href="usage-baseline.html">guardana baseline</a></li>
+<li><a href="usage-diff.html">guardana diff</a></li>
+<li><a href="usage-monitor.html">guardana monitor</a></li>
+<li><a href="usage-run.html">guardana run</a></li>
+<li><a href="usage-calibrate.html">guardana calibrate</a></li>
+<li><a href="privacy.html">Evidence and redaction</a></li>
+</ul>
+<h2>Recorded applications</h2><ul>
+<li><a href="usage-analyze-trace.html">guardana analyze-trace</a></li>
+<li><a href="usage-trace-inspect.html">guardana trace inspect</a></li>
+<li><a href="usage-contracts.html">Security contracts</a></li>
+<li><a href="usage-import-observations.html">guardana import-observations</a></li>
+<li><a href="writing-an-integrator.html">Writing an integrator<span class="tag">beta</span></a></li>
+</ul>
+<h2>Rules and extensions</h2><ul>
+<li><a href="usage-rules.html">guardana rules</a></li>
+<li><a href="usage-taxonomy.html">guardana taxonomy</a></li>
+<li><a href="writing-rules.html">Writing rules</a></li>
+<li><a href="usage-rule-test.html">guardana rule test</a></li>
+<li><a href="usage-new-pack.html" aria-current="page">guardana new-pack</a></li>
+<li><a href="usage-pack.html">guardana pack</a></li>
+<li><a href="extending.html">Extending Guardana</a></li>
+<li><a href="model-formats.html">Reading model formats</a></li>
+</ul>
+<h2>Collector and deployment</h2><ul>
+<li><a href="integrations.html">CI and pre-commit</a></li>
+<li><a href="deployment.html">Deploying the collector<span class="tag">beta</span></a></li>
+<li><a href="usage-collector.html">The collector<span class="tag">beta</span></a></li>
+</ul>
+<h2>Architecture and security</h2><ul>
+<li><a href="product-status.html">Product status</a></li>
+<li><a href="threat-model.html">Threat model</a></li>
+<li><a href="architecture.html">Architecture</a></li>
+</ul>
+<h2>Reference</h2><ul>
+<li><a href="rules/index.html">Rule explorer</a></li>
+<li><a href="generated/rule-summary.html">Rule summary</a></li>
+<li><a href="generated/rule-catalog.html">Rule catalog</a></li>
+<li><a href="generated/evaluator-catalog.html">Evaluator catalog</a></li>
+<li><a href="generated/taxonomy-coverage.html">Taxonomy coverage</a></li>
+</ul>
+<h2>Design documents</h2><ul>
+<li><a href="design/README.html">How these are written</a></li>
+</ul>
+<h2>Project direction</h2><ul>
+<li><a href="design/audit-0.23-market.html">The 0.23 repository and market audit<span class="tag">accepted</span></a></li>
+<li><a href="design/audit-0.25-market.html">The 0.25 roadmap and market audit<span class="tag">accepted</span></a></li>
+</ul>
+<h2>Maintainers</h2><ul>
+<li><a href="maintainers/github-setup.html">GitHub repository setup</a></li>
+<li><a href="maintainers/ops-catalogue.html">Operations catalogue</a></li>
+<li><a href="maintainers/lessons.html">Lessons</a></li>
+</ul>
+<h2>Also here</h2><ul>
+<li><a href="design/trace-domain-model.html">The Trace domain model<span class="tag">implemented</span></a></li>
+<li><a href="design/trace-producer.html">Producing a trace<span class="tag">implemented</span></a></li>
+<li><a href="design/framework-adapters.html">Framework adapters<span class="tag">implemented</span></a></li>
+<li><a href="design/assessment-channel.html">The assessment channel<span class="tag">accepted</span></a></li>
+<li><a href="design/capability-protocols.html">Capability protocols<span class="tag">accepted</span></a></li>
+<li><a href="design/production-intake.html">Production intake<span class="tag">proposed</span></a></li>
+<li><a href="design/audit-0.21.html">The 0.21 audit<span class="tag">accepted</span></a></li>
+<li><a href="design/audit-0.22.html">The 0.22 audit<span class="tag">accepted</span></a></li>
+<li><a href="design/security-contracts.html">Security contracts<span class="tag">implemented</span></a></li>
+<li><a href="design/mcp-protocol-eras.html">MCP has two eras<span class="tag">implemented</span></a></li>
+<li><a href="design/mcp-authorization-depth.html">MCP authorization depth<span class="tag">implemented</span></a></li>
+<li><a href="design/taxonomy-editions.html">Taxonomy editions<span class="tag">implemented</span></a></li>
+<li><a href="design/extension-author-tooling.html">Extension author tooling<span class="tag">accepted</span></a></li>
+<li><a href="design/target-locators.html">Target locators<span class="tag">implemented</span></a></li>
+<li><a href="design/output-plugins.html">Output plugins<span class="tag">proposed</span></a></li>
+<li><a href="design/quality-suites.html">Quality suites<span class="tag">proposed</span></a></li>
+<li><a href="design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
+<li><a href="design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
+<li><a href="design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
+<li><a href="design/declarative-fixtures.html">Declarative fixtures for scenarios and agent runs<span class="tag">accepted</span></a></li>
+<li><a href="design/pack-scaffolding.html">Scaffolding a pack<span class="tag">accepted</span></a></li>
+<li><a href="design/documentation-site.html">A documentation site<span class="tag">implemented</span></a></li>
+<li><a href="design/run-manifest-v2.html">Run manifest v2<span class="tag">implemented</span></a></li>
+<li><a href="design/collector-domain-model.html">Collector domain model<span class="tag">superseded</span></a></li>
+<li><a href="design/privacy-and-redaction.html">Privacy and redaction<span class="tag">implemented</span></a></li>
+<li><a href="design/exit-codes.html">Exit codes and gate semantics<span class="tag">implemented</span></a></li>
+<li><a href="design/collector-persistence.html">Collector persistence<span class="tag">implemented</span></a></li>
+<li><a href="design/collector-tenancy.html">Collector tenancy<span class="tag">implemented</span></a></li>
+<li><a href="design/ai-systems-and-deployments.html">AI systems and deployments<span class="tag">implemented</span></a></li>
+<li><a href="design/collector-runs-and-findings.html">Runs and findings<span class="tag">accepted</span></a></li>
+<li><a href="design/finding-lifecycle-and-waivers.html">Finding lifecycle and waivers<span class="tag">accepted</span></a></li>
+<li><a href="design/audit-retention-and-deletion.html">Audit, retention and deletion<span class="tag">accepted</span></a></li>
+<li><a href="design/panel-sessions.html">Panel sessions<span class="tag">accepted</span></a></li>
+</ul>
+</nav>
+<main>
+<h1><code>guardana new-pack</code> — start from something that already passes</h1><p class="lede">one command writes an installable pack — manifest, entry points, three sampled rules, a target and tests — that passes <code>pack validate</code> and <code>rule test</code> before you edit anything</p><p>Guardana has had an extension contract since 0.18 and target locators since 0.24,
+and every declarative rule shape can carry its own samples since 0.25. What it did
+not have was a way to start: <code>guardana init</code> writes a policy file, <code>guardana new-rule</code> writes one rule, and everything else had to be copied out of this
+repository's example.</p>
+<pre><code class="language-bash">guardana new-pack acme-rules
+</code></pre>
+<pre><code>Wrote 13 files to acme-rules/
+Install and verify it:
+  pip install -e acme-rules
+  guardana pack validate acme-rules/src/acme_rules/guardana-pack.yaml
+  guardana rule test 'acme.*'
+  pytest acme-rules/tests
+</code></pre>
+<p>Those four lines are the point. Run them on the generated pack, before changing a
+character:</p>
+<pre><code>extension APIs implemented by this build: 1, 2 (newest 2)
+
+✓ acme-rules (extension_api &gt;=2,&lt;3) — 4 declared
+1 pack(s) checked, 0 with problems.
+
+3 rule(s); 9 fixture(s) passed, 0 failed, 0 could not run. 0 rule(s) not fully sampled.
+
+11 passed
+</code></pre>
+<p>A scaffold whose first verification is red teaches you to distrust the tool at the
+moment you have the least context to judge it. This one is green, so the first red
+you ever see is about your own change.</p>
+<h2 id="what-it-writes">What it writes</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>path</th>
+<th>what it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>pyproject.toml</code></td>
+<td>the four entry-point groups Guardana discovers, and <code>guardana-core</code> as the only dependency</td>
+</tr>
+<tr>
+<td><code>src/acme_rules/guardana-pack.yaml</code></td>
+<td>the manifest: what the pack promises, checked against what it registers</td>
+</tr>
+<tr>
+<td><code>src/acme_rules/catalog/</code></td>
+<td>one YAML file per rule, each with its finding, clean and inconclusive samples</td>
+</tr>
+<tr>
+<td><code>src/acme_rules/target.py</code></td>
+<td>a target, reachable as <code>--target acme-rules://some/directory</code></td>
+</tr>
+<tr>
+<td><code>src/acme_rules/__init__.py</code></td>
+<td><code>provide_rules</code>, <code>provide_evaluators</code>, <code>provide_targets</code>, <code>provide_taxonomies</code></td>
+</tr>
+<tr>
+<td><code>tests/</code></td>
+<td>the manifest is true, every rule proves all three outcomes, the target conforms</td>
+</tr>
+</tbody>
+</table></div>
+<p>No licence file is written. Picking one for you is not this command's decision —
+add a <code>LICENSE</code> and set <code>license</code> in <code>pyproject.toml</code>.</p>
+<h2 id="the-three-rule-shapes">The three rule shapes</h2>
+<p>One rule per shape, because they differ in how a sample is scripted and an author
+who starts from one will write the others by guessing:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>shape</th>
+<th>the rule declares</th>
+<th>a sample scripts</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>prompt</code></td>
+<td><code>prompts:</code></td>
+<td><code>reply:</code> — one answer</td>
+</tr>
+<tr>
+<td><code>scenario</code></td>
+<td><code>steps:</code></td>
+<td><code>replies:</code> — one answer per step</td>
+</tr>
+<tr>
+<td><code>agent</code></td>
+<td><code>task:</code> and <code>tools:</code></td>
+<td><code>turns:</code> — <code>say</code>, <code>call</code> with <code>arguments</code>, or both</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>--shape</code> narrows the set, and narrows the manifest with it:</p>
+<pre><code class="language-bash">guardana new-pack acme-rules --shape prompt --shape agent
+</code></pre>
+<p>Every generated rule plants a marker and grades whether it comes back. That is
+deliberate: a rule whose &quot;finding&quot; sample is merely a reply without a refusal
+marker passes whatever the model did, and a scaffold built to be green would
+otherwise teach you that this is what a sample looks like.</p>
+<h2 id="what-it-refuses-and-why">What it refuses, and why</h2>
+<p>Each of these exits <code>3</code> and writes nothing, because a scaffold that emits a pack
+the registry will reject has moved the error somewhere harder to read:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>name</th>
+<th>refused because</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>guardana-anything</code></td>
+<td>rule ids would start with <code>guardana.</code>, which the registry reserves</td>
+</tr>
+<tr>
+<td><code>trace</code>, <code>file</code>, <code>http</code>, <code>https</code>, <code>mcp</code></td>
+<td>the target scheme is reserved, so the pack would not load at all</td>
+</tr>
+<tr>
+<td><code>My-Pack</code>, <code>pack.name</code></td>
+<td>not a distribution name — lowercase letters, digits and hyphens</td>
+</tr>
+<tr>
+<td><code>2fast</code></td>
+<td>the module name would not be importable</td>
+</tr>
+<tr>
+<td>a name already installed here</td>
+<td>two origins claiming one id is a registry error</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>--dir</code> writes somewhere other than <code>./&lt;name&gt;</code>, and a directory that already holds
+files is refused rather than written over; there is no <code>--force</code>. <code>.git</code>,
+<code>.gitignore</code>, <code>.DS_Store</code>, <code>.idea</code> and <code>.vscode</code> do not count as occupied, so
+<code>git init</code> first and then scaffolding into <code>.</code> works.</p>
+<h2 id="editing-what-it-wrote">Editing what it wrote</h2>
+<ul>
+<li><strong>Rules.</strong> Change the prompts and the samples together, and keep the marker
+shape: it is what makes a positive sample evidence rather than an opinion.</li>
+<li><strong>The manifest.</strong> Add every new id to <code>provides</code>. <code>guardana pack validate</code> fails
+when the manifest and the registrations disagree, in either direction — see
+<a href="usage-pack.html"><code>guardana pack</code></a>.</li>
+<li><strong>The API range.</strong> <code>extension_api</code> pins the extension API, not Guardana's release
+number. Widen it after reading what changed, never before.</li>
+<li><strong>Your evaluator and your control set.</strong> <code>provide_evaluators</code> and
+<code>provide_taxonomies</code> return nothing on purpose. Fill them in and declare them.</li>
+</ul>
+<p><a href="writing-rules.html">Writing rules</a> has the full rule schema, and
+<a href="extending.html">extending Guardana</a> the contract behind the four entry points.</p>
+
+</main>
+</div>
+<footer class="foot"><div class="bar">
+<span>Guardana 0.25.0 · Apache-2.0</span>
+<a href="https://github.com/guardana/guardana/blob/main/docs/usage-new-pack.md">Edit this page on GitHub</a>
+<a href="../llms.txt">llms.txt</a>
+</div></footer>
+</body>
+</html>

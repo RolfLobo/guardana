@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`guardana new-pack` writes an installable pack that already passes.** One
+  command produces a manifest, all four entry-point groups, one declarative rule per
+  shape — single prompt, multi-step scenario, agent run — each carrying its finding,
+  clean and inconclusive samples, a locator target and a test suite. The generated
+  pack answers `guardana pack validate` and `guardana rule test` before a character
+  is edited: a scaffold whose first verification is red teaches distrust at the
+  moment an author has least context to judge the tool. Every generated rule plants
+  a marker and grades whether it comes back, so its positive sample is evidence
+  rather than the absence of a refusal. `--shape` narrows the catalogue and the
+  manifest together; `--dir` chooses where to write. Names that would produce a pack
+  the registry rejects are refused before anything is written, with the reason: the
+  reserved `guardana.` rule namespace, a reserved target scheme, a name that is not
+  a distribution or module name, and a name already installed here. A directory
+  holding files is never written over, and there is no `--force`.
+- **A fourth isolated gate step proves it.** `scripts/new_pack_check.py` scaffolds
+  into an empty directory, installs the result with no cache beside this build's own
+  packages, then validates the manifest by path, grades the rules scoped to the
+  pack's own prefix, and runs the generated suite. It also hands the validator a
+  manifest that lies, so the gate proves its own detector still works — a pack whose
+  manifest never reached the wheel is otherwise reported as nothing to check rather
+  than as broken.
+
 ### Fixed
 
 - **`guardana new-rule` no longer scaffolds a rule that `guardana rule test`
@@ -34,10 +58,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   audit that set the order. The editions that changed were already carried in the
   taxonomy catalogues, the GenAI telemetry conventions remain developmental in every
   span, and no comparable project shipped either of the two capabilities this
-  milestone is built on. `guardana new-pack` now states how it will be proven —
-  scaffolded into an empty directory by a gate step that uses no file from this
-  repository — and the claim that a design document already existed for each of the
-  first four remaining items is corrected, because the first one has none.
+  milestone is built on. `guardana new-pack` gained a done-criterion naming the gate
+  step that proves it, and the claim that a design document already existed for each
+  of the first four remaining items is corrected, because the first one had none.
 
 ## [0.25.0] - 2026-09-19 — declarative rule samples expose false greens
 

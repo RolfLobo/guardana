@@ -37,6 +37,7 @@ them on every CI push as well.
 | `ci_local.sh` | mirror every CI job, one verdict line per gate; `--fast` reports the slow jobs as NOT RUN | `local` (`cache/ci/`, `.coverage*`, `sbom/`) | `-` | `uv audit`, `uv sync --locked` | docker for PostgreSQL and the images |
 | `critical_coverage.py` | per-area coverage floors over a coverage JSON report | `-` | `-` | `-` | `.coverage.json` from pytest |
 | `clean_install_check.py` | install the five distributions into an empty venv and run the documented commands | `local` (temp venv outside the repo) | `NONE` (no `--help`) | package resolution | ~40 s |
+| `new_pack_check.py` | gate: scaffold a pack, install it isolated, and prove it validates, grades its samples and would notice a manifest that lies | `local` (a temp venv and tree outside the repo) | `--help` | package resolution | `uv`, ~15 s |
 | `generate_sbom.py` | one CycloneDX SBOM per distribution, verified against its metadata | `local` (`sbom/`, gitignored) | `--check` (writes to a temp dir) | `uv export` | — |
 | `image_smoke.py` | ⚠ build both container images and run them against the documented behaviour | `docker` | `NONE` (no `--help`; `--no-build` reuses images) | base-image pull | docker running |
 

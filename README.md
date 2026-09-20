@@ -259,7 +259,7 @@ planned boundary for a managed service, as recorded in the project
 | **0.23** | Completed reference-package conformance fixtures, centralized plugin trust, corrected refusal handling, and added enforced layering, CodeQL, and ten more coverage floors. |
 | **0.24** | Made installed custom target locators work across target-building commands with shared trust, kind, budget, evidence, and exit behavior. Extension API 2 defines the contract while API 1 remains compatible. |
 | **0.25** *(current)* | Shipped finding, clean, and inconclusive samples for scenario and agent rules, played by `guardana rule test`; 11 of 51 built-ins are fully sampled. Refused scripts that could not play and fixed false greens exposed by writing the samples. |
-| **next** | Add `guardana new-pack`, then suites with versioned datasets and assessors, paired statistical diff, and renderer and reporter plugins. |
+| **next** | Suites with versioned datasets and assessors, then paired statistical diff, then renderer and reporter plugins. |
 | **1.0** | Define the compatibility contract that makes third-party rule packs a stable investment. |
 
 Beyond 1.0, work is organized as milestones. Exit criteria, deferrals, and non-goals

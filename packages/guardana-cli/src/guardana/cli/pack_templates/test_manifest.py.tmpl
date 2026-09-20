@@ -1,0 +1,77 @@
+"""The manifest says what this pack provides, and it must be true of the install.
+
+These run against the installed distribution: entry points and the manifest are
+both only real once the wheel is built.
+"""
+
+from importlib import resources
+
+import __MODULE__
+from guardana.core.pack import (
+    EXTENSION_API_VERSION,
+    PackManifest,
+    check_pack,
+    installed_manifests,
+    load_manifest,
+)
+from guardana.core.registry import Registry
+
+
+def _manifest() -> PackManifest:
+    path = resources.files("__MODULE__").joinpath("guardana-pack.yaml")
+    with resources.as_file(path) as manifest:
+        return load_manifest(manifest)
+
+
+def _registered() -> set[str]:
+    """Every id the entry points register, in the vocabulary the manifest uses."""
+    return (
+        {rule.meta.id for rule in __MODULE__.provide_rules()}
+        | {evaluator.id for evaluator in __MODULE__.provide_evaluators()}
+        | {target.__name__ for target in __MODULE__.provide_targets()}
+        | {ref.framework for ref in __MODULE__.provide_taxonomies()}
+    )
+
+
+def test_the_manifest_ships_inside_the_wheel() -> None:
+    """A manifest left out of the wheel is one `pack validate` never reads.
+
+    It does not fail: an installed distribution with no manifest is dropped before
+    validation, so the pack is reported as nothing to check rather than as broken.
+    """
+    assert resources.files("__MODULE__").joinpath("guardana-pack.yaml").is_file()
+
+
+def test_this_build_can_load_this_pack() -> None:
+    assert _manifest().loadable_by(EXTENSION_API_VERSION)
+
+
+def test_the_manifest_lists_exactly_what_the_entry_points_register() -> None:
+    assert set(_manifest().provides) == _registered()
+
+
+def test_discovery_finds_this_pack() -> None:
+    found = [m for m in installed_manifests() if m.name == "__DIST__"]
+
+    assert found, "the pack ships a manifest and registers entry points, so it must be found"
+
+
+def test_a_promise_the_package_does_not_keep_is_reported() -> None:
+    """Inverted by removing a registration, not by editing the manifest.
+
+    Editing the manifest would only prove the parser reads fewer lines.
+    """
+    ids = sorted(rule.meta.id for rule in __MODULE__.provide_rules())
+    assert ids, "the package registers no rules, so there is no promise to break"
+
+    check = check_pack(_manifest(), _registered() - {ids[0]})
+
+    assert not check.ok
+    assert ids[0] in check.problems[0]
+
+
+def test_the_target_is_registered_and_declared() -> None:
+    registered = {target.__name__ for target in Registry.discover().targets()}
+
+    assert "__CLASS__Target" in registered
+    assert "__CLASS__Target" in _manifest().provides

@@ -1,0 +1,77 @@
+"""A target this pack can be pointed at from the command line."""
+
+from collections.abc import Iterator, Mapping
+from pathlib import Path
+from typing import Self
+
+from guardana.core.source import PythonSource, UnreadSource, read_source
+from guardana.core.target import Capability, LocatorError, Target, TargetKind
+
+
+class __CLASS__Target(Target):
+    """A directory of files, selected as ``__SCHEME__://path``.
+
+    Declares `READ_FILES` and implements every method that capability promises.
+    A declaration the runner selects rules by must have a surface behind it.
+    """
+
+    kind = TargetKind.ARTIFACT
+    scheme = "__SCHEME__"
+
+    def __init__(self, root: Path | str) -> None:
+        """Point the target at a directory."""
+        self._root = Path(root)
+        self._unread: list[UnreadSource] = []
+
+    @classmethod
+    def from_locator(cls, locator: str, *, options: Mapping[str, str]) -> Self:
+        """Build the target the CLI selected as ``__SCHEME__://path``."""
+        if options:
+            raise LocatorError(
+                "__SCHEME__ accepts no target options; unknown: "
+                + ", ".join(sorted(options))
+            )
+        root = Path(locator)
+        if not root.is_dir():
+            raise LocatorError(f"{root} is not a directory")
+        return cls(root)
+
+    def capabilities(self) -> set[Capability]:
+        """Files, and only files."""
+        return {Capability.READ_FILES}
+
+    @property
+    def ref(self) -> str:
+        """How this target appears in a finding and in a run manifest."""
+        return f"__SCHEME__://{self._root}"
+
+    def iter_files(self, suffixes: tuple[str, ...] | None = None) -> Iterator[Path]:
+        """Walk the directory in a stable order.
+
+        A root that is not there yields nothing AND records why. Yielding nothing
+        silently would make a directory nobody could read look like a directory
+        with nothing wrong in it, which is the one thing a security check may
+        never do.
+        """
+        if not self._root.is_dir():
+            self._unread.append(
+                UnreadSource(path=self._root, reason="the directory is not there to read")
+            )
+            return
+        for path in sorted(p for p in self._root.rglob("*") if p.is_file()):
+            if suffixes is None or path.suffix in suffixes:
+                yield path
+
+    def python_source(self, path: Path) -> PythonSource | None:
+        """Read and index a Python file; record it when it cannot be read."""
+        if path.suffix != ".py":
+            return None
+        result = read_source(path)
+        if isinstance(result, UnreadSource):
+            self._unread.append(result)
+            return None
+        return result
+
+    def unread_sources(self) -> tuple[UnreadSource, ...]:
+        """Every file this target could not read — a check that did not run."""
+        return tuple(self._unread)

@@ -23,9 +23,9 @@ _TAXONOMY_GROUP = "guardana.taxonomies"
 _CANARY_EVALUATOR_ID = "canary"
 # Never planted for real: only used to ask a rule whether it participates at all.
 _MARKER = "GUARDANA_CANARY_PARTICIPATION_CHECK"
-_RESERVED_NAMESPACE = "guardana."
+RESERVED_NAMESPACE = "guardana."
 _TARGET_SCHEME = re.compile(r"^[a-z][a-z0-9-]*$")
-_RESERVED_TARGET_SCHEMES = frozenset({"file", "http", "https", "mcp", "trace"})
+RESERVED_TARGET_SCHEMES = frozenset({"file", "http", "https", "mcp", "trace"})
 
 
 class RegistryConflictError(RuleLoadError):
@@ -104,7 +104,7 @@ class Registry:
                     f"target {target.__name__} declares invalid scheme {scheme!r}; use a "
                     "lowercase name matching [a-z][a-z0-9-]*"
                 )
-            if scheme in _RESERVED_TARGET_SCHEMES:
+            if scheme in RESERVED_TARGET_SCHEMES:
                 raise RegistryConflictError(
                     f"target {target.__name__} declares reserved scheme {scheme!r}; "
                     "file, http, https, mcp and trace belong to built-in target forms"
@@ -134,13 +134,13 @@ class Registry:
     def _refuse_conflict(self, kind: str, identifier: str, origin: Origin) -> None:
         """Raise unless `identifier` is free, or held by this very origin."""
         if (
-            identifier.startswith(_RESERVED_NAMESPACE)
+            identifier.startswith(RESERVED_NAMESPACE)
             and origin.distribution is not None
             and not origin.is_builtin
         ):
             raise RegistryConflictError(
                 f"{origin.describe()} registers {kind} {identifier!r}, but the "
-                f"`{_RESERVED_NAMESPACE}*` namespace is reserved for Guardana's own "
+                f"`{RESERVED_NAMESPACE}*` namespace is reserved for Guardana's own "
                 f"distributions — namespace your ids (see docs/writing-rules.md)"
             )
         key = identifier if kind == "rule" else f"{kind}:{identifier}"

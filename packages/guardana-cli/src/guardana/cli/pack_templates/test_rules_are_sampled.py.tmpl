@@ -1,0 +1,28 @@
+"""Every rule proves all three outcomes: finding, clean, and could not tell.
+
+The third is the one that proves a rule can decline, which is the property this
+tool is built around. `guardana rule test "__PREFIX__.*"` runs the same check.
+"""
+
+import __MODULE__
+from guardana.core.registry import Registry
+from guardana.core.rule import RuleContext
+from guardana.core.rule.verify import verify_rules
+
+
+def test_every_rule_proves_all_three_outcomes() -> None:
+    ctx = RuleContext(evaluators=Registry.discover().evaluators())
+    rules = __MODULE__.provide_rules()
+
+    # Without this the test is green when the catalogue never reached the wheel:
+    # an empty list has no unproven rule in it.
+    assert rules, "the package registers no rules at all"
+
+    unproven = [
+        f"{v.rule_id}: gaps={list(v.gaps)} failed={[r.fixture for r in v.failed]} "
+        f"errored={[r.fixture for r in v.errored]}"
+        for v in verify_rules(rules, ctx)
+        if not v.is_proven
+    ]
+
+    assert not unproven, "\n".join(unproven)

@@ -1,0 +1,48 @@
+# __DIST__
+
+Guardana rules, a target and the manifest that declares them, discovered through
+the four public entry-point groups.
+
+## Verify it
+
+Nothing here needs editing first — that is the point. Install it and run the two
+commands that judge a pack:
+
+```bash
+pip install -e .
+guardana pack validate src/__MODULE__/guardana-pack.yaml
+guardana rule test '__PREFIX__.*'
+pytest tests
+```
+
+`guardana rule test` grades every rule against the three samples it declares: one
+that must produce a finding, one that must stay clean, one where the rule must
+decline. A rule with no samples is reported as unchecked, never as passing.
+
+## What is here
+
+| path | what it is |
+|---|---|
+| `src/__MODULE__/guardana-pack.yaml` | the manifest, checked against what this package registers |
+| `src/__MODULE__/catalog/` | the rules, one YAML file each, each with its three samples |
+| `src/__MODULE__/target.py` | a target, reachable as `--target __SCHEME__://some/directory` |
+| `src/__MODULE__/__init__.py` | the four entry points Guardana discovers |
+| `tests/` | the manifest is true, every rule proves all three outcomes, the target conforms |
+
+## Editing it
+
+- **Rules.** Each catalogue file is one rule. The three shapes differ in how a
+  sample is scripted: `reply` for one prompt, `replies` for a multi-step scenario,
+  `turns` for an agent run. Change the prompts and the samples together.
+- **The marker.** The samples plant `__MARKER___*` and grade whether it comes back,
+  so a positive sample is evidence rather than an opinion about tone. Keep that
+  shape when you rewrite them.
+- **The manifest.** Add every new rule id to `provides`. `guardana pack validate`
+  fails when the two disagree, in either direction.
+- **The API range.** `extension_api` pins the extension API, not Guardana's version.
+  When Guardana's extension API moves past the range, widen it here after checking
+  what changed — a pack outside the range is refused in both directions.
+- **Your evaluator and your control set.** `provide_evaluators` and
+  `provide_taxonomies` return nothing on purpose. Fill them in and declare them.
+- **A licence.** None is generated, because picking one for you is not this
+  command's call. Add a `LICENSE` and set `license` in `pyproject.toml`.

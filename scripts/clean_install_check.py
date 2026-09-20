@@ -127,6 +127,21 @@ def _checks(venv: Path, clean_directory: Path, trace_file: Path) -> list[Check]:
         Check("unknown flag", [guardana, "scan", "--no-such-flag", "."], 3),
         Check("path that does not exist", [guardana, "scan", "/no/such/path"], 3),
         Check("doctor", [guardana, "doctor"], 0),
+        # A command that WRITES is the one an undeclared import or a missing data
+        # file breaks quietly, because its templates live in the wheel rather than
+        # in the source tree this gate cannot see.
+        Check(
+            "new-pack scaffolds a pack",
+            [guardana, "new-pack", "demo-pack", "--dir", str(clean_directory.parent / "demo")],
+            0,
+            expect=("Wrote", "guardana pack validate"),
+        ),
+        Check(
+            "new-pack refuses a reserved namespace",
+            [guardana, "new-pack", "guardana-demo", "--dir", str(clean_directory.parent / "no")],
+            3,
+            expect=("reserved",),
+        ),
         Check("collector help", [collector, "--help"], 0),
         # The collector refuses to guess a storage backend. It must refuse in
         # words, with a code from the table — not with a stack trace.

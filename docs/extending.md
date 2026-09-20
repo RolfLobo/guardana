@@ -41,6 +41,13 @@ valid — the re-exports are the same objects. The full list is
 `SystemPromptPlanter`, `Target`, `TargetKind`, `TaxonomyRef`, `Verdict`, and
 `__version__`.
 
+Two names live on `guardana.core.registry` rather than at the top, because they
+are what the registry refuses rather than something an extension implements:
+`RESERVED_NAMESPACE` is the `guardana.` prefix no third-party id may take, and
+`RESERVED_TARGET_SCHEMES` is the set of locator schemes — `file`, `http`,
+`https`, `mcp`, `trace` — a third-party target may not claim. Read them rather
+than repeating them: a scheme refused at discovery is a pack that does not load.
+
 ## Adding a Rule
 
 See [`writing-rules.md`](writing-rules.md) for the full guide (YAML schema,
@@ -296,6 +303,11 @@ needs a test that `capabilities()` and its read/interaction surface behave.
 [`examples/custom_rule/tests/`](../examples/custom_rule/tests/) shows the
 pattern end-to-end for a rule package, including a discovery-proving test
 you can copy.
+
+You do not have to copy it. [`guardana new-pack`](usage-new-pack.md) writes the
+same shape — manifest, all four entry points, a rule per declarative shape with
+its three samples, a locator target and these tests — into an empty directory, and
+the result passes `pack validate` and `rule test` before you change anything.
 
 `guardana.core.testing` ships every double behind that, so a fixture is a
 few lines of Python instead of a network call or a hand-crafted binary, in

@@ -1,0 +1,49 @@
+"""__DIST__ — rules, a target, and the manifest that declares them.
+
+Guardana discovers all of this through the four public entry-point groups, the
+same way it discovers its own built-ins. Nothing here is special-cased.
+"""
+
+import importlib.resources
+
+from guardana.core.evaluator import Evaluator
+from guardana.core.rule import Rule
+from guardana.core.rule.yaml_rule import load_yaml_rules
+from guardana.core.target import Target
+from guardana.core.taxonomy import TaxonomyRef
+
+from __MODULE__.target import __CLASS__Target
+
+
+def provide_rules() -> list[Rule]:
+    """Entry point for `guardana.rules`: every rule in the catalogue."""
+    catalog = importlib.resources.files("__MODULE__.catalog")
+    rules: list[Rule] = []
+    for entry in sorted(catalog.iterdir(), key=lambda item: item.name):
+        if entry.name.endswith(".yaml"):
+            with importlib.resources.as_file(entry) as path:
+                rules.extend(load_yaml_rules(path))
+    return rules
+
+
+def provide_evaluators() -> list[Evaluator]:
+    """Entry point for `guardana.evaluators`.
+
+    Empty on purpose: a scaffolded evaluator would be a keyword matcher under a new
+    name. Return yours here, and add its id to `provides.evaluators` in the manifest.
+    """
+    return []
+
+
+def provide_targets() -> list[type[Target]]:
+    """Entry point for `guardana.targets`: what `--target __SCHEME__://...` builds."""
+    return [__CLASS__Target]
+
+
+def provide_taxonomies() -> list[TaxonomyRef]:
+    """Entry point for `guardana.taxonomies`.
+
+    Empty on purpose. A private control set goes here, and `provides.taxonomies`
+    names the framework rather than each control in it.
+    """
+    return []
