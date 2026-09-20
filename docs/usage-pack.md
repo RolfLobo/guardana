@@ -102,10 +102,18 @@ failing a build over it would make this something teams switch off.
 | every pack is loadable and accurate | pass | `0` |
 | a pack is unloadable, or promises what it does not register | fail | `1` |
 | nothing declared a manifest | **indeterminate** | `2` |
+| an installed package registers extensions and declares no manifest | **indeterminate** | `2` |
 | the manifest named on the command line could not be read | refused | `3` |
 
 Exit `2` over an empty run is deliberate: validating nothing is not the same as
 nothing being wrong.
+
+The second `2` is the same rule applied to a partial run. A package with no
+manifest is dropped before validation while its rules, evaluators, targets and
+catalogues stay live in the registry — so a verdict counted from the manifests
+that *were* found would be a clean bill of health over a subset whose size the
+reader cannot see. The command names those packages on stderr instead. Asking
+about one manifest by path is a different question and is answered on its own.
 
 ## Versioning
 

@@ -4,6 +4,7 @@ from guardana.core.pack.discover import (
     check_packs,
     installed_manifests,
     installed_packs,
+    unmanifested_packages,
 )
 from guardana.core.pack.load import MANIFEST_NAME, load_manifest
 from guardana.core.pack.lock import (
@@ -55,4 +56,5 @@ __all__ = [
     "lock_from_dict",
     "lock_of",
     "lock_to_dict",
+    "unmanifested_packages",
 ]

@@ -29,6 +29,7 @@ from guardana.core.pack import (
     installed_manifests,
     installed_packs,
     load_manifest,
+    unmanifested_packages,
 )
 from guardana.core.pack.lock import (
     LOCK_NAME,
@@ -74,9 +75,10 @@ def validate(
     """Check a pack manifest against this build's extension API and its own registrations.
 
     Exit `0` every pack is loadable and accurate · `1` one is not · `2` nothing
-    declared a manifest, or plugin trust refused an extension so this build's own
-    registrations are unproven and no manifest can be checked against them · `3`
-    the manifest could not be read at all.
+    declared a manifest, some installed package registers extensions and declares
+    none, or plugin trust refused an extension so this build's own registrations
+    are unproven and no manifest can be checked against them · `3` the manifest
+    could not be read at all.
     """
     registry = Registry.discover(resolve_trust(plugins, allow_plugin, no_plugins=False))
     warn_about_load_errors(registry, what="an extension")
@@ -129,7 +131,22 @@ def validate(
     checks = check_packs(manifests, registered)
     for line in _render(checks):
         typer.echo(line)
-    raise typer.Exit(code=ExitCode.POLICY_FAILED if any(not c.ok for c in checks) else ExitCode.OK)
+    if any(not c.ok for c in checks):
+        raise typer.Exit(code=ExitCode.POLICY_FAILED)
+    if manifest is None and (silent := unmanifested_packages()):
+        # Those packages register rules, evaluators, targets or catalogues that are
+        # live in this build, and no manifest says which API they were written
+        # against. Counting only the manifests found would report a clean bill of
+        # health over a subset whose size the reader cannot see.
+        shown = ", ".join(silent[:_NAMED_IN_A_WARNING])
+        typer.echo(
+            f"{len(silent)} installed package(s) register extensions and declare no "
+            f"manifest, so nothing here says whether this build can load them: "
+            f"{shown}" + (" …" if len(silent) > _NAMED_IN_A_WARNING else ""),
+            err=True,
+        )
+        raise typer.Exit(code=ExitCode.INDETERMINATE)
+    raise typer.Exit(code=ExitCode.OK)
 
 
 @pack_app.command("lock")

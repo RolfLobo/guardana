@@ -16,6 +16,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   without samples as the shape to copy. The template now writes a finding, a clean
   and an inconclusive sample for both evaluators, and the canary template plants a
   concrete placeholder marker so its positive sample is gradable.
+- **`guardana pack validate` no longer reports "0 with problems" about a pack it
+  never read.** An installed distribution that registers rules, evaluators, targets
+  or catalogues but ships no `guardana-pack.yaml` was dropped before validation,
+  and the command went indeterminate only when *no* manifest was found anywhere —
+  which never happens, because the built-in pack always has one. A third party
+  whose manifest missed the wheel therefore saw a clean verdict that belonged to
+  somebody else's pack, while their own checks ran unvalidated. The command now
+  names those packages and exits `2`; `guardana pack lock` already reported the
+  same fact, from the same call.
 
 ### Changed
 

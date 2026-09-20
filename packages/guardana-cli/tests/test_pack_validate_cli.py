@@ -16,6 +16,10 @@ make, just reached through a policy instead of a missing entry-point group. The
 fix refuses the comparison outright rather than reporting it wrong.
 """
 
+from pathlib import Path
+
+import pytest
+from guardana.cli import pack
 from guardana.cli.exit_codes import ExitCode
 from guardana.cli.main import app
 from typer.testing import CliRunner
@@ -52,3 +56,47 @@ def test_full_trust_still_catches_a_pack_that_really_does_not_register() -> None
     assert result.exit_code == ExitCode.OK, result.output
     assert "does not register" not in result.output
     assert "pack(s) checked" in result.output
+
+
+def test_a_package_that_registers_extensions_and_declares_no_manifest_is_named(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The silence this command used to keep about packs it never read.
+
+    `installed_manifests` drops a distribution that ships no manifest, and the
+    command went indeterminate only when the list came back empty — which it never
+    does, because the built-in pack always has one. A third party whose manifest
+    missed the wheel therefore saw "0 with problems" about rules that were live in
+    the registry and had been compared against nothing.
+    """
+    monkeypatch.setattr(pack, "unmanifested_packages", lambda: ["acme_rules"])
+
+    result = runner.invoke(app, ["pack", "validate"])
+
+    assert result.exit_code == ExitCode.INDETERMINATE, result.output
+    assert "acme_rules" in result.stderr
+    assert "declare no manifest" in result.stderr
+
+
+def test_a_named_manifest_is_answered_without_the_whole_installation(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Asking about one manifest is not asking for a survey of every install.
+
+    The unmanifested note belongs to the discovery run. Attaching it to an explicit
+    path would make a question about one file answerable only by the state of the
+    environment around it.
+    """
+    monkeypatch.setattr(pack, "unmanifested_packages", lambda: ["acme_rules"])
+    manifest = tmp_path / "guardana-pack.yaml"
+    manifest.write_text(
+        "schema_version: 2\nname: borrowed-pack\n"
+        'extension_api: ">=1,<3"\n'
+        "description: a manifest that claims a rule this build really registers\n"
+        "provides:\n  rules:\n    - guardana.prompt.injection.ignore_previous\n"
+    )
+
+    result = runner.invoke(app, ["pack", "validate", str(manifest)])
+
+    assert result.exit_code == ExitCode.OK, result.output
+    assert "acme_rules" not in result.stderr

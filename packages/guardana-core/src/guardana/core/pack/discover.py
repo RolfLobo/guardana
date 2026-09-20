@@ -119,6 +119,17 @@ def installed_manifests() -> list[PackManifest]:
     return [manifest for _module, manifest in _pack_modules() if manifest is not None]
 
 
+def unmanifested_packages() -> list[str]:
+    """Every installed package that registers an extension and declares no manifest.
+
+    The other half of `installed_manifests`, and the reason it is a function rather
+    than a detail: those packages are live in the registry and invisible to every
+    check that reads manifests. A caller that reports only the manifests it found is
+    reporting on a subset it cannot name the size of.
+    """
+    return [module for module, manifest in _pack_modules() if manifest is None]
+
+
 def check_packs(manifests: Sequence[PackManifest], registered: Iterable[str]) -> list[PackCheck]:
     """Check every pack, and report two of them claiming one name.
 
@@ -184,9 +195,11 @@ def _extension_packages() -> set[str]:
 def _manifest_in(package: str) -> PackManifest | None:
     """Read the manifest a package ships, or None when it ships none.
 
-    Absent is allowed. Requiring one would make every pack written before this
-    existed unloadable — breaking somebody's package to enforce a bar it could not
-    have known about — so `pack validate` reports the absence instead of refusing.
+    Absent is allowed, and reported. Requiring one would make every pack written
+    before this existed unloadable — breaking somebody's package to enforce a bar it
+    could not have known about. Dropping it silently would be worse: the extension
+    stays live in the registry while the command that judges packs never mentions
+    it, so `unmanifested_packages` is what keeps the absence visible.
     """
     try:
         candidate = resources.files(package).joinpath(MANIFEST_NAME)
