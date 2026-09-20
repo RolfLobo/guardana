@@ -91,6 +91,7 @@ not task guides and may describe rejected or superseded alternatives.
 - [`../FEATURES.md`](../FEATURES.md) — concise shipped capability overview
 - [`../ROADMAP.md`](../ROADMAP.md) — ordered next work and exit criteria
 - [`design/audit-0.23-market.md`](design/audit-0.23-market.md) — repository audit, market evidence, and the rationale for the current order
+- [`design/audit-0.25-market.md`](design/audit-0.25-market.md) — whether that order still follows from evidence, and the validation plan that replaces the one it could not run
 - [`../CHANGELOG.md`](../CHANGELOG.md) — release history
 
 ## Maintainers

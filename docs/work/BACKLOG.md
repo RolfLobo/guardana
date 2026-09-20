@@ -51,6 +51,14 @@ changes rather than fixture changes (`docs/design/declarative-fixtures.md`, Deci
 - Corpus rows for multi-step scenario and agent-run fixtures: the graded prefix is the rule's
   knowledge and a `tool_call` verdict has no column in the corpus format.
 
+## Taxonomy currency
+
+- The MITRE ATLAS catalogue records `version: 5.6.0`, which is the ATLAS *data format* release
+  and not the *content* release its eighteen entries were transcribed from. ATLAS publishes the
+  two on separate tracks, and three content releases have landed since that format version. The
+  provenance field is the first fix; mapping the agent-facing techniques the newest releases add
+  is rule work for the parallel contributor lane. See `docs/design/audit-0.25-market.md`.
+
 ## Tooling debt
 
 - Four scripts have no argument parser and run for real when handed `--help`:

@@ -39,19 +39,23 @@ samples. The remaining milestone
 turns a one-off extension into something a team can scaffold, repeat, compare, and
 operate. The order below reflects the
 [0.23 repository and market audit](docs/design/audit-0.23-market.md): author
-workflow and honest measurement come before additional output destinations.
+workflow and honest measurement come before additional output destinations. The
+[0.25 audit](docs/design/audit-0.25-market.md) re-read the standards and the
+comparable projects a month later and moved no row.
 
 | Order | Deliverable | Done when |
 |---:|---|---|
-| 1 | `guardana new-pack` | one command creates an installable pack with manifest, entry points, fixtures, locator target, and tests |
+| 1 | `guardana new-pack` | one command creates an installable pack with manifest, entry points, fixtures, locator target, and tests, proven from an empty directory by a gate step that uses no file from this repository |
 | 2 | Suites, versioned datasets, and assessors | a run records the sample, assessor, denominator, and uncertainty rather than only findings |
 | 3 | Paired statistical diff | comparison refuses unequal or undersized samples and gates only on a declared minimum effect |
 | 4 | Renderer and reporter plugins | outputs are discoverable entry points and every output remains behind the common redaction boundary |
 | 5 | Provider conformance matrix | documented endpoint support is backed by repeatable capability tests |
 | 6 | Assessments in the collector | trends are keyed by system, deployment, dataset, and assessor version; findings and quality measurements stay separate |
 
-Design inputs already exist for the shipped locators and fixtures and for the first
-four remaining items:
+Design inputs already exist for the shipped extension contract, locators and
+fixtures, and for rows 2, 3 and 4. Row 1 has none: `extension-author-tooling.md`
+designs the manifest, the lock file and `rule test`, not the command that
+scaffolds a pack.
 
 - [target locators](docs/design/target-locators.md)
 - [declarative fixtures](docs/design/declarative-fixtures.md)
@@ -119,6 +123,10 @@ New artifact formats, deterministic rules, framework adapters, and taxonomy
 updates may proceed in parallel when they do not delay the ordered milestone.
 Prefer extension packs when a feature adds a large dependency, a niche corpus, or
 an experimental evaluator.
+
+One taxonomy update is open now: the MITRE ATLAS catalogue records a data-format
+version rather than the content release its entries were transcribed from, and
+three content releases have landed since.
 
 ## Researched after the foundations
 

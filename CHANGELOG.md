@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **The ordered milestone was re-read against its sources and no item moved.**
+  [`docs/design/audit-0.25-market.md`](docs/design/audit-0.25-market.md) checked the
+  frameworks, the telemetry conventions and the comparable projects a month after the
+  audit that set the order. The editions that changed were already carried in the
+  taxonomy catalogues, the GenAI telemetry conventions remain developmental in every
+  span, and no comparable project shipped either of the two capabilities this
+  milestone is built on. `guardana new-pack` now states how it will be proven —
+  scaffolded into an empty directory by a gate step that uses no file from this
+  repository — and the claim that a design document already existed for each of the
+  first four remaining items is corrected, because the first one has none.
+
 ## [0.25.0] - 2026-09-19 — declarative rule samples expose false greens
 
 ### Added

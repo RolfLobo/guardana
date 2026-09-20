@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The 0.25 roadmap and market audit — Guardana documentation</title>
+<meta name="description" content="whether the ordered milestone still follows from evidence after target locators and declarative fixtures shipped, what the 0.23 validation plan actually produced, and why the order stays while the plan that was supposed to test it is replaced">
+<link rel="canonical" href="https://guardana.dev/docs/design/audit-0.25-market.html">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+<link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+<header class="top"><div class="bar">
+<a class="mark" href="../../">guard<span>ana</span></a>
+<nav>
+<a href="../index.html">Documentation</a>
+<a href="../rules/index.html">Rules</a>
+<a href="https://github.com/guardana/guardana">GitHub</a>
+</nav>
+</div></header>
+<div class="shell">
+<nav class="side">
+<ul class="home"><li><a href="../index.html">Overview</a></li></ul>
+<h2>First run</h2><ul>
+<li><a href="../how-it-works.html">How Guardana works</a></li>
+<li><a href="../install.html">Installing</a></li>
+<li><a href="../usage-testing.html">In your test suite</a></li>
+<li><a href="../usage-scan.html">guardana scan</a></li>
+<li><a href="../usage-probe.html">guardana probe</a></li>
+</ul>
+<h2>Run and policy</h2><ul>
+<li><a href="../safe-testing.html">Safe active testing</a></li>
+<li><a href="../usage-doctor.html">guardana doctor</a></li>
+<li><a href="../usage-target.html">guardana target inspect</a></li>
+<li><a href="../usage-plan.html">guardana plan</a></li>
+<li><a href="../exit-codes.html">Exit codes</a></li>
+<li><a href="../profiles.html">Profiles — guardana.yaml</a></li>
+</ul>
+<h2>Evidence and regression</h2><ul>
+<li><a href="../usage-baseline.html">guardana baseline</a></li>
+<li><a href="../usage-diff.html">guardana diff</a></li>
+<li><a href="../usage-monitor.html">guardana monitor</a></li>
+<li><a href="../usage-run.html">guardana run</a></li>
+<li><a href="../usage-calibrate.html">guardana calibrate</a></li>
+<li><a href="../privacy.html">Evidence and redaction</a></li>
+</ul>
+<h2>Recorded applications</h2><ul>
+<li><a href="../usage-analyze-trace.html">guardana analyze-trace</a></li>
+<li><a href="../usage-trace-inspect.html">guardana trace inspect</a></li>
+<li><a href="../usage-contracts.html">Security contracts</a></li>
+<li><a href="../usage-import-observations.html">guardana import-observations</a></li>
+<li><a href="../writing-an-integrator.html">Writing an integrator<span class="tag">beta</span></a></li>
+</ul>
+<h2>Rules and extensions</h2><ul>
+<li><a href="../usage-rules.html">guardana rules</a></li>
+<li><a href="../usage-taxonomy.html">guardana taxonomy</a></li>
+<li><a href="../writing-rules.html">Writing rules</a></li>
+<li><a href="../usage-rule-test.html">guardana rule test</a></li>
+<li><a href="../usage-pack.html">guardana pack</a></li>
+<li><a href="../extending.html">Extending Guardana</a></li>
+<li><a href="../model-formats.html">Reading model formats</a></li>
+</ul>
+<h2>Collector and deployment</h2><ul>
+<li><a href="../integrations.html">CI and pre-commit</a></li>
+<li><a href="../deployment.html">Deploying the collector<span class="tag">beta</span></a></li>
+<li><a href="../usage-collector.html">The collector<span class="tag">beta</span></a></li>
+</ul>
+<h2>Architecture and security</h2><ul>
+<li><a href="../product-status.html">Product status</a></li>
+<li><a href="../threat-model.html">Threat model</a></li>
+<li><a href="../architecture.html">Architecture</a></li>
+</ul>
+<h2>Reference</h2><ul>
+<li><a href="../rules/index.html">Rule explorer</a></li>
+<li><a href="../generated/rule-summary.html">Rule summary</a></li>
+<li><a href="../generated/rule-catalog.html">Rule catalog</a></li>
+<li><a href="../generated/evaluator-catalog.html">Evaluator catalog</a></li>
+<li><a href="../generated/taxonomy-coverage.html">Taxonomy coverage</a></li>
+</ul>
+<h2>Design documents</h2><ul>
+<li><a href="../design/README.html">How these are written</a></li>
+</ul>
+<h2>Project direction</h2><ul>
+<li><a href="../design/audit-0.23-market.html">The 0.23 repository and market audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-0.25-market.html" aria-current="page">The 0.25 roadmap and market audit<span class="tag">accepted</span></a></li>
+</ul>
+<h2>Maintainers</h2><ul>
+<li><a href="../maintainers/github-setup.html">GitHub repository setup</a></li>
+<li><a href="../maintainers/ops-catalogue.html">Operations catalogue</a></li>
+<li><a href="../maintainers/lessons.html">Lessons</a></li>
+</ul>
+<h2>Also here</h2><ul>
+<li><a href="../design/trace-domain-model.html">The Trace domain model<span class="tag">implemented</span></a></li>
+<li><a href="../design/trace-producer.html">Producing a trace<span class="tag">implemented</span></a></li>
+<li><a href="../design/framework-adapters.html">Framework adapters<span class="tag">implemented</span></a></li>
+<li><a href="../design/assessment-channel.html">The assessment channel<span class="tag">accepted</span></a></li>
+<li><a href="../design/capability-protocols.html">Capability protocols<span class="tag">accepted</span></a></li>
+<li><a href="../design/production-intake.html">Production intake<span class="tag">proposed</span></a></li>
+<li><a href="../design/audit-0.21.html">The 0.21 audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-0.22.html">The 0.22 audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/security-contracts.html">Security contracts<span class="tag">implemented</span></a></li>
+<li><a href="../design/mcp-protocol-eras.html">MCP has two eras<span class="tag">implemented</span></a></li>
+<li><a href="../design/mcp-authorization-depth.html">MCP authorization depth<span class="tag">implemented</span></a></li>
+<li><a href="../design/taxonomy-editions.html">Taxonomy editions<span class="tag">implemented</span></a></li>
+<li><a href="../design/extension-author-tooling.html">Extension author tooling<span class="tag">accepted</span></a></li>
+<li><a href="../design/target-locators.html">Target locators<span class="tag">implemented</span></a></li>
+<li><a href="../design/output-plugins.html">Output plugins<span class="tag">proposed</span></a></li>
+<li><a href="../design/quality-suites.html">Quality suites<span class="tag">proposed</span></a></li>
+<li><a href="../design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
+<li><a href="../design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
+<li><a href="../design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
+<li><a href="../design/declarative-fixtures.html">Declarative fixtures for scenarios and agent runs<span class="tag">accepted</span></a></li>
+<li><a href="../design/documentation-site.html">A documentation site<span class="tag">implemented</span></a></li>
+<li><a href="../design/run-manifest-v2.html">Run manifest v2<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-domain-model.html">Collector domain model<span class="tag">superseded</span></a></li>
+<li><a href="../design/privacy-and-redaction.html">Privacy and redaction<span class="tag">implemented</span></a></li>
+<li><a href="../design/exit-codes.html">Exit codes and gate semantics<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-persistence.html">Collector persistence<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-tenancy.html">Collector tenancy<span class="tag">implemented</span></a></li>
+<li><a href="../design/ai-systems-and-deployments.html">AI systems and deployments<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-runs-and-findings.html">Runs and findings<span class="tag">accepted</span></a></li>
+<li><a href="../design/finding-lifecycle-and-waivers.html">Finding lifecycle and waivers<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-retention-and-deletion.html">Audit, retention and deletion<span class="tag">accepted</span></a></li>
+<li><a href="../design/panel-sessions.html">Panel sessions<span class="tag">accepted</span></a></li>
+</ul>
+</nav>
+<main>
+<h1>The 0.25 roadmap and market audit<span class="status accepted">accepted</span></h1><p class="lede">whether the ordered milestone still follows from evidence after target locators and declarative fixtures shipped, what the 0.23 validation plan actually produced, and why the order stays while the plan that was supposed to test it is replaced</p><p><strong>Status:</strong> accepted · <strong>Written:</strong> 2026-09-20 · <strong>Subject:</strong> released 0.25.0, and the
+sequencing decided in <a href="audit-0.23-market.html">the 0.23 audit</a></p>
+<h2 id="decision-in-one-page">Decision in one page</h2>
+<p>Keep the &quot;Now&quot; order exactly as it stands: <code>guardana new-pack</code>, then suites with versioned
+datasets and assessors, then paired statistical diff, then renderer and reporter plugins, then
+the provider conformance matrix, then assessments in the collector.</p>
+<p>Nothing found in this pass moves a row. The standards that changed were already carried in the
+taxonomy catalogues before this audit began. The standard that did not change — the
+OpenTelemetry GenAI conventions — is the one the roadmap already defers for exactly that
+reason, and it is still developmental in every span and every attribute. The competitors who
+moved spent the month on provider surface and on datasets; neither of the two capabilities
+this milestone is built around, a scaffolding command and a paired statistical comparison,
+appeared anywhere.</p>
+<p>Change two things that are not the order.</p>
+<p>First, <strong>the validation plan from the 0.23 audit cannot be run and must be replaced.</strong> Its
+market half asked for three design partners and three independent target implementations. The
+project has no public issues, no discussions and one fork. That is not a refutation of the
+order; it is a plan written for a project with a feedback channel, applied to one that has
+visitors and no content. The replacement below measures the same hypotheses against numbers
+the repository computes about itself, which keeps the offline promise intact rather than
+trading it for telemetry.</p>
+<p>Second, <strong>row 1 is the only row with no design document, and <code>ROADMAP.md</code> currently says
+otherwise.</strong> It lists <code>extension-author-tooling.md</code> as row 1's design input; that document is
+marked implemented in 0.18.0, it designs the manifest, the lock file and <code>rule test</code>, and it
+does not describe <code>new-pack</code>. A command is a protected contract, so <code>new-pack</code> gets its own
+short design document before its code.</p>
+<h2 id="scope-and-method">Scope and method</h2>
+<p>This audit asks one question: does the &quot;Now&quot; order still follow from evidence now that 0.24.0
+shipped target locators and 0.25.0 shipped declarative fixtures for every rule shape?</p>
+<p>Evidence came from primary sources only, each read on 2026-09-20. Release facts were taken
+from the GitHub releases API rather than from a rendered page or a summary, after a first pass
+misdated two releases by a year. Repository claims were verified by reading the code and
+naming the line. Where a fact could not be confirmed on a page it is marked unverified and
+left unused.</p>
+<p><strong>No second opinion was obtained.</strong> The two brokered text engines were both exhausted on the
+day of writing, reproduced directly: GPT reports a usage limit resetting 2026-09-22, Gemini
+reports <code>RESOURCE_EXHAUSTED</code> resetting around 2026-09-24. The reasoning here is therefore
+single-source. That is a gap in the method, recorded rather than rounded up.</p>
+<h2 id="what-the-023-validation-plan-produced">What the 0.23 validation plan produced</h2>
+<p>The 0.23 audit committed to four hypotheses with decision thresholds, to be observed in the 60
+days after 0.24.0, without telemetry in the CLI.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Hypothesis</th>
+<th>Threshold it set</th>
+<th>What arrived</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>teams need non-built-in targets</td>
+<td>three independent systems reach a working locator</td>
+<td>nothing: no issues in any state, no discussions, one fork</td>
+</tr>
+<tr>
+<td>author tooling is the adoption bottleneck</td>
+<td>a conforming pack runnable in under 15 minutes without copying repository internals</td>
+<td>no external signal; the in-repo measurement stands on its own</td>
+</tr>
+<tr>
+<td>suites beat another output plugin</td>
+<td>three partners naming a dataset, assessor, minimum sample and decision</td>
+<td>nothing: no partners</td>
+</tr>
+<tr>
+<td>continuous evidence is urgent but out of path</td>
+<td>two operating envelopes and a written overload test</td>
+<td>nothing</td>
+</tr>
+</tbody>
+</table></div>
+<p>The reason is worth stating precisely, because it is not disinterest. In the fourteen days to
+2026-09-20 the repository's traffic records four unique visitors on <code>/discussions</code>, three on
+<code>/issues</code> and two on <code>/fork</code>, and none of them opened anything. Clone traffic runs an order of
+magnitude above page views, which is the shape of automation rather than of readers. Package
+downloads sit in the same band for all five distributions. These are numbers about reach, not
+about use, and treating them as adoption would be the reporting failure this project exists to
+prevent.</p>
+<p>One hypothesis is measurable without anybody's help, and its answer is unambiguous. The only
+working template for a third-party pack is <code>examples/custom_rule/</code>: twenty-three files and
+1225 lines. The documented path to writing one is 939 lines across two pages. <code>guardana init</code>
+writes a single policy file; <code>guardana new-rule</code> writes a single rule file with no tests, no
+fixtures, no manifest and no entry points. &quot;Without copying repository internals&quot; is not
+currently possible, which is the condition row 1 exists to remove.</p>
+<p><strong>The product-integrity half of the same plan passed, and unlike the market half it is
+checkable.</strong> All four measures were verified in code on 2026-09-20: an unknown target scheme
+raises rather than being skipped; a canary with no planted marker grades <code>inconclusive</code> with
+the reason written into the verdict; a target that does not meter itself reports unknown
+rather than zero; and a comparison whose assessor or dataset moved is excluded from every rate
+and named in the reader's notes instead of being folded into a number.</p>
+<h2 id="standards-three-confirmations-and-one-new-object">Standards: three confirmations and one new object</h2>
+<p><strong>OWASP published a new LLM edition and this repository already carries it.</strong> The 2026 edition
+is published, release date 4 August 2026.[^owasp-llm-2026] No entry was added or dropped;
+seven were re-ranked, and <em>System Prompt Leakage</em> was broadened into <em>Hidden Context
+Exposure</em>. The shipped catalogue matches that list entry for entry, including the relations
+that say how each 2026 entry supersedes a 2025 one. No work follows.</p>
+<p><strong>The agentic and MCP lists did not move.</strong> The Top 10 for Agentic Applications remains the
+edition published in December 2025.[^owasp-asi] The MCP Top 10 remains explicitly in its beta
+and pilot phase,[^owasp-mcp] which is the state the shipped catalogue records, pinned as a
+beta with the revision it was transcribed from.</p>
+<p><strong>NIST did not move either.</strong> AI 100-2 E2025 remains the current edition, finalized 24 March
+2025.[^nist-100-2] NIST's 2026 activity relevant to a testing tool is the control-overlay
+project for securing AI systems,[^nist-cosais] which produces SP 800-53 overlays rather than
+an attack taxonomy a rule maps to.</p>
+<p><strong>The OpenTelemetry GenAI conventions are still developmental, which is what the roadmap
+assumes.</strong> Every <code>gen_ai.*</code> attribute and every GenAI span — client, create agent, invoke
+agent, and the tool-execution span an agent trace depends on — carries the literal status
+<code>Development</code>.[^otel-spans][^otel-agent-spans] GenAI content left the core repository in
+v1.42.0 and now lives in a dedicated repository that has cut no release and no tag, with a
+changelog holding only an unreleased heading.[^otel-releases][^otel-genai-repo] Stabilisation
+appears only under an unconfirmed heading of the conventions roadmap, with no date. The
+roadmap's existing sentence — that full OTLP intake waits because the conventions are still
+changing — is accurate as written, and the compatibility spike it permits after items 2 and 3
+remains the right shape.</p>
+<p><strong>The new object is not a taxonomy.</strong> The Agent Control Standard was donated to the OWASP
+GenAI Security Project and announced on 1 September 2026.[^owasp-acs] It is a wire
+specification at v0.1.0: JSON-RPC hooks and versioned schemas that let a separate guardian
+inspect an action and permit, deny or modify it before it happens.[^acs-repo] There is no
+enumerated ACS list, so there is nothing for a rule to map to, and implementing the standard
+would put Guardana in the production request path, which the non-goals forbid.</p>
+<p>What makes it interesting is what its own issue tracker says: the wire is not authenticated,
+and the default posture on failure is to proceed. A control that fails open is precisely the
+defect this project names, and a deployed guardian is a system under test. That belongs in the
+parallel contributor lane as a target and a rule — never as engine logic — and only after the
+specification stops being a v0.1.0 with open protocol questions.</p>
+<h2 id="the-market-since-the-last-audit">The market since the last audit</h2>
+<p>Six comparable projects were checked against their own release histories for the month after
+20 August 2026, the date the previous audit read them.</p>
+<ul>
+<li><strong>Giskard is the one that moved on this milestone's ground.</strong> v3.0.0 splits the project into
+five distributions, adds composition operators over checks, exports its default registry
+generators on the public API, and adds JUnit XML export alongside a hub export
+format.[^giskard] A pluggable check registry and an output shape, in one release.</li>
+<li><strong>PyRIT changed address and grew its datasets.</strong> The repository the previous audit cited is
+archived; the live one published v1.1.0 with several hundred in-the-wild jailbreak
+templates, a second published dataset, dataset-refresh support, new target types and
+stop-reason metadata.[^pyrit-archived][^pyrit] No pass rates or sample sizes are stated,
+which is the distinction row 2 exists to make.</li>
+<li><strong>promptfoo spent the month on provider surface</strong>: portable HTTP and MCP configuration
+schemas, tool calls exposed in response metadata, an agents-API provider, and importable
+custom providers in another language.[^promptfoo]</li>
+<li><strong>garak added a framework mapping</strong>, tagging existing probe results by regulatory risk
+category, and hardened its agent probe.[^garak] A mapping, which is the same move a taxonomy
+catalogue makes.</li>
+<li><strong>Two projects did not move.</strong> One has had no release for ten months and one none for seven,
+with no commits on the default branch since.[^deepteam][^modelscan]</li>
+</ul>
+<p>Two absences carry more weight than any of the releases. <strong>Nobody shipped a paired statistical
+comparison of two runs.</strong> And <strong>nobody shipped a command that scaffolds an authoring
+package</strong>; the closest is a registry, which is where extensions are looked up, not where they
+come from. Rows 1 and 3 remain the two places this project is not following anyone.</p>
+<h2 id="what-moves-and-what-does-not">What moves, and what does not</h2>
+<ul>
+<li><strong>Unchanged:</strong> all six rows, in the order the 0.23 audit set.</li>
+<li><strong>Corrected:</strong> the claim that design inputs exist for the first four remaining rows. Row 1
+has none, and gets one before its code.</li>
+<li><strong>Replaced:</strong> the validation plan, below.</li>
+<li><strong>Added to the parallel lane:</strong> an ATLAS content refresh. ATLAS publishes monthly content
+releases separately from its semantically versioned data format, and three content releases
+have landed since the version the catalogue records.[^atlas-releases] The newest alone adds
+eleven techniques, most of them agent-facing.[^atlas-2026-09] The catalogue's provenance
+field currently names the data format rather than the content release, which is the first
+thing to fix; the techniques themselves are rule-mapping work that must not delay the
+milestone.</li>
+<li><strong>Still rejected</strong>, unchanged from the previous audit: inline enforcement, a universal risk
+score, unbounded autonomous attack generation, and a second trace store. The Agent Control
+Standard does not reopen the first of these.</li>
+</ul>
+<h2 id="options-that-were-rejected">Options that were rejected</h2>
+<p><strong>Moving the provider conformance matrix above renderer and reporter plugins.</strong> The active
+competitor spent the month on provider surface, so parity argues for it. Rejected because that
+row has no design document either, and because the five output formats it would overtake
+already ship — moving it up buys parity and defers the seam a third party needs to add an
+output of their own, which is named in the milestone's exit criteria.</p>
+<p><strong>Moving suites above <code>new-pack</code>.</strong> Two competitors moved on measurement, and suites are the
+deepest change in the milestone. Rejected on the dependency the previous audit drew and this
+one does not disturb: a suite run against somebody else's system needs a pack they can build,
+and building one today means copying twenty-three files out of an example.</p>
+<h2 id="a-validation-plan-this-project-can-actually-run">A validation plan this project can actually run</h2>
+<p>The previous plan failed because its observables lived outside the repository. These live
+inside it, are computed by the gate, and cost no telemetry.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Hypothesis</th>
+<th>Observable, and where the number comes from</th>
+<th>Threshold</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>author tooling is the bottleneck</td>
+<td>a gate step that scaffolds a pack into an empty directory, installs it isolated with no cache, and runs <code>pack validate</code> and <code>rule test</code> against it; the numbers are its wall-clock seconds and the count of files an author must still edit</td>
+<td>the step passes without any file from this repository, and an author edits no more than what the step reports</td>
+</tr>
+<tr>
+<td>the author path is not growing</td>
+<td>generated counts: lines of documentation on the critical authoring path, and files in a freshly scaffolded pack</td>
+<td>neither rises without a decision that says why</td>
+</tr>
+<tr>
+<td>the catalogue stays honestly sampled</td>
+<td>the generated count of rules that ship a full fixture set, today 11 of 51</td>
+<td>never falls; every rise names the shapes it covered</td>
+</tr>
+<tr>
+<td>a gate never passes what it did not run</td>
+<td>the four integrity measures above, each pinned by a test</td>
+<td>all four hold at every release, and a new one is added whenever a release adds a way to be silent</td>
+</tr>
+</tbody>
+</table></div>
+<p>The market hypotheses are not abandoned; they are unmeasurable today and are marked so rather
+than being answered with a number that means reach. The one honest intervention available is
+to make the channel able to produce content at all — the traffic shows people arriving at the
+discussion and issue pages and leaving without opening anything.</p>
+<h2 id="sources">Sources</h2>
+<p>[^owasp-llm-2026]: OWASP GenAI Security Project, <a href="https://github.com/GenAI-Security-Project/GenAI-LLM-Top10/blob/main/2026/README.md">Top 10 for LLM Applications, 2026 edition source</a>, release date 4 August 2026. Read 20 September 2026.
+[^owasp-asi]: OWASP GenAI Security Project, <a href="https://genai.owasp.org/2025/12/09/owasp-top-10-for-agentic-applications-the-benchmark-for-agentic-security-in-the-age-of-autonomous-ai/">Top 10 for Agentic Applications</a>, 9 December 2025. Read 20 September 2026.
+[^owasp-mcp]: OWASP, <a href="https://owasp.org/www-project-mcp-top-10/">MCP Top 10 project page</a>, stating &quot;Phase 3 – Beta Release and Pilot Testing&quot;. Read 20 September 2026.
+[^owasp-acs]: OWASP GenAI Security Project, <a href="https://genai.owasp.org/2026/09/01/owasp-genai-security-project-unveils-2026-top-10-for-llm-applications-new-agent-control-standard-and-sponsors-as-community-tops-30000-members/">2026 project announcement</a>, 1 September 2026. Read 20 September 2026.
+[^acs-repo]: <a href="https://github.com/GenAI-Security-Project/agent-control-standard">Agent Control Standard repository</a>, v0.1.0; used for the wire description, the unauthenticated wire and the fail-open default. Read 20 September 2026.
+[^nist-100-2]: NIST, <a href="https://csrc.nist.gov/pubs/ai/100/2/e2025/final">AI 100-2 E2025, final</a>, 24 March 2025. Read 20 September 2026.
+[^nist-cosais]: NIST, <a href="https://csrc.nist.gov/projects/cosais">Control Overlays for Securing AI Systems</a>. Read 20 September 2026.
+[^otel-spans]: OpenTelemetry, <a href="https://github.com/open-telemetry/semantic-conventions-genai/blob/main/docs/gen-ai/gen-ai-spans.md">GenAI spans</a>, status <code>Development</code>. Read 20 September 2026.
+[^otel-agent-spans]: OpenTelemetry, <a href="https://github.com/open-telemetry/semantic-conventions-genai/blob/main/docs/gen-ai/gen-ai-agent-spans.md">GenAI agent spans</a>, agent and tool-execution spans status <code>Development</code>. Read 20 September 2026.
+[^otel-releases]: OpenTelemetry, <a href="https://github.com/open-telemetry/semantic-conventions/releases">semantic-conventions releases</a>; v1.42.0 moved GenAI content out. Read 20 September 2026.
+[^otel-genai-repo]: OpenTelemetry, <a href="https://github.com/open-telemetry/semantic-conventions-genai">semantic-conventions-genai</a>; no releases, no tags. Read 20 September 2026.
+[^atlas-releases]: MITRE ATLAS, <a href="https://github.com/mitre-atlas/atlas-data/releases">atlas-data releases</a>; content releases v2026.07, v2026.08 and v2026.09 postdate data-format release v5.6.0. Read 20 September 2026 via the API.
+[^atlas-2026-09]: MITRE ATLAS, <a href="https://github.com/mitre-atlas/atlas-data/releases/tag/v2026.09">content release v2026.09</a>, 15 September 2026; eleven techniques added. Read 20 September 2026.
+[^giskard]: Giskard, <a href="https://github.com/Giskard-AI/giskard-oss/releases/tag/v3.0.0">giskard-oss v3.0.0</a>, 26 August 2026. Read 20 September 2026.
+[^pyrit-archived]: Microsoft, <a href="https://github.com/Azure/PyRIT">the archived PyRIT repository</a>, cited by the previous audit. Read 20 September 2026.
+[^pyrit]: Microsoft, <a href="https://github.com/microsoft/PyRIT/releases/tag/v1.1.0">PyRIT v1.1.0</a>, 4 September 2026. Read 20 September 2026.
+[^promptfoo]: Promptfoo, <a href="https://github.com/promptfoo/promptfoo/releases">releases 0.122.1 through 0.123.1</a>, 26 August to 18 September 2026. Read 20 September 2026.
+[^garak]: NVIDIA, <a href="https://github.com/NVIDIA/garak/releases/tag/v0.17.0">garak v0.17.0</a>, 9 September 2026. Read 20 September 2026.
+[^deepteam]: Confident AI, <a href="https://github.com/confident-ai/deepteam/releases">DeepTeam releases</a>; latest v1.0.9, 12 November 2025. Read 20 September 2026.
+[^modelscan]: Protect AI, <a href="https://github.com/protectai/modelscan/releases">ModelScan releases</a>; latest v0.8.8, 18 February 2026. Read 20 September 2026.</p>
+
+</main>
+</div>
+<footer class="foot"><div class="bar">
+<span>Guardana 0.25.0 · Apache-2.0</span>
+<a href="https://github.com/guardana/guardana/blob/main/docs/design/audit-0.25-market.md">Edit this page on GitHub</a>
+<a href="../../llms.txt">llms.txt</a>
+</div></footer>
+</body>
+</html>
