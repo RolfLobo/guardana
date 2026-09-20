@@ -23,12 +23,12 @@ Every roadmap item must preserve these properties:
 5. Application-specific risk remains expressible without forking the engine.
 6. Public schemas are versioned and migratable.
 
-## What ships today (0.25.0)
+## What ships today (0.26.0)
 
 The current release is beta. It provides artifact scanning, controlled endpoint
 and MCP probing, recorded-trace analysis, regression comparison, policy and
-baseline gates, extension APIs, and an optional authenticated PostgreSQL-backed
-collector. See [FEATURES.md](FEATURES.md) for the concise overview and
+baseline gates, extension APIs with scaffolding for a new pack, and an optional
+authenticated PostgreSQL-backed collector. See [FEATURES.md](FEATURES.md) for the concise overview and
 [Product status](docs/product-status.md) for limitations.
 
 ## Now: repeatable application assurance
