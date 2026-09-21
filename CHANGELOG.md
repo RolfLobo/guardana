@@ -20,6 +20,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`CITATION.cff` now lets GitHub render a "Cite this repository" button.** The
   button was unavailable without the file.
 
+### Changed
+
+- **All five distributions now declare `Development Status :: 4 - Beta`.** Their
+  metadata previously said `Development Status :: 3 - Alpha`, even though the
+  README badge, `ROADMAP.md` and `docs/product-status.md` said beta. `keywords` now total
+  13 instead of 5 and include mcp, model-context-protocol, agent-security,
+  red-teaming, owasp, mitre-atlas, sarif, supply-chain-security and llm-security.
+  The Documentation URL now points at https://guardana.dev/docs/ instead of
+  duplicating Homepage at https://guardana.dev.
+- **The README opening, landing page meta description and og:description now use
+  text rewritten through `scripts/text_model.py`.** The GitHub repository description
+  previously ran to 286 characters, so GitHub truncated it around 160 in search
+  results; it is now 158 characters. The README now states that every published
+  distribution carries signed build provenance verifiable with
+  `gh attestation verify` plus a PEP 740 attestation on PyPI.
+
 ### Fixed
 
 - **Canonical links under `site/docs/` now use the extensionless URLs served by the
