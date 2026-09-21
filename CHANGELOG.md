@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Generated `site/sitemap.xml` and `site/robots.txt` now describe the built tree.**
+  Neither existed, and both returned 404 on the live site across over 210 built
+  pages. `scripts/generate_sitemap.py` derives URLs from the built tree because a
+  sitemap must claim that each URL answers a request; `docs/index.md` could not
+  establish that. It omits `lastmod`, `changefreq` and `priority` because checkout
+  modification times recorded when the clone happened, not when a page changed.
+  The `--check` flag runs in `scripts/ci_local.sh` and `test_docs_consistency.py`, with
+  checks that no URL ends in `.html` and every URL has a file behind it.
+- **`CITATION.cff` now lets GitHub render a "Cite this repository" button.** The
+  button was unavailable without the file.
+
+### Fixed
+
+- **Canonical links under `site/docs/` now use the extensionless URLs served by the
+  host.** The `.html` forms returned 307 redirects, so canonical links contradicted
+  their purpose. `sitegen.page.served_path` now supplies both canonical links and the
+  sitemap, so the two cannot drift.
+
 ## [0.26.0] - 2026-09-20 — one command writes a pack that already passes
 
 ### Added
