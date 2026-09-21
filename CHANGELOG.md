@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.26.1] - 2026-09-21 — a field report, and the audit of its own fix
+
 ### Added
 
 - **Generated `site/sitemap.xml` and `site/robots.txt` now describe the built tree.**
@@ -105,6 +107,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   host.** The `.html` forms returned 307 redirects, so canonical links contradicted
   their purpose. `sitegen.page.served_path` now supplies both canonical links and the
   sitemap, so the two cannot drift.
+
+### Upgrading
+
+Comparing a 0.26.0 run with a 0.26.1 run over the same tree reports the moved entries as
+BLINDED, "a proven problem can no longer be graded, not fixed". Nothing went blind at
+the upgrade: the tool was always blind to those artifacts and now says so. A baseline
+waiver cannot cover them, because waivers move entries out of `findings` only.
 
 ## [0.26.0] - 2026-09-20 — one command writes a pack that already passes
 
