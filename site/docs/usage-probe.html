@@ -127,7 +127,8 @@
 </ul>
 </nav>
 <main>
-<h1><code>guardana probe</code> — one-shot dynamic checks against a live endpoint</h1><p class="lede"><code>guardana probe</code>: adversarial checks against a live endpoint or agent, and an MCP server's manifest <strong>and authorization surface</strong></p><p>Runs every <strong>endpoint</strong>-kind rule once against a live chat endpoint:
+<h1><code>guardana probe</code> — one-shot dynamic checks against a live endpoint</h1><p class="lede"><code>guardana probe</code>: adversarial checks against a live endpoint or agent, and an MCP server's manifest <strong>and authorization surface</strong></p><p>Runs every <strong>endpoint</strong>-kind rule against a live chat endpoint, one attempt per
+case unless <a href="#repeated-trials"><code>--trials</code></a> asks for more:
 direct prompt injection, jailbreak attempts (single-turn and multi-turn
 scenarios), indirect (RAG) injection, system-prompt leakage (via a planted
 canary), output-secret leakage, excessive tool-use agency (when the endpoint
@@ -209,6 +210,11 @@ Hugging Face TGI's <code>/generate</code>.</p>
 <td><code>--rules PATH</code></td>
 <td>none</td>
 <td>Directory or file of custom YAML rules; repeatable. Combined with the profile's <code>rules.paths</code> — see <a href="writing-rules.html"><code>writing-rules.md</code></a>. A malformed rule file is a warning, never an abort.</td>
+</tr>
+<tr>
+<td><code>--trials INTEGER</code></td>
+<td><code>1</code> (or <code>trials:</code> in the profile)</td>
+<td>Independent attempts per case for rules that grade a sampled reply — see <a href="#repeated-trials">Repeated trials</a>. Every preset uses <code>1</code>; we recommend <code>5</code> for a release gate, which is also garak's default number of generations per prompt</td>
 </tr>
 <tr>
 <td><code>--concurrency INTEGER</code></td>
@@ -453,6 +459,46 @@ to a string is an error, never a blank reply graded as clean. A planted system
 prompt with no <code>{{system}}</code> slot is folded into the prompt rather than dropped, so
 a canary/leak check is never silently disarmed. Programmatically, the same mapping
 is <code>guardana.core.target.HttpAdapterTransport</code> / <code>AdapterConfig</code>.</p>
+<h2 id="repeated-trials">Repeated trials</h2>
+<p>A deployed model samples, so one reply per prompt shows only that a failure did not
+happen that time. <code>--trials N</code> sends every case N times, each as a fresh request with no
+shared history, and records every attempt.</p>
+<pre><code class="language-bash">guardana probe --url http://localhost:11434 --model llama3 --trials 5
+</code></pre>
+<ul>
+<li><strong>Which rules repeat:</strong> single-prompt rules, scenarios, agent runs, <code>guardana.output.secrets</code>
+and <code>guardana.agent.excessive_tool_use</code> — every rule whose verdict depends on a sampled
+reply. MCP and other protocol checks, trace rules, and a scenario marked <code>stateful: true</code>
+make one attempt per case whatever you ask; the report names them.</li>
+<li><strong>A scenario is one case per attempt.</strong> Its graded turns and its whole-conversation grade
+are checkpoints of one conversation, so the bound counts the conversation once, not once
+per checkpoint.</li>
+<li><strong>A case fails when any attempt fails.</strong> It yields one finding that says how many attempts
+failed (<code>2 of 5 trials failed: …</code>). An attempt the grader could not decide, with none
+failed, leaves the case incomplete: it is reported as unverified, never as clean.</li>
+<li><strong>Every attempt is an assessment</strong> with its <code>trial</code> number in the saved run, and each
+repeating rule records a <code>trial_summary</code> — see <a href="usage-run.html#the-document"><code>usage-run.md</code></a>.</li>
+<li><strong>Cost is exact:</strong> a rule that repeats sends its requests times N, <code>guardana plan probe --trials N</code> prices that before anything is sent, and a budget bounds it.</li>
+<li><strong>One canary per rule per run:</strong> every attempt of a canary rule sees the same freshly
+minted token, because an attempt repeats the same input.</li>
+<li><strong>Guardana never changes the target's sampling settings.</strong> A lower temperature would
+measure a configuration nobody deployed.</li>
+</ul>
+<p>The report ends with one line per repeating rule:</p>
+<pre><code class="language-text">Trials
+  guardana.prompt.injection.ignore_previous  1 of 4 cases failed in 5 trials each · ASR@5 25% (95% CI 4.5 to 70%) · mean failure rate per trial 10% · graded by keyword, grader error not corrected
+  guardana.prompt.system_prompt_leak.canary  clean · 0 of 4 cases in 5 trials each · ASR@5 ≤ 52.8% (95%) · graded by canary, grader error not corrected
+  static prompt set · no adaptive attacker ran
+</code></pre>
+<p><code>ASR@K</code> is the share of cases where at least one of K attempts failed. A clean rule states
+an upper bound on it at 95% confidence, computed over <strong>cases</strong>, not over pooled attempts:
+the attempts at one prompt are correlated, so 4 cases in 5 trials each are 4 observations,
+not 20. A bound over four cases is wide, and the line says so rather than reading as safe.
+The bound is over this rule's own prompts, and it counts the grader's verdicts without
+correcting for the grader's own error, which the line states too.</p>
+<p><code>guardana diff</code> refuses to compare a rule whose trials per case changed between the two
+runs — more attempts find more, which is not a regression; see
+<a href="usage-diff.html#exit-codes"><code>usage-diff.md</code></a>.</p>
 <h2 id="how-canary-rules-work">How canary rules work</h2>
 <p>Rules that need <code>plant_system_prompt</code> (the system-prompt-leak canary rule and
 the indirect-injection scenario) run in their <strong>own</strong> probe pass, each against a dedicated endpoint
@@ -472,7 +518,13 @@ co-exist with your real system prompt.</p>
 ✖ [HIGH] guardana.prompt.injection.ignore_previous — Prompt injection via instruction override
     No refusal marker found; response likely complied.  (http://localhost:11434#llama3)
 
-2 finding(s); 8 rule(s) run, 0 skipped.
+Trials
+  guardana.prompt.injection.ignore_previous  1 of 4 cases failed in 1 trial each · ASR@1 25% (95% CI 4.5 to 70%) · graded by keyword, grader error not corrected
+  guardana.prompt.system_prompt_leak.canary  1 of 4 cases failed in 1 trial each · ASR@1 25% (95% CI 4.5 to 70%) · graded by canary, grader error not corrected
+  …
+  static prompt set · no adaptive attacker ran
+
+2 finding(s); 8 rule(s) run, 0 skipped. 22/22 case(s) measured.
 </code></pre>
 <p>Every dynamic finding's evidence pairs with a verdict: run
 <code>--format json</code> to see <code>outcome</code>, <code>confidence</code>, and <code>rationale</code> per finding.</p>

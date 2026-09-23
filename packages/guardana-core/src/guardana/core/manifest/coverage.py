@@ -78,12 +78,16 @@ def coverage_digest(
     and a fingerprint that moved with it would report a coverage change on every
     other run — which is the same as reporting none.
 
-    Trial counts are folded in through `RuleRecord.trials`. A rule that sends four
-    prompts and a rule that sends one are not the same amount of checking, and a
-    corpus trimmed to a quarter of its prompts must not read as an unchanged run.
+    Request counts are folded in through `RuleRecord.declared_requests`. A rule that
+    sends four prompts and a rule that sends one are not the same amount of checking,
+    and a corpus trimmed to a quarter of its prompts must not read as an unchanged run.
+    The string hashed per rule is fixed: changing it would move every recorded digest.
     """
     parts = [
-        *sorted(f"rule:{r.id}:{r.digest}:{'?' if r.trials is None else r.trials}" for r in rules),
+        *sorted(
+            f"rule:{r.id}:{r.digest}:{'?' if r.declared_requests is None else r.declared_requests}"
+            for r in rules
+        ),
         *sorted(f"evaluator:{e.id}:{e.digest or '?'}" for e in evaluators),
         *sorted(f"capability:{c}" for c in capabilities),
         *sorted(f"taxonomy:{t.framework}:{t.digest}" for t in taxonomies),

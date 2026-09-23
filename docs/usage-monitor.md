@@ -30,6 +30,7 @@ guardana monitor (--url <base-url> --model <name> | --target <scheme://locator>)
 | `--interval FLOAT` | `60.0` | Seconds between sampling cycles |
 | `--max-cycles INTEGER` | none (run forever) | Stop after this many cycles — mainly for testing/demos |
 | `--concurrency INTEGER` | `4` | How many rules may query the model at once, per cycle — same meaning as on `probe` |
+| `--trials INTEGER` | `1` (or `trials:` in the profile) | Independent attempts per case in every cycle, for rules that grade a sampled reply — same meaning as on `probe`, see [`usage-probe.md`](usage-probe.md#repeated-trials). A cycle costs its requests times this |
 | `--profile PATH` | none (built-in default profile) | Path to a `guardana.yaml` policy file |
 | `--preset [ci\|pre-training\|monitor]` | none | Named policy preset (mutually exclusive with `--profile`); `--preset monitor` fails on HIGH **and** on inconclusive — see [`profiles.md`](profiles.md#named-presets---preset) |
 | `--rules PATH` | none | Directory or file of custom YAML rules; repeatable. Combined with the profile's `rules.paths` — see [`writing-rules.md`](writing-rules.md). A malformed rule file is a warning, never an abort. |
@@ -64,6 +65,9 @@ canary** in a dedicated system prompt (merged with your
 `guardana.prompt.system_prompt_leak.canary` rule genuinely runs on every
 cycle instead of being skipped for lack of a planted prompt. See
 [`usage-probe.md`](usage-probe.md#how-canary-rules-work) for the mechanics.
+
+With `--trials N`, every cycle makes N attempts at each case of a rule that repeats, and
+all cycles use the same N, so two cycles always compare.
 
 ## How it decides to alert
 

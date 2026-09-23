@@ -62,6 +62,9 @@ trace:                          # only ever governs `analyze-trace` / `trace ins
 contracts:                      # optional; security contracts to load, files or
   - ./contracts/checkout.yaml   # directories — see usage-contracts.md
 
+trials: 1                       # optional; attempts per case for rules that grade a
+                                # sampled reply — see usage-probe.md#repeated-trials
+
 evaluators:                     # config-wired evaluators — see the section below
   llm_judge:
     endpoint: "http://localhost:11434"   # any OpenAI-compatible server
@@ -86,6 +89,7 @@ evaluators:                     # config-wired evaluators — see the section be
 | `fail_on.fail_on_error` | bool | **`true`** | A check that could not run *at all* — a plugin that failed to import, a custom rule file that would not load, a rule that raised — fails the gate. Note the default is the opposite of `fail_on_inconclusive`, and deliberately so: `inconclusive` is a verdict (the check ran and honestly could not tell), while an error means the check never happened while the result looked as though it had. Set `false` only if you would rather ship than fix the broken check. |
 | `trace.require` | list of dimension names | `[]` | Evidence a trace run demands: `messages`, `tools`, `retrieval`, `memory`, `identity`, `delegation`, `consent`, `policy`, `approval`, `effects`, `handoff`. A producer that does not record one makes the run **`indeterminate`, unconditionally** — no `fail_on_*` governs it, because you asked for this coverage by name. An unknown dimension raises at load. Governs traces only: a shared config carrying it does not affect `scan` or `probe`. See [`usage-trace-inspect.md`](usage-trace-inspect.md). |
 | `contracts` | list of paths | `[]` | Security contracts to load — files, or directories of `.yaml`/`.yml`. Added to anything passed via the repeatable `--contract PATH` flag. Unlike a malformed *rule* file, a contract that will not load is a hard error: it is your own threat model, and a silently absent one is a gate you think you have. See [`usage-contracts.md`](usage-contracts.md). |
+| `trials` | integer ≥ 1 | `1` | How many independent attempts `probe`, `monitor` and `plan probe` make at each case of a rule that grades a sampled model reply. `--trials N` wins over it. A rule that does not repeat (a protocol check, a `stateful` scenario) makes one attempt whatever this says, and the run records that. Anything other than a whole number of at least 1 is refused at load. See [`usage-probe.md`](usage-probe.md#repeated-trials). |
 | `evaluators` | mapping | `{}` | Config blocks for evaluators that need a model of their own, keyed by evaluator id — `llm_judge` and `guard` today. `probe` and `monitor` build and register them from this block at startup; see the next section. With no block, a rule naming that evaluator is skipped **visibly**, never silently passed. |
 
 `include`/`exclude` are matched with shell-style globbing (`fnmatch`) against
@@ -175,6 +179,10 @@ guardana scan .          --preset ci            # linter-style gate in CI
 guardana scan ./data     --preset pre-training  # strict pre-run gate on the training box
 guardana monitor --url … --model … --preset monitor
 ```
+
+Every preset makes **one attempt per case** (`trials: 1`), so choosing a preset never
+multiplies what a gate costs. Raise it with `--trials` or `trials:` where you mean to pay
+for it.
 
 `--preset` and `--profile` are mutually exclusive — pass one or the other. When
 you need finer control (per-rule config, custom rule directories, a wired judge),

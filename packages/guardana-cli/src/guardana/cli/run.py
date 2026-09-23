@@ -38,6 +38,16 @@ def _value(raw: object) -> str:
     return _UNKNOWN if raw is None else str(raw)
 
 
+def _trials(manifest: RunManifest) -> str:
+    """Say how many attempts per case were asked for, and how many rules made them."""
+    repeated = sum(
+        1
+        for rule in manifest.rules
+        if rule.trial_summary is not None and rule.trial_summary.trials_per_case > 1
+    )
+    return f"{manifest.execution.trials} per case asked; {repeated} rule(s) repeated"
+
+
 def _lines(manifest: RunManifest) -> list[str]:
     usage, summary, target = manifest.usage, manifest.result_summary, manifest.target
     lines = [
@@ -57,6 +67,7 @@ def _lines(manifest: RunManifest) -> list[str]:
             f"  findings:  {summary.findings} ({summary.unverified} unverified, "
             f"{summary.waived} waived, {summary.errors} error(s))",
             f"  rules run: {len(summary.rules_run)} ({len(summary.rules_skipped)} skipped)",
+            f"  trials:    {_trials(manifest)}",
             f"  requests:  {_value(usage.requests)}",
             f"  tokens:    in {_value(usage.input_tokens)}, out {_value(usage.output_tokens)}",
             f"  wall time: {_value(usage.wall_time_seconds)}",

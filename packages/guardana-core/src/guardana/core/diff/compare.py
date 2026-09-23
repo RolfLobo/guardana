@@ -111,6 +111,8 @@ def compare(
     digests_before = before_context.rules
     digests_after = after_context.rules
 
+    retried = _trials_changed(before, after, ran_before & ran_after)
+
     changes: list[Change] = []
     unchanged = 0
     for identity in sorted(before_states.keys() | after_states.keys()):
@@ -119,6 +121,11 @@ def compare(
         # did not, the coverage change below is the honest report — pairing a
         # state against a rule that never ran would invent a verdict.
         if rule_id not in ran_before or rule_id not in ran_after:
+            continue
+        # Nor where the two runs made a different number of attempts at each case:
+        # a failure found in five tries and missed in one is more sampling, not a
+        # regression, and the refusal below says so instead.
+        if rule_id in retried:
             continue
         was, now = before_states.get(identity), after_states.get(identity)
         kind, detail = _classify(was, now)
@@ -137,7 +144,12 @@ def compare(
             )
         )
     changes.extend(_coverage_changes(ran_before, ran_after))
-    measurement = measure(before.assessments, after.assessments)
+    measurement = measure(
+        [a for a in before.assessments if a.rule_id not in retried],
+        [a for a in after.assessments if a.rule_id not in retried],
+        before_trials=before.trials_per_case,
+        after_trials=after.trials_per_case,
+    )
     return RunDiff(
         changes=tuple(changes),
         unchanged=unchanged,
@@ -146,8 +158,32 @@ def compare(
             *measurement.notes(),
         ),
         measurement=measurement,
-        incomplete=_incomplete(before, after),
+        incomplete=(
+            *_incomplete(before, after),
+            *(
+                f"{rule_id}: trials changed {was} → {now}, so its results are not answers "
+                f"to one question and it was not compared"
+                for rule_id, (was, now) in sorted(retried.items())
+            ),
+        ),
     )
+
+
+def _trials_changed(
+    before: ScanResult, after: ScanResult, shared: frozenset[str]
+) -> dict[str, tuple[int, int]]:
+    """Map each rule both runs ran to its attempts per case, where that number moved.
+
+    A rule absent from `trials_per_case` made one attempt per case: it does not repeat,
+    or the run was recorded before trials existed.
+    """
+    moved = {}
+    for rule_id in shared:
+        was = before.trials_per_case.get(rule_id, 1)
+        now = after.trials_per_case.get(rule_id, 1)
+        if was != now:
+            moved[rule_id] = (was, now)
+    return moved
 
 
 _STOP_EXPLANATIONS = {

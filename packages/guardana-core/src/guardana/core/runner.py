@@ -194,6 +194,9 @@ class Runner:
             # `diff` and the collector holding a conclusion with no cause.
             coverage_shortfall=_coverage_shortfall(self.profile, target),
             stopped_by=stopped_by,
+            trials_per_case={
+                rule.meta.id: rule.trials_per_case for rule in plan if rule.meta.id in ran
+            },
         )
 
     def _execute(self, plan: Sequence[Rule], target: Target) -> Iterator[_RuleOutcome]:

@@ -19,6 +19,7 @@ from guardana.core.manifest.records import (
     EvaluatorRecord,
     ResultSummary,
     RuleRecord,
+    TrialSummary,
 )
 from guardana.core.manifest.settings import ConfigurationRef, EvidenceMode, ExecutionSettings
 from guardana.core.manifest.settings import PrivacyRecord as _PrivacyRecord
@@ -27,6 +28,7 @@ from guardana.core.report.shortfall import CoverageShortfall, ShortfallKind
 from guardana.core.report.skipped import SkippedRule, SkipReason
 from guardana.core.report.stop import StopReason
 from guardana.core.target import TargetKind
+from guardana.core.trials import check_trials
 
 
 class ManifestLoadError(Exception):
@@ -194,7 +196,21 @@ def _execution(raw: object) -> ExecutionSettings:
         max_input_tokens=_optional_int(block, "max_input_tokens"),
         max_output_tokens=_optional_int(block, "max_output_tokens"),
         max_duration_seconds=_optional_number(block, "max_duration_seconds"),
+        trials=_execution_trials(block.get("trials")),
     )
+
+
+def _execution_trials(raw: object) -> int:
+    """Read the trials per case the operator asked for, refusing a value that is not one.
+
+    Absent reads as one attempt, which is what every run before trials existed made.
+    """
+    if raw is None:
+        return 1
+    try:
+        return check_trials(raw)
+    except ValueError as exc:
+        raise ManifestLoadError(f"run.execution.trials: {exc}") from exc
 
 
 def _usage(raw: object) -> RunUsage:
@@ -222,10 +238,55 @@ def _rules(raw: object) -> tuple[RuleRecord, ...]:
                 version=_optional_text(block, "version"),
                 origin=_optional_text(block, "origin"),
                 maturity=_optional_text(block, "maturity"),
-                trials=_optional_int(block, "trials"),
+                declared_requests=_optional_int(block, "declared_requests"),
+                trial_summary=_trial_summary(block),
             )
         )
     return tuple(records)
+
+
+_TRIAL_COUNTS = ("trials_per_case", "cases", "cases_failed", "cases_incomplete")
+_TRIAL_RATES = ("bound", "mean_success_rate")
+
+
+def _trial_summary(rule: Mapping[str, Any]) -> TrialSummary | None:
+    """Read what a rule's trials added up to, refusing a summary that is absent or malformed.
+
+    Refused rather than read as null: a summary is where a clean result states its
+    bound, and one quietly dropped would turn a stated bound into an unrepeated rule.
+    """
+    what = "run.rules[].trial_summary"
+    if "trial_summary" not in rule:
+        raise ManifestLoadError(f"{what} is missing; null says the rule made one attempt")
+    raw = rule["trial_summary"]
+    if raw is None:
+        return None
+    block = _mapping(raw, what)
+    counts: dict[str, int] = {}
+    for key in _TRIAL_COUNTS:
+        value = block.get(key)
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise ManifestLoadError(f"{what}.{key} must be a whole number")
+        counts[key] = value
+    rates: dict[str, float | None] = {}
+    for key in _TRIAL_RATES:
+        if key not in block:
+            raise ManifestLoadError(f"{what}.{key} is missing; null says it is unknown")
+        value = block[key]
+        if value is not None and (isinstance(value, bool) or not isinstance(value, int | float)):
+            raise ManifestLoadError(f"{what}.{key} must be a number or null")
+        rates[key] = None if value is None else float(value)
+    try:
+        return TrialSummary(
+            trials_per_case=counts["trials_per_case"],
+            cases=counts["cases"],
+            cases_failed=counts["cases_failed"],
+            cases_incomplete=counts["cases_incomplete"],
+            bound=rates["bound"],
+            mean_success_rate=rates["mean_success_rate"],
+        )
+    except ValueError as exc:
+        raise ManifestLoadError(f"{what}: {exc}") from exc
 
 
 def _coverage(raw: object) -> CoverageRecord:

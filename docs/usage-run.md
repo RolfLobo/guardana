@@ -28,6 +28,7 @@ run 0191d4c2-8f1a-7c3e-9b21-6f0a2d8e4c11
   gate:      pass
   findings:  0 (0 unverified, 0 waived, 0 error(s))
   rules run: 19 (0 skipped)
+  trials:    1 per case asked; 0 rule(s) repeated
   requests:  0
   tokens:    in not recorded, out not recorded
   wall time: 0.42
@@ -92,8 +93,10 @@ already have.
 
 What an older version never recorded arrives as an explicit unknown rather than as a
 default — version 1 has no usage, no execution settings and **no gate verdict**;
-version 2 has no coverage fingerprint and no declared trial counts; version 3 could not
-name a `trace` target, because that kind did not exist. Recomputing any
+version 2 has no coverage fingerprint and no declared request counts; version 3 could not
+name a `trace` target, because that kind did not exist; version 6 made one attempt per
+case, so it arrives with `execution.trials: 1`, `trial: null` on every assessment and
+no `trial_summary` on any rule — the summary is not recomputed from its assessments. Recomputing any
 of them during migration would apply today's build to another build's run, which is
 exactly what storing them as fields exists to prevent. `inspect` says so at the
 bottom of its output, and `diff` adds a note.
@@ -127,8 +130,8 @@ missing.
 ## The document
 
 The saved-run schema lives at
-[`schemas/run-v6.schema.json`](../schemas/run-v6.schema.json), identified by
-`https://guardana.dev/schemas/run/v6.schema.json`. The version is in the
+[`schemas/run-v7.schema.json`](../schemas/run-v7.schema.json), identified by
+`https://guardana.dev/schemas/run/v7.schema.json`. The version is in the
 identifier, so a consumer can tell which contract it is holding before parsing
 anything; it changes whenever the change is not backwards-compatible. A test
 validates what Guardana writes against that file, so the schema cannot drift
@@ -140,13 +143,16 @@ it was written to. Version 4 exists for one reason: it permits a `trace` target 
 Widening version 3's enum in place was the alternative, and it would have changed a
 contract under a name that promised it had not. Version 6 adds the `assessments`
 channel and `run.rules[].origin`; a version-5 document migrates forward with the
-first empty and the second `null`, because that is what it knew.
+first empty and the second `null`, because that is what it knew. Version 7 records
+repeated trials: `run.execution.trials`, `assessments[].trial` and
+`run.rules[].trial_summary`, and renames `run.rules[].trials` to `declared_requests`,
+which is what it always counted.
 
 Top level:
 
 | Key | What it is |
 |---|---|
-| `schema_version` | `6`. Stated once, for the whole document. |
+| `schema_version` | `7`. Stated once, for the whole document. |
 | `run` | the manifest — everything below |
 | `findings` / `unverified` / `waived` / `errors` / `observations` | the problem, evidence and inventory channels |
 | `assessments` | what the run *measured*, pass included — see [assessments](#assessments) |
@@ -162,9 +168,9 @@ Inside `run`:
 | `target` | what was examined, with a fingerprint and the fields that fingerprint covers |
 | `deployment` | which deployment of which AI system this verifies |
 | `configuration` | which settings produced it, **by digest** |
-| `execution` | what limits it ran under |
+| `execution` | what limits it ran under, and `trials`: the attempts per case the run asked for |
 | `usage` | what it actually consumed |
-| `rules` / `evaluators` | what did the checking, with digests, declared trial counts and calibration |
+| `rules` / `evaluators` | what did the checking, with digests, declared request counts, a `trial_summary` for each rule that repeated, and calibration |
 | `coverage` | what the run was *able* to check: one fingerprint, the framework catalogues it mapped against by digest, and any protocol versions the target negotiated |
 | `result_summary` | the counts, the gate, and whether the run was cut short |
 | `privacy` | which evidence policy was in force |
@@ -208,7 +214,8 @@ system improved, the test got weaker, or the sample changed.
   "confidence": 0.6,
   "dataset": "5435b77094cde319",
   "rationale": "Response contains a refusal marker.",
-  "tags": []
+  "tags": [],
+  "trial": 1
 }
 ```
 
@@ -220,10 +227,12 @@ system improved, the test got weaker, or the sample changed.
 | `passed` | the boolean reading, or `null` when nothing could be graded. Never `false` for a case that was not measured |
 | `value`, `unit`, `direction`, `threshold` | the numeric reading, which way is better, and the bound applied on *this* run |
 | `confidence` | how much the assessor trusts itself, when it can say. Never invented |
+| `trial` | which attempt at the case this was, from `1`, for a rule that can repeat; `null` for a rule that cannot, and for a run saved before trials existed. Not part of a case's identity: two runs pair on `case_id` |
 | `dataset` | which versioned corpus the case came from. For a YAML rule this is its declaration digest, so an edited expectation makes the two runs incomparable rather than making the model look worse |
 
 `run.result_summary` carries `assessments` and `measured` as two numbers rather
-than one rate. Their difference is the fact that matters: 40 assessments and 3
+than one rate. Both count records, one per attempt, so a rule that repeats five times
+adds five per case. Their difference is the fact that matters: 40 assessments and 3
 measured is a pass rate over three cases, and a summary carrying only the pass
 count would present it with the same confidence as a full run.
 
@@ -231,6 +240,34 @@ An artifact scan records none of these, and that is correct — reading a file a
 finding nothing is not a measurement. See
 [`design/assessment-channel.md`](design/assessment-channel.md) for the reasoning,
 and [`usage-diff.md`](usage-diff.md) for what a comparison does with them.
+
+## Trial summaries
+
+Each rule that repeated carries what its attempts added up to, over cases, as the engine
+reduced them when the run was written:
+
+```json
+"trial_summary": {
+  "trials_per_case": 5,
+  "cases": 12,
+  "cases_failed": 0,
+  "cases_incomplete": 0,
+  "bound": 0.2209,
+  "mean_success_rate": 0.0
+}
+```
+
+| Field | What it is |
+|---|---|
+| `trials_per_case` | the attempts this rule made at every case. It can be lower than `execution.trials`: a rule that cannot repeat has no summary at all |
+| `cases`, `cases_failed`, `cases_incomplete` | how many cases, how many had a failed attempt, and how many had an attempt nobody could grade and no failure |
+| `bound` | the 95% upper bound on the share of cases where any attempt fails, over cases, set only when every attempt of every case passed |
+| `mean_success_rate` | the mean, over cases, of each case's share of failed attempts |
+
+The summary is stored rather than recomputed by each reader, as the gate verdict is, so
+a later build prints the verdict this run was written with. A rule that stopped part-way
+is not in `rules`, so it has no summary to misread. `run.rules[].declared_requests` is the
+number of requests the rule declared, attempts included.
 
 ## Field names borrowed on purpose
 

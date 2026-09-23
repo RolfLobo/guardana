@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from guardana.core.budget import Budgets
 from guardana.core.profile.model import Profile
 from guardana.core.registry import Registry
-from guardana.core.target import Target
+from guardana.core.target import Target, TargetKind
 
 
 @dataclass(frozen=True, slots=True)
@@ -29,6 +29,15 @@ class RunPlan:
     min_requests: int
     max_requests: int
     budgets: Budgets
+    trials: int = 1
+    """Attempts per case the run was asked for; already inside `max_requests`."""
+
+    single_attempt: tuple[str, ...] = ()
+    """Selected rules that make one attempt per case whatever `trials` says.
+
+    Named so a plan for K attempts cannot be read as K attempts at a protocol check
+    or a conversation the endpoint keeps, which do not repeat.
+    """
 
     @property
     def is_complete(self) -> bool:
@@ -65,7 +74,12 @@ def build_plan(registry: Registry, profile: Profile, target: Target) -> RunPlan:
     from guardana.core.runner import safety_refusal  # noqa: PLC0415 — runner is downstream
 
     capabilities = target.capabilities()
+    # Only an endpoint run samples a reply; a file plan given `trials: 5` in a shared
+    # profile would otherwise list every artifact rule as declining something it
+    # was never asked to do.
+    repeats = target.kind is TargetKind.ENDPOINT
     selected: list[str] = []
+    single_attempt: list[str] = []
     skipped: list[str] = []
     unknown: list[str] = []
     ceiling = 0
@@ -81,6 +95,8 @@ def build_plan(registry: Registry, profile: Profile, target: Target) -> RunPlan:
             skipped.append(meta.id)
             continue
         selected.append(meta.id)
+        if repeats and rule.trials_per_case < profile.trials:
+            single_attempt.append(meta.id)
         declared = rule.estimated_requests
         if declared is None:
             # A rule that sends and did not say how much sends at least once.
@@ -98,4 +114,6 @@ def build_plan(registry: Registry, profile: Profile, target: Target) -> RunPlan:
         min_requests=floor,
         max_requests=ceiling,
         budgets=profile.budgets,
+        trials=profile.trials if repeats else 1,
+        single_attempt=tuple(single_attempt),
     )

@@ -54,7 +54,7 @@ def test_a_scan_plan_lists_the_rules_it_would_run(tmp_path: Path) -> None:
 
     payload = json.loads(result.output)
     assert payload["rules"], "a scan plan that lists no rules would be describing nothing"
-    assert payload["schema_version"] == 1
+    assert payload["schema_version"] == 2
 
 
 def test_a_restrictive_plugin_mode_says_so_in_the_plan(tmp_path: Path) -> None:
@@ -122,7 +122,7 @@ def test_a_plan_document_satisfies_its_published_schema(
     from jsonschema import Draft202012Validator  # noqa: PLC0415
 
     schema = _json.loads(
-        (_Path(__file__).resolve().parents[3] / "schemas" / "plan-v1.schema.json").read_text(
+        (_Path(__file__).resolve().parents[3] / "schemas" / "plan-v2.schema.json").read_text(
             encoding="utf-8"
         )
     )

@@ -7,7 +7,7 @@ from guardana.core.manifest.records import EvaluatorRecord, ResultSummary, RuleR
 from guardana.core.manifest.settings import ConfigurationRef, ExecutionSettings, PrivacyRecord
 from guardana.core.manifest.usage import RunUsage
 
-MANIFEST_SCHEMA_VERSION = 6
+MANIFEST_SCHEMA_VERSION = 7
 """Version of the run document, moved independently of the CLI.
 
 A run written by 0.7.3 and one written by 0.9.0 are the same document if the
@@ -26,6 +26,10 @@ second is why this is a version rather than an addition: `rules_skipped[].reason
 is read against a closed list, so a v4 reader handed a v5 document refuses it
 outright — which is the correct behaviour and exactly the reason the enum is not
 widened in place.
+
+Version 7 records repeated trials: `execution.trials`, `rules[].trial_summary` and
+`assessments[].trial`, and renames `rules[].trials` to `declared_requests` so the
+count of declared model calls no longer shares a name with the trials per case.
 """
 
 

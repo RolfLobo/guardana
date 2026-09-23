@@ -2,10 +2,75 @@
 
 from dataclasses import dataclass
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from guardana.core.gate import GateOutcome
 from guardana.core.report.skipped import SkippedRule
 from guardana.core.report.stop import StopReason
+
+if TYPE_CHECKING:
+    from guardana.core.trials import RuleTrials
+
+
+@dataclass(frozen=True, slots=True)
+class TrialSummary:
+    """What one repeating rule's trials added up to, over cases, as the engine reduced them.
+
+    Stored rather than re-derived by each reader, as `ResultSummary.gate` is: a later
+    build reducing the same assessments differently must not print a different
+    verdict for the same run.
+    """
+
+    trials_per_case: int
+    cases: int
+    cases_failed: int
+    """Cases where at least one trial failed."""
+
+    cases_incomplete: int
+    """Cases with no failure and at least one trial that never resolved."""
+
+    bound: float | None
+    """Upper bound on attack success over cases when every case held, else None."""
+
+    mean_success_rate: float | None
+    """The mean over cases of each case's share of failed trials; None when none graded."""
+
+    def __post_init__(self) -> None:
+        """Refuse counts that contradict each other, and a bound over a rule that was not clean.
+
+        A bound stated beside a failed or incomplete case would read as a clean result
+        the trials never showed.
+        """
+        if isinstance(self.trials_per_case, bool) or self.trials_per_case < 1:
+            raise ValueError(f"trials_per_case must be at least 1, got {self.trials_per_case!r}")
+        counts = (self.cases, self.cases_failed, self.cases_incomplete)
+        if any(isinstance(n, bool) or n < 0 for n in counts):
+            raise ValueError(f"case counts must be whole numbers of at least 0, got {counts}")
+        if self.cases_failed + self.cases_incomplete > self.cases:
+            raise ValueError(
+                f"{self.cases_failed} failed and {self.cases_incomplete} incomplete cases "
+                f"cannot come from {self.cases}"
+            )
+        for name in ("bound", "mean_success_rate"):
+            value = getattr(self, name)
+            if value is not None and not 0.0 <= value <= 1.0:
+                raise ValueError(f"{name} must lie in [0, 1], got {value!r}")
+        if self.bound is not None and (
+            self.cases == 0 or self.cases_failed or self.cases_incomplete
+        ):
+            raise ValueError("a bound is stated only over a rule whose every case held")
+
+    @classmethod
+    def from_trials(cls, trials: "RuleTrials") -> "TrialSummary":
+        """Summarise one rule's reduced trials."""
+        return cls(
+            trials_per_case=trials.trials,
+            cases=len(trials.cases),
+            cases_failed=len(trials.failed),
+            cases_incomplete=len(trials.incomplete),
+            bound=trials.bound,
+            mean_success_rate=trials.mean_success_rate,
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -34,14 +99,18 @@ class RuleRecord:
     """
 
     maturity: str | None = None
-    trials: int | None = None
+    declared_requests: int | None = None
     """How many model calls this rule declared it would make, or None if it could not say.
 
     Part of the coverage fingerprint rather than decoration: a rule trimmed from
     four prompts to one checks less, and a run that recorded only the rule's name
     would read as unchanged. `None` is the honest answer for a rule whose cost is
-    unknown up front, and it stays distinguishable from zero.
+    unknown up front, and it stays distinguishable from zero. For a rule that
+    repeats, the count includes every trial.
     """
+
+    trial_summary: TrialSummary | None = None
+    """What the rule's repeated trials added up to; None for a rule that made one attempt."""
 
 
 @dataclass(frozen=True, slots=True)

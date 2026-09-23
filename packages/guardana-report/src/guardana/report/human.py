@@ -1,14 +1,22 @@
+import math
 from collections.abc import Callable
 
+from guardana.core.assessment import AssessmentStatus
+from guardana.core.manifest import RunManifest
+from guardana.core.manifest.records import TrialSummary
 from guardana.core.report import Finding, ScanResult
+from guardana.core.trials import CONFIDENCE, wilson_interval
 
 _ICON = {"CRITICAL": "✖", "HIGH": "✖", "MEDIUM": "▲", "LOW": "•", "INFO": "·"}
 
 
 class HumanRenderer:
-    """Terminal output: one line per finding, with a summary."""
+    """Terminal output: one line per finding, what each repeating rule rests on, a summary."""
 
     name = "human"
+
+    def __init__(self, run: RunManifest | None = None) -> None:
+        self._run = run
 
     def render(self, result: ScanResult) -> str:
         """Render one scan result to text."""
@@ -36,9 +44,96 @@ class HumanRenderer:
         for gap in result.coverage_shortfall:
             lines.append(f"! [COVERAGE] {gap.name} — demanded, and not available ({gap.kind})")
             lines.append(f"    {gap.detail}")
+        trials = _trials_block(result, self._run)
+        if trials:
+            lines.append("")
+            lines.extend(trials)
         lines.append("")
         lines.append(_summary(result))
         return "\n".join(lines)
+
+
+def _trials_block(result: ScanResult, run: RunManifest | None) -> list[str]:
+    """Say what each repeating rule's result rests on: its cases, its trials, its bound.
+
+    Read from the summary the engine stored, never recomputed here, so a saved run
+    prints the verdict it was written with. Without a manifest there is nothing
+    stored to read, and nothing is printed rather than something re-derived.
+    """
+    if run is None:
+        return []
+    repeating = [(r.id, r.trial_summary) for r in run.rules if r.trial_summary is not None]
+    asked = run.execution.trials
+    once = [r.id for r in run.rules if r.trial_summary is None]
+    if not repeating:
+        if asked > 1 and once:
+            return [f"Trials: {asked} asked for, and no rule in this run repeats a case"]
+        return []
+    assessors: dict[str, set[str]] = {}
+    for assessment in result.assessments:
+        assessors.setdefault(assessment.rule_id, set()).add(assessment.assessor)
+    lines = ["Trials"]
+    lines.extend(
+        f"  {rule_id}  {_trials_line(summary, _named(assessors.get(rule_id, set())))}"
+        for rule_id, summary in repeating
+    )
+    if asked > 1 and once:
+        lines.append(f"  one attempt per case, whatever was asked: {', '.join(once)}")
+    # A bound here is over each rule's own fixed prompts; read as robustness against an
+    # attacker who adapts, it would be a claim no run made.
+    lines.append("  static prompt set · no adaptive attacker ran")
+    return lines
+
+
+def _trials_line(summary: TrialSummary, assessors: str) -> str:
+    k = summary.trials_per_case
+    each = f"in {k} trial{'s' if k != 1 else ''} each"
+    graded = f"graded by {assessors}, grader error not corrected"
+    if summary.bound is not None:
+        return (
+            f"clean · 0 of {summary.cases} cases {each} · "
+            f"ASR@{k} ≤ {_up(summary.bound)}% ({_percent(CONFIDENCE)}%) · {graded}"
+        )
+    parts = []
+    if summary.cases_failed:
+        decided = summary.cases - summary.cases_incomplete
+        low, high = wilson_interval(summary.cases_failed, decided)
+        parts.append(
+            f"{summary.cases_failed} of {summary.cases} cases failed {each} · "
+            f"ASR@{k} {_percent(summary.cases_failed / decided)}% "
+            f"({_percent(CONFIDENCE)}% CI {_down(low)} to {_up(high)}%)"
+        )
+        if k > 1 and summary.mean_success_rate is not None:
+            parts.append(f"mean failure rate per trial {_percent(summary.mean_success_rate)}%")
+    if summary.cases_incomplete:
+        parts.append(
+            f"not clean: {summary.cases_incomplete} of {summary.cases} cases incomplete, "
+            f"a trial could not be graded"
+        )
+    if not parts:
+        parts.append(
+            f"no bound: the rule reported a finding its {summary.cases} recorded case(s) "
+            f"do not show"
+        )
+    parts.append(graded)
+    return " · ".join(parts)
+
+
+def _named(assessors: set[str]) -> str:
+    return ", ".join(sorted(assessors)) if assessors else "an unnamed assessor"
+
+
+def _percent(value: float) -> str:
+    return f"{value * 100:.1f}".removesuffix(".0")
+
+
+def _up(value: float) -> str:
+    """Round a bound up at one decimal: a printed bound must never claim more than was shown."""
+    return _percent(math.ceil(value * 1000 - 1e-9) / 1000)
+
+
+def _down(value: float) -> str:
+    return _percent(math.floor(value * 1000 + 1e-9) / 1000)
 
 
 _NOT_AN_ALL_CLEAR: tuple[
@@ -122,10 +217,11 @@ def _summary(result: ScanResult) -> str:
     if result.assessments:
         # Both numbers, never the rate. "12 measured" beside "40 cases" is what
         # stops a pass rate over the three cases a broken judge still graded from
-        # reading like a pass rate over all of them.
+        # reading like a pass rate over all of them. Counted in cases, so K trials
+        # of one prompt read as one case.
+        cases, measured, ungraded = _case_counts(result)
         summary += (
-            f" {len(result.measured)}/{len(result.assessments)} case(s) measured"
-            f"{f', {len(result.ungraded)} ungraded' if result.ungraded else ''}."
+            f" {measured}/{cases} case(s) measured{f', {ungraded} ungraded' if ungraded else ''}."
         )
     if result.observations:
         # Says what the run actually looked at, so "no findings" reads as "nothing
@@ -137,3 +233,13 @@ def _summary(result: ScanResult) -> str:
         # never finished.
         summary += f" Run stopped early: {result.stopped_by.value}."
     return summary
+
+
+def _case_counts(result: ScanResult) -> tuple[int, int, int]:
+    """Count cases, cases whose every trial was measured, and cases with an ungraded trial."""
+    statuses: dict[tuple[str, str], list[AssessmentStatus]] = {}
+    for a in result.assessments:
+        statuses.setdefault((a.rule_id, a.case_id), []).append(a.status)
+    measured = sum(all(s is AssessmentStatus.MEASURED for s in v) for v in statuses.values())
+    ungraded = sum(AssessmentStatus.INCONCLUSIVE in v for v in statuses.values())
+    return len(statuses), measured, ungraded

@@ -38,6 +38,7 @@ from guardana.core.manifest.records import (
     EvaluatorRecord,
     ResultSummary,
     RuleRecord,
+    TrialSummary,
 )
 from guardana.core.manifest.serialize import manifest_to_dict
 from guardana.core.manifest.settings import (
@@ -101,6 +102,7 @@ def _fully_populated() -> RunManifest:
             max_input_tokens=50_000,
             max_output_tokens=25_000,
             max_duration_seconds=90.5,
+            trials=3,
         ),
         usage=RunUsage(
             requests=42,
@@ -138,7 +140,15 @@ def _fully_populated() -> RunManifest:
                 version="0.22.0",
                 origin="guardana-rules",
                 maturity="stable",
-                trials=4,
+                declared_requests=12,
+                trial_summary=TrialSummary(
+                    trials_per_case=3,
+                    cases=4,
+                    cases_failed=1,
+                    cases_incomplete=1,
+                    bound=None,
+                    mean_success_rate=0.25,
+                ),
             ),
         ),
         evaluators=(

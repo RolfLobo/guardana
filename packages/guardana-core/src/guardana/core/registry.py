@@ -15,6 +15,7 @@ from guardana.core.rule.yaml_rule import load_yaml_rules
 from guardana.core.target import Target
 from guardana.core.taxonomy import TaxonomyRef
 from guardana.core.taxonomy import register as register_taxonomy
+from guardana.core.trials import check_trials
 
 _RULE_GROUP = "guardana.rules"
 _EVALUATOR_GROUP = "guardana.evaluators"
@@ -158,6 +159,16 @@ class Registry:
         """Every registered rule, built-in and third-party alike."""
         return tuple(self._rules)
 
+    def apply_trials(self, trials: int) -> None:
+        """Make every registered rule that repeats attempt each of its cases `trials` times.
+
+        Applied once, before a plan is priced or a rule runs, so the plan, the budget,
+        the run and the saved record all read the same rule objects. A rule that does
+        not repeat is left as it is and records one attempt per case.
+        """
+        check_trials(trials)
+        self._rules = [_repeated(rule, trials) for rule in self._rules]
+
     def evaluators(self) -> Mapping[str, Evaluator]:
         """Every registered evaluator, keyed by the id rules reference it with."""
         return dict(self._evaluators)
@@ -297,6 +308,12 @@ class Registry:
             snapshot[2],
             snapshot[3],
         )
+
+
+def _repeated(rule: Rule, trials: int) -> Rule:
+    """Return `rule` repeating `trials` times, or unchanged when it does not repeat."""
+    repeated = rule.with_trials(trials)
+    return rule if repeated is None else repeated
 
 
 def _ignoring_origin(register: Callable[[Any], None]) -> Callable[[Any, Origin], None]:

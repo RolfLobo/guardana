@@ -2,7 +2,7 @@ from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, replace
 
 from guardana.core.assessment import case_id_for, from_verdict
-from guardana.core.evaluator.base import Evaluator, Expectation
+from guardana.core.evaluator.base import Evaluator, Expectation, Verdict
 from guardana.core.exchange import Exchange
 from guardana.core.report import Evidence, Finding
 from guardana.core.rule.base import Rule, RuleContext, RuleMeta
@@ -10,6 +10,7 @@ from guardana.core.rule.errors import RuleError, RuleLoadError
 from guardana.core.rule.fixture import DeclaredFixture, RuleFixture, materialise
 from guardana.core.target import ChatMessage, Target
 from guardana.core.target.protocols import ChatEndpoint
+from guardana.core.trials import CaseOutcome, case_outcome, check_trials, failed_before_stop
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,6 +43,9 @@ class ScenarioRule(Rule):
     declared_fixtures: tuple[RuleFixture | DeclaredFixture, ...] = ()
     """Samples from the rule file's `fixtures:` block, one reply per step."""
 
+    trials_per_case: int = 1
+    """How many times `run` walks the whole conversation afresh; set by `with_trials`."""
+
     def fixtures(self) -> Iterable[RuleFixture]:
         """Build this rule file's samples, each with a double that has played nothing."""
         return materialise(self.declared_fixtures)
@@ -65,8 +69,24 @@ class ScenarioRule(Rule):
 
     @property
     def estimated_requests(self) -> int:
-        """One request per step: a conversation has to be walked through in order."""
-        return len(self.steps)
+        """One request per step per trial: a conversation has to be walked through in order."""
+        return len(self.steps) * self.trials_per_case
+
+    @property
+    def grades_one_case(self) -> bool:
+        """Every graded turn and the whole-conversation grade are checkpoints of one walk."""
+        return True
+
+    def with_trials(self, trials: int) -> "Rule | None":
+        """Walk the conversation `trials` times, each from an empty history.
+
+        None for a `stateful` scenario: the endpoint keeps that conversation, and
+        nothing here can open a fresh session, so a second trial would continue the
+        first and two attempts would be one longer conversation.
+        """
+        if self.stateful:
+            return None
+        return replace(self, trials_per_case=check_trials(trials))
 
     def declared_expectations(self) -> Iterable[tuple[str, Expectation]]:
         """Every grade the scenario carries: one per graded step, plus the conversation."""
@@ -90,68 +110,92 @@ class ScenarioRule(Rule):
         )
 
     def run(self, target: Target, ctx: RuleContext) -> Iterable[Finding]:
-        """Drive the turns, grade each `expect` as it comes, and the conversation at the end."""
+        """Drive the turns once per trial, grade each `expect`, and the conversation at the end."""
         if not isinstance(target, ChatEndpoint):
             # Unreachable while the capability contract holds: the runner only
             # plans this rule against a target that declared `chat`. If it ever
             # runs, the contract is broken, and that belongs in `errors` rather
             # than looking like a rule that ran and found nothing.
             raise RuleError(f"{self.meta.id} needs a chat endpoint, got {type(target).__name__}")
-        messages: list[ChatMessage] = []
-        for step in self.steps:
-            messages.append(ChatMessage(role="user", content=step.send))
-            to_send = [messages[-1]] if self.stateful else list(messages)
-            messages.append(ChatMessage(role="assistant", content=target.chat(to_send)))
-            if step.expect is not None:
-                evaluator = _resolve(ctx, step.evaluator)
-                yield from self._grade(
-                    _GradedScope(evaluator, step.expect, "turn", step.send),
-                    Exchange(tuple(messages)),
-                    target.ref,
-                    ctx,
-                )
-        if self.conversation_expect is not None:
-            evaluator = _resolve(ctx, self.conversation_evaluator)
-            exchange = Exchange(tuple(messages))
-            yield from self._grade(
-                _GradedScope(evaluator, self.conversation_expect, "conversation", ""),
-                exchange,
-                target.ref,
-                ctx,
-            )
+        graded: dict[str, list[tuple[_GradedScope, Verdict, str]]] = {}
+        try:
+            for trial in range(1, self.trials_per_case + 1):
+                for scope, verdict, transcript in self._conversation(target, ctx):
+                    # The scope is part of the case id: a scenario grades the same
+                    # conversation per turn and again whole, and folding those together
+                    # would count one exchange as two measurements of the same thing.
+                    case_id = case_id_for(self.meta.id, scope.name, scope.case_key)
+                    ctx.record(
+                        from_verdict(
+                            verdict,
+                            case_id=case_id,
+                            subject_ref=target.ref,
+                            rule_id=self.meta.id,
+                            dataset=self.digest(),
+                            tags=(scope.name,),
+                            trial=trial,
+                        )
+                    )
+                    graded.setdefault(case_id, []).append((scope, verdict, transcript))
+        except Exception:
+            # A failure already seen is kept when a later trial stops the rule: a
+            # spent budget or a grader that raised must not take it back.
+            for trials in graded.values():
+                partial = failed_before_stop([v for _s, v, _t in trials], self.trials_per_case)
+                if partial is not None:
+                    yield self._finding(partial, trials, target.ref)
+            raise
+        for trials in graded.values():
+            # `fail` is a finding; a case with a trial that could not be graded is
+            # surfaced too (the runner routes it to `unverified`). Only a case whose
+            # every trial passed yields nothing.
+            outcome = case_outcome([verdict for _scope, verdict, _transcript in trials])
+            if outcome is not None:
+                yield self._finding(outcome, trials, target.ref)
 
-    def _grade(
-        self, scope: "_GradedScope", exchange: Exchange, target_ref: str, ctx: RuleContext
-    ) -> Iterator[Finding]:
-        verdict = scope.evaluator.evaluate(exchange, scope.expectation)
-        # The scope is part of the case id: a scenario grades the same conversation
-        # per turn and again whole, and folding those together would count one
-        # exchange as two measurements of the same thing.
-        ctx.record(
-            from_verdict(
-                verdict,
-                case_id=case_id_for(self.meta.id, scope.name, scope.case_key),
-                subject_ref=target_ref,
-                rule_id=self.meta.id,
-                dataset=self.digest(),
-                tags=(scope.name,),
-            )
-        )
-        # `fail` is a finding; `inconclusive` is surfaced too (the runner routes it to
-        # `unverified`). Only a real `pass` yields nothing.
-        if verdict.outcome == "pass":
-            return
-        yield Finding(
+    def _finding(
+        self,
+        outcome: CaseOutcome,
+        trials: list[tuple["_GradedScope", Verdict, str]],
+        target_ref: str,
+    ) -> Finding:
+        """One case's finding, with the transcript of the trial its verdict came from."""
+        scope, _verdict, transcript = trials[outcome.trial - 1]
+        return Finding(
             rule_id=self.meta.id,
             severity=self.meta.severity,
             title=self.meta.title,
             taxonomy=self.meta.taxonomy,
             target_ref=target_ref,
             evidence=Evidence(
-                summary=f"[{scope.name}] {verdict.rationale}", detail=exchange.transcript
+                summary=f"[{scope.name}] {outcome.verdict.rationale}", detail=transcript
             ),
-            verdict=verdict,
+            verdict=outcome.verdict,
         )
+
+    def _conversation(
+        self, target: ChatEndpoint, ctx: RuleContext
+    ) -> Iterator[tuple["_GradedScope", Verdict, str]]:
+        """Walk the turns from an empty history once, grading every scope as it comes."""
+        messages: list[ChatMessage] = []
+        for step in self.steps:
+            messages.append(ChatMessage(role="user", content=step.send))
+            to_send = [messages[-1]] if self.stateful else list(messages)
+            messages.append(ChatMessage(role="assistant", content=target.chat(to_send)))
+            if step.expect is not None:
+                scope = _GradedScope(_resolve(ctx, step.evaluator), step.expect, "turn", step.send)
+                exchange = Exchange(tuple(messages))
+                verdict = scope.evaluator.evaluate(exchange, scope.expectation)
+                yield scope, verdict, exchange.transcript
+        if self.conversation_expect is not None:
+            scope = _GradedScope(
+                _resolve(ctx, self.conversation_evaluator),
+                self.conversation_expect,
+                "conversation",
+                "",
+            )
+            exchange = Exchange(tuple(messages))
+            yield scope, scope.evaluator.evaluate(exchange, scope.expectation), exchange.transcript
 
 
 @dataclass(frozen=True, slots=True)

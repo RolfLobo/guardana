@@ -184,6 +184,12 @@ found nothing wrong are opposite answers, and only one of them is safe to print
 next to a green build. You will see <code>2</code> for a run saved by Guardana 0.5 or
 earlier (no schema version), a truncated file, two different kinds of target, two
 runs with no rule in common, or a pair of arguments passed in the wrong order.</p>
+<p>You will also see <code>2</code> when a rule made a different number of attempts per case in the
+two runs — <code>trials changed 1 → 5</code> names it. More attempts find more failures, so the
+difference is sampling, not a regression, and the rule is left out of the comparison
+rather than read either way. A rule that does not repeat, such as an MCP check, is
+still compared when only the run's <code>--trials</code> moved. Re-save the baseline at the
+new number of trials.</p>
 <h2 id="what-counts-as-worse">What counts as worse</h2>
 <p>A check is <em>one rule, in one place</em>. Against files the place is the path; against
 a live model or MCP server there is only one thing under test, so the check is
@@ -264,6 +270,9 @@ in:</p>
   2 not compared (the assessor or dataset changed)
   0 gone, 0 new
 </code></pre>
+<p>A rule that repeats records one assessment per attempt, and the comparison counts
+<strong>cases</strong>: a case is compared only when every planned attempt was graded, and it passes
+only when every attempt passed.</p>
 <p>Every line answers a question the change list cannot. <strong>21 compared</strong> is the
 denominator: without it, &quot;one fewer finding&quot; and &quot;half the cases stopped being
 graded&quot; look identical. <strong>Not compared</strong> is a refusal, not a gap — a case whose
@@ -301,9 +310,9 @@ accept a change. A <code>2</code> means the pair could not be compared — treat
 like a <code>1</code> until you have read why.</p>
 <h2 id="what-it-does-not-do">What it does not do</h2>
 <ul>
-<li><strong>It does not re-run anything.</strong> It reads two saved runs. Smoothing noise by
-repeating a probe N times would multiply the cost of every run and needs its own
-design, with that cost knowable before you start it.</li>
+<li><strong>It does not re-run anything.</strong> It reads two saved runs. Repeated attempts are
+made by <code>probe --trials N</code> and saved in the run; see
+<a href="usage-probe.html#repeated-trials"><code>usage-probe.md</code></a>.</li>
 <li><strong>It does not compare inventories.</strong> What components a run <em>saw</em> is a real
 question with a real answer in the report's <code>observations</code>, but it is an
 inventory, not a gate.</li>

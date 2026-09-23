@@ -1,6 +1,7 @@
 import os
 import time
 from collections.abc import Callable
+from dataclasses import replace
 from pathlib import Path
 from typing import Annotated
 
@@ -152,6 +153,14 @@ def monitor(  # noqa: PLR0913, PLR0917 — one typer.Option per CLI flag; this i
         int,
         typer.Option(min=1, help="How many rules may query the model at once, per cycle"),
     ] = _DEFAULT_CONCURRENCY,
+    trials: Annotated[
+        int | None,
+        typer.Option(
+            "--trials",
+            min=1,
+            help="Attempts per case for rules that grade a sampled reply; overrides `trials:`.",
+        ),
+    ] = None,
     profile: Annotated[Path | None, typer.Option(help="guardana.yaml path")] = None,
     preset: Annotated[
         str | None, typer.Option(help="Named policy preset: ci|pre-training|monitor")
@@ -201,9 +210,12 @@ def monitor(  # noqa: PLR0913, PLR0917 — one typer.Option per CLI flag; this i
     """Continuously sample a live endpoint and alert on new findings."""
     check_reporter_url(reporter)
     prof = resolve_profile(profile, preset)
+    if trials is not None:
+        prof = replace(prof, trials=trials)
     registry = Registry.discover(resolve_trust(plugins, allow_plugin, no_plugins=False))
     wire_config_evaluators(registry, prof)
     load_custom_rules(registry, prof, rules)
+    registry.apply_trials(prof.trials)
 
     deployment = detect_deployment(ai_system, environment, deployment_id)
     if target is not None:

@@ -58,26 +58,40 @@ def _sarif_result(
     return result
 
 
-def _driver_rules(findings: list[Finding]) -> tuple[list[dict[str, object]], dict[str, int]]:
+def _driver_rules(
+    findings: list[Finding], manifest: RunManifest | None
+) -> tuple[list[dict[str, object]], dict[str, int]]:
     """Build `driver.rules[]` (one per distinct rule) and a rule-id → index map.
 
     Code scanning ignores results whose `ruleId` has no entry in `driver.rules`, so
-    an empty `rules[]` (the old behaviour) drops every alert.
+    an empty `rules[]` (the old behaviour) drops every alert. A rule that repeated
+    carries its attempts per case, per rule rather than per run, because a protocol
+    check in the same run made one.
     """
+    repeated = (
+        {}
+        if manifest is None
+        else {
+            r.id: r.trial_summary.trials_per_case
+            for r in manifest.rules
+            if r.trial_summary is not None
+        }
+    )
     index: dict[str, int] = {}
     rules: list[dict[str, object]] = []
     for finding in findings:
         if finding.rule_id not in index:
             index[finding.rule_id] = len(rules)
-            rules.append(
-                {
-                    "id": finding.rule_id,
-                    "name": finding.rule_id,
-                    "shortDescription": {"text": finding.title},
-                    "helpUri": _HELP_URI,
-                    "defaultConfiguration": {"level": _level(finding)},
-                }
-            )
+            rule: dict[str, object] = {
+                "id": finding.rule_id,
+                "name": finding.rule_id,
+                "shortDescription": {"text": finding.title},
+                "helpUri": _HELP_URI,
+                "defaultConfiguration": {"level": _level(finding)},
+            }
+            if finding.rule_id in repeated:
+                rule["properties"] = {"trialsPerCase": repeated[finding.rule_id]}
+            rules.append(rule)
     return rules, index
 
 
@@ -166,7 +180,7 @@ class SarifRenderer:
     def render(self, result: ScanResult) -> str:
         """Render one scan result to text."""
         every = [*result.findings, *result.unverified, *result.waived]
-        rules, index = _driver_rules(every)
+        rules, index = _driver_rules(every, self._run)
         doc = {
             "version": "2.1.0",
             "$schema": "https://json.schemastore.org/sarif-2.1.0.json",

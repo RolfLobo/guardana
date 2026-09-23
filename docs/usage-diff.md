@@ -55,6 +55,13 @@ next to a green build. You will see `2` for a run saved by Guardana 0.5 or
 earlier (no schema version), a truncated file, two different kinds of target, two
 runs with no rule in common, or a pair of arguments passed in the wrong order.
 
+You will also see `2` when a rule made a different number of attempts per case in the
+two runs — `trials changed 1 → 5` names it. More attempts find more failures, so the
+difference is sampling, not a regression, and the rule is left out of the comparison
+rather than read either way. A rule that does not repeat, such as an MCP check, is
+still compared when only the run's `--trials` moved. Re-save the baseline at the
+new number of trials.
+
 ## What counts as worse
 
 A check is *one rule, in one place*. Against files the place is the path; against
@@ -133,6 +140,10 @@ Measured cases
   0 gone, 0 new
 ```
 
+A rule that repeats records one assessment per attempt, and the comparison counts
+**cases**: a case is compared only when every planned attempt was graded, and it passes
+only when every attempt passed.
+
 Every line answers a question the change list cannot. **21 compared** is the
 denominator: without it, "one fewer finding" and "half the cases stopped being
 graded" look identical. **Not compared** is a refusal, not a gap — a case whose
@@ -182,9 +193,9 @@ like a `1` until you have read why.
 
 ## What it does not do
 
-- **It does not re-run anything.** It reads two saved runs. Smoothing noise by
-  repeating a probe N times would multiply the cost of every run and needs its own
-  design, with that cost knowable before you start it.
+- **It does not re-run anything.** It reads two saved runs. Repeated attempts are
+  made by `probe --trials N` and saved in the run; see
+  [`usage-probe.md`](usage-probe.md#repeated-trials).
 - **It does not compare inventories.** What components a run *saw* is a real
   question with a real answer in the report's `observations`, but it is an
   inventory, not a gate.

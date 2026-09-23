@@ -107,6 +107,14 @@ class Profile:
     answer and was, until this existed, the only one available.
     """
 
+    trials: int = 1
+    """How many independent attempts a probe makes at each case, from `trials:`.
+
+    1 in every preset, so no existing gate changes what it costs without an edit.
+    Applies only to rules whose verdict depends on a model sampling a reply; a rule
+    that does not repeat records one attempt whatever this says.
+    """
+
     contract_paths: tuple[str, ...] = ()
     """Security contracts this profile loads, from `contracts:` in `guardana.yaml`.
 

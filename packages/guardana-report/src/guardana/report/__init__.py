@@ -13,7 +13,7 @@ from guardana.report.sarif import SarifRenderer
 
 _RENDERERS: dict[str, Callable[[RunManifest | None], Renderer]] = {
     JsonRenderer.name: JsonRenderer,
-    HumanRenderer.name: lambda _run: HumanRenderer(),
+    HumanRenderer.name: HumanRenderer,
     SarifRenderer.name: SarifRenderer,
     JUnitRenderer.name: lambda _run: JUnitRenderer(),
 }

@@ -5,11 +5,16 @@ from datetime import UTC, datetime
 from guardana.core.manifest.coverage import CoverageRecord
 from guardana.core.manifest.identity import DeploymentRef, RunSource, TargetIdentity, ToolInfo
 from guardana.core.manifest.model import RunManifest
-from guardana.core.manifest.records import EvaluatorRecord, ResultSummary, RuleRecord
+from guardana.core.manifest.records import (
+    EvaluatorRecord,
+    ResultSummary,
+    RuleRecord,
+    TrialSummary,
+)
 from guardana.core.manifest.settings import ConfigurationRef, ExecutionSettings, PrivacyRecord
 from guardana.core.manifest.usage import RunUsage
 
-SCHEMA_URL = "https://guardana.dev/schemas/run/v6.schema.json"
+SCHEMA_URL = "https://guardana.dev/schemas/run/v7.schema.json"
 """Identifier of the saved-run document, carrying its major version in the path.
 
 The practice in-toto and SLSA settled on, for the reason they settled on it: a
@@ -92,6 +97,7 @@ def _execution(execution: ExecutionSettings) -> dict[str, object]:
         "max_input_tokens": execution.max_input_tokens,
         "max_output_tokens": execution.max_output_tokens,
         "max_duration_seconds": execution.max_duration_seconds,
+        "trials": execution.trials,
     }
 
 
@@ -113,7 +119,19 @@ def _rule(rule: RuleRecord) -> dict[str, object]:
         "version": rule.version,
         "origin": rule.origin,
         "maturity": rule.maturity,
-        "trials": rule.trials,
+        "declared_requests": rule.declared_requests,
+        "trial_summary": None if rule.trial_summary is None else _trial_summary(rule.trial_summary),
+    }
+
+
+def _trial_summary(summary: TrialSummary) -> dict[str, object]:
+    return {
+        "trials_per_case": summary.trials_per_case,
+        "cases": summary.cases,
+        "cases_failed": summary.cases_failed,
+        "cases_incomplete": summary.cases_incomplete,
+        "bound": summary.bound,
+        "mean_success_rate": summary.mean_success_rate,
     }
 
 

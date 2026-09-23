@@ -50,10 +50,11 @@ class Direction(StrEnum):
 
 @dataclass(frozen=True, slots=True)
 class Assessment:
-    """One case, measured once, by something that says what it was.
+    """One attempt at one case, by something that says what it was.
 
     `case_id` is the identity two runs are paired on: stable across runs, and
-    different when the case itself is different.
+    different when the case itself is different. A rule that repeats records one
+    assessment per trial under the same `case_id`.
     """
 
     case_id: str
@@ -94,6 +95,14 @@ class Assessment:
     tags: tuple[str, ...] = ()
     """Slices a comparison may group by — language, category, tenant class."""
 
+    trial: int | None = None
+    """Which attempt at the case this was, from 1, for a rule that repeats.
+
+    None for a rule that does not repeat, and for every document written before
+    trials existed; both read as a single attempt. Not part of `comparable_key`:
+    trial 3 of one run and trial 3 of another are not the same observation.
+    """
+
     @property
     def comparable_key(self) -> tuple[str, str, str | None]:
         """Return the triple two runs must agree on before their values may be compared."""
@@ -121,6 +130,7 @@ def from_verdict(  # noqa: PLR0913 — one keyword per fact the verdict cannot s
     rule_id: str,
     dataset: str | None = None,
     tags: tuple[str, ...] = (),
+    trial: int | None = None,
 ) -> Assessment:
     """Turn one graded exchange into a measurement, keeping "could not grade" apart.
 
@@ -140,4 +150,5 @@ def from_verdict(  # noqa: PLR0913 — one keyword per fact the verdict cannot s
         dataset=dataset,
         rationale=verdict.rationale,
         tags=tags,
+        trial=trial,
     )

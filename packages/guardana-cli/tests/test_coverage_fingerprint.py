@@ -25,7 +25,7 @@ from typer.testing import CliRunner
 
 runner = CliRunner()
 
-_RULES = (RuleRecord(id="a", digest="d1", trials=4),)
+_RULES = (RuleRecord(id="a", digest="d1", declared_requests=4),)
 _EVALUATORS = (EvaluatorRecord(id="canary"),)
 _CATALOGUES = (TaxonomyCatalogRecord(framework="OWASP-LLM-2026", digest="sha256:aa", entries=10),)
 
@@ -59,11 +59,11 @@ def test_a_run_records_what_each_rule_declared_it_would_cost(tmp_path: Path) -> 
     rules = _scan(tmp_path)["run"]["rules"]
 
     assert rules
-    assert all("trials" in rule for rule in rules)
+    assert all("declared_requests" in rule for rule in rules)
 
 
 def test_a_trimmed_corpus_changes_the_fingerprint() -> None:
-    assert _digest() != _digest(rules=(RuleRecord(id="a", digest="d1", trials=1),))
+    assert _digest() != _digest(rules=(RuleRecord(id="a", digest="d1", declared_requests=1),))
 
 
 def test_an_uninstalled_evaluator_changes_the_fingerprint() -> None:
@@ -90,8 +90,14 @@ def test_the_fingerprint_does_not_move_with_discovery_order() -> None:
     # Rule order depends on entry-point ordering and on which directories a
     # `--rules` flag was given in. A fingerprint that moved with it would report a
     # coverage change on every other run, which is the same as reporting none.
-    shuffled = (RuleRecord(id="b", digest="d2"), RuleRecord(id="a", digest="d1", trials=4))
-    straight = (RuleRecord(id="a", digest="d1", trials=4), RuleRecord(id="b", digest="d2"))
+    shuffled = (
+        RuleRecord(id="b", digest="d2"),
+        RuleRecord(id="a", digest="d1", declared_requests=4),
+    )
+    straight = (
+        RuleRecord(id="a", digest="d1", declared_requests=4),
+        RuleRecord(id="b", digest="d2"),
+    )
 
     assert _digest(rules=shuffled) == _digest(rules=straight)
 

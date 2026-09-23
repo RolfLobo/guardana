@@ -84,6 +84,14 @@ class ScanResult:
     that improved.
     """
 
+    trials_per_case: Mapping[str, int] = field(default_factory=dict)
+    """How many attempts each rule that ran made at every case, by rule id.
+
+    Read off the rule object the runner executed, not the one the registry holds: a
+    planted copy is what ran, and a copy that lost its trials must be recorded as
+    what it did. A rule absent here made one attempt per case.
+    """
+
     @classmethod
     def merged(cls, results: Sequence["ScanResult"]) -> "ScanResult":
         """Combine several results into one, carrying every channel.
@@ -103,10 +111,11 @@ class ScanResult:
             rules_skipped=tuple({s.rule_id: s for r in results for s in r.rules_skipped}.values()),
             unverified=tuple(f for r in results for f in r.unverified),
             waived=tuple(f for r in results for f in r.waived),
-            # De-duplicated by comparability key: probe runs each case once per
-            # planted canary, and three copies would inflate every rate.
+            # De-duplicated by comparability key and trial: probe runs each case once
+            # per planted canary, and three copies would inflate every rate — while
+            # the K trials of one case share a key and are K observations, not one.
             assessments=tuple(
-                {a.comparable_key: a for r in results for a in r.assessments}.values()
+                {(a.comparable_key, a.trial): a for r in results for a in r.assessments}.values()
             ),
             errors=tuple(e for r in results for e in r.errors),
             # De-duplicated by ref: probe runs the same target several times (one
@@ -133,6 +142,7 @@ class ScanResult:
             # same protocol, and reading it off whichever finished last would lose
             # it entirely whenever that pass happened not to open a session.
             protocols={name: v for r in results for name, v in r.protocols.items()},
+            trials_per_case={rule: k for r in results for rule, k in r.trials_per_case.items()},
         )
 
     @property

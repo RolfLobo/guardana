@@ -50,6 +50,12 @@ governs all of them or none, and a check that went dark between two runs is a
 regression at any severity. Saved runs carry versions, policy identity,
 target identity, protocol versions, usage, redaction mode, and rule provenance.
 
+Repeated trials send the same case as independent, fresh requests without shared
+conversation history or agent memory. Any failed attempt fails the case; if a grader
+cannot decide and none fail, the case remains unverified. The report counts failed
+attempts and gives a bound computed over cases, since attempts at one prompt are
+correlated. See [repeated trials](docs/usage-probe.md#repeated-trials).
+
 ## Security coverage
 
 ### Build-time

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import yaml
 from guardana.core.assessment import case_id_for, from_verdict
-from guardana.core.evaluator.base import Expectation
+from guardana.core.evaluator.base import Expectation, Verdict
 from guardana.core.exchange import Exchange
 from guardana.core.report import Evidence, Finding
 from guardana.core.rule._digest import declaration_digest
@@ -22,6 +22,7 @@ from guardana.core.rule.errors import RuleError, RuleLoadError
 from guardana.core.rule.fixture import DeclaredFixture, RuleFixture, materialise
 from guardana.core.target import ChatMessage, Target
 from guardana.core.target.protocols import ChatEndpoint
+from guardana.core.trials import CaseOutcome, case_outcome, check_trials, failed_before_stop
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,6 +42,9 @@ class YamlRule(Rule):
     implements: a field and a method cannot share a name, and the method is the
     part a third party overrides.
     """
+
+    trials_per_case: int = 1
+    """How many independent attempts `run` makes at each prompt; set by `with_trials`."""
 
     def fixtures(self) -> Iterable[RuleFixture]:
         """Build this rule file's samples, each with a double that has played nothing.
@@ -69,13 +73,17 @@ class YamlRule(Rule):
 
     @property
     def estimated_requests(self) -> int:
-        """One request per prompt: `run` sends all of them, and does not stop early.
+        """One request per prompt per trial: `run` sends all of them, and does not stop early.
 
-        Every prompt is a separate test of the same claim, so stopping at the
-        first failure would leave the rest ungraded — which means this is an exact
-        count rather than a ceiling.
+        Every prompt is a separate test of the same claim, and every trial a separate
+        attempt at it, so stopping at the first failure would leave the rest ungraded
+        — which means this is an exact count rather than a ceiling.
         """
-        return len(self.prompts)
+        return len(self.prompts) * self.trials_per_case
+
+    def with_trials(self, trials: int) -> "Rule | None":
+        """Send every prompt `trials` times: the verdict depends on a sampled reply."""
+        return replace(self, trials_per_case=check_trials(trials))
 
     def declared_expectations(self) -> Iterable[tuple[str, Expectation]]:
         """Report the single evaluator and expectation every prompt is graded with."""
@@ -88,7 +96,11 @@ class YamlRule(Rule):
         return replace(self, expectation=replace(self.expectation, canary=canary))
 
     def run(self, target: Target, ctx: RuleContext) -> Iterable[Finding]:
-        """Send each prompt, grade each reply, and yield a finding per failure."""
+        """Send each prompt once per trial, grade each reply, and yield a finding per failed case.
+
+        Every trial is a fresh request with no history, so K replies to one prompt are K
+        attempts at the same case rather than one longer conversation.
+        """
         if not isinstance(target, ChatEndpoint):
             # Unreachable while the capability contract holds: the runner only
             # plans this rule against a target that declared `chat`. If it ever
@@ -102,41 +114,60 @@ class YamlRule(Rule):
             # (visible skip), never a rule that resolves to nothing and passes.
             raise RuleLoadError(f"unknown evaluator: {evaluator_id!r}")
         for prompt in self.prompts:
-            reply = target.chat([ChatMessage(role="user", content=prompt)])
-            exchange = Exchange(
-                (
-                    ChatMessage(role="user", content=prompt),
-                    ChatMessage(role="assistant", content=reply),
-                )
-            )
-            verdict = evaluator.evaluate(exchange, self.expectation)
-            # `pass` included: without the passes there is no denominator. The
-            # `dataset` is this rule's declaration digest — the same hash `diff`
-            # uses for "rule definition changed", so a sharpened corpus makes two
-            # runs incomparable rather than making the model look worse.
-            ctx.record(
-                from_verdict(
-                    verdict,
-                    case_id=case_id_for(self.meta.id, prompt),
-                    subject_ref=target.ref,
-                    rule_id=self.meta.id,
-                    dataset=self.digest(),
-                )
-            )
-            # `fail` is a finding; `inconclusive` is surfaced too (the runner routes
-            # it to `unverified`) so a check that could not grade is never a silent
-            # pass. Only a real `pass` yields nothing.
-            if verdict.outcome == "pass":
-                continue
-            yield Finding(
-                rule_id=self.meta.id,
-                severity=self.meta.severity,
-                title=self.meta.title,
-                taxonomy=self.meta.taxonomy,
-                target_ref=target.ref,
-                evidence=Evidence(summary=verdict.rationale, detail=reply),
-                verdict=verdict,
-            )
+            case_id = case_id_for(self.meta.id, prompt)
+            verdicts: list[Verdict] = []
+            replies: list[str] = []
+            try:
+                for trial in range(1, self.trials_per_case + 1):
+                    reply = target.chat([ChatMessage(role="user", content=prompt)])
+                    exchange = Exchange(
+                        (
+                            ChatMessage(role="user", content=prompt),
+                            ChatMessage(role="assistant", content=reply),
+                        )
+                    )
+                    verdict = evaluator.evaluate(exchange, self.expectation)
+                    # `pass` included: without the passes there is no denominator. The
+                    # `dataset` is this rule's declaration digest — the same hash `diff`
+                    # uses for "rule definition changed", so a sharpened corpus makes two
+                    # runs incomparable rather than making the model look worse.
+                    ctx.record(
+                        from_verdict(
+                            verdict,
+                            case_id=case_id,
+                            subject_ref=target.ref,
+                            rule_id=self.meta.id,
+                            dataset=self.digest(),
+                            trial=trial,
+                        )
+                    )
+                    verdicts.append(verdict)
+                    replies.append(reply)
+            except Exception:
+                # A failure already seen is kept when a later trial stops the rule: a
+                # spent budget or a grader that raised must not take it back.
+                partial = failed_before_stop(verdicts, self.trials_per_case)
+                if partial is not None:
+                    yield self._finding(partial, replies, target.ref)
+                raise
+            # A failed trial is a finding; a trial that could not be graded, with none
+            # failed, is surfaced too (the runner routes it to `unverified`) so a case
+            # that was not fully measured is never a silent pass.
+            outcome = case_outcome(verdicts)
+            if outcome is not None:
+                yield self._finding(outcome, replies, target.ref)
+
+    def _finding(self, outcome: CaseOutcome, replies: list[str], target_ref: str) -> Finding:
+        """One case's finding, with the reply of the trial its verdict came from."""
+        return Finding(
+            rule_id=self.meta.id,
+            severity=self.meta.severity,
+            title=self.meta.title,
+            taxonomy=self.meta.taxonomy,
+            target_ref=target_ref,
+            evidence=Evidence(summary=outcome.verdict.rationale, detail=replies[outcome.trial - 1]),
+            verdict=outcome.verdict,
+        )
 
 
 def _build_rule(raw: object, path: Path) -> Rule:
@@ -152,6 +183,13 @@ def _build_rule(raw: object, path: Path) -> Rule:
     prompts = str_list(raw.get("prompts"), "prompts", path)
     if not prompts:
         raise RuleLoadError(f"invalid rule in {path}: at least one prompt is required")
+    repeated = sorted({prompt for prompt in prompts if prompts.count(prompt) > 1})
+    if repeated:
+        # A prompt is its own case id, so a repeated prompt would be one case recorded
+        # twice, and the second set of grades would overwrite the first.
+        raise RuleLoadError(
+            f"invalid rule in {path}: prompts must be distinct; {repeated[0]!r} appears twice"
+        )
     expectation = parse_expectation(raw.get("expect"), path)
     check_evaluator_expectations(meta, expectation, path)
     return YamlRule(

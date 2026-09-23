@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`--trials N` repeats eligible cases in `guardana probe`, `guardana monitor`
+  and `guardana plan probe`.** Until now each prompt was sent once, so a clean
+  result meant "not observed in one try" and a report without findings read as
+  safe. Set `trials:` in `guardana.yaml`; the flag wins. Presets `ci`,
+  `pre-training` and `monitor` keep `trials: 1`, so existing gates cost no more
+  without an edit. We recommend `5` for a release gate. Each trial sends the
+  same input as a fresh request, without shared history or agent memory. Target
+  sampling settings stay unchanged. Single-turn YAML rules, scenarios, agent
+  runs, `guardana.output.secrets` and `guardana.agent.excessive_tool_use` repeat.
+  MCP and other protocol checks, trace rules and `stateful: true` scenarios run
+  once per case; the report names them. Any failed attempt fails the case and
+  produces one finding, such as `2 of 5 trials failed: …`. If none fail but a
+  grader cannot decide, the case is unverified. Earlier failures survive budget
+  exhaustion. The human report counts trials and bounds results over cases
+  because attempts at one prompt are correlated. It says
+  `static prompt set · no adaptive attacker ran`. Saved runs use schema `7`:
+  assessments carry a `trial` number, `run.execution.trials` records the request,
+  repeating rules store `trial_summary`, and `run.rules[].trials` becomes
+  `declared_requests`. Version-6 runs migrate with one attempt per case and no
+  recomputation. `guardana plan probe --trials N` prices attempts before sending;
+  plan schema is `2`, and budget exit `6` remains. `guardana diff` exits `2`
+  when trials per case change, separating added sampling from a regression.
+
 ## [0.26.1] - 2026-09-21 — a field report, and the audit of its own fix
 
 ### Added

@@ -182,7 +182,8 @@ class RunDiff:
     Separate from `notes`, which are context. This is a refusal: a comparison
     against a run that stopped part-way answers "is this worse than last time"
     with a picture that was never finished, and a non-empty value here always
-    fails the gate. Without it, lowering a budget until a run ends early would be
+    fails the gate. A rule whose attempts per case changed between the runs is
+    refused the same way, by name. Without it, lowering a budget until a run ends early would be
     a way to quiet a red comparison — the same trick exit code 6 exists to stop,
     one level further out.
     """

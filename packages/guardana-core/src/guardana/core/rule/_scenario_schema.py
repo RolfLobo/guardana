@@ -73,6 +73,15 @@ def parse_scenario(raw: dict[str, Any], path: Path) -> ScenarioRule:
             f"invalid scenario in {path}: at least one 'expect' (a step's or the "
             f"conversation's) is required — an ungraded scenario passes everything"
         )
+    graded = [step.send for step in steps if step.expect is not None]
+    repeated = sorted({send for send in graded if graded.count(send) > 1})
+    if repeated:
+        # A graded turn's case id is its message, so two graded turns sending the same
+        # text would be one case recorded twice, and one grade would overwrite the other.
+        raise RuleLoadError(
+            f"invalid scenario in {path}: graded steps must send different messages; "
+            f"{repeated[0]!r} is graded more than once"
+        )
     uses_canary = conv_evaluator == "canary" or any(step.evaluator == "canary" for step in steps)
     require_canary_is_plantable(uses_canary, meta.required_capabilities, path)
     return ScenarioRule(

@@ -218,6 +218,37 @@ class Rule(ABC):
         """
         return None
 
+    @property
+    def trials_per_case(self) -> int:
+        """How many independent attempts this rule makes at each case. 1 unless it repeats."""
+        return 1
+
+    @property
+    def grades_one_case(self) -> bool:
+        """Whether every case this rule grades in one attempt is a checkpoint of that attempt.
+
+        True for a rule that grades one conversation at several points: its trial
+        statistics then count one case per attempt, because grades of one conversation
+        are not independent observations. False by default: each case is its own attempt.
+        """
+        return False
+
+    def with_trials(self, trials: int) -> "Rule | None":
+        """Return a copy of this rule that makes `trials` attempts at every case, or None.
+
+        A trial is the same input sent again as a fresh request, sharing no conversation
+        state with another trial; the case fails when any trial fails. Default None: this
+        rule does not repeat, and the run records one attempt per case for it rather than
+        the K it asked for. Override it only when the verdict depends on a model sampling
+        a reply — a protocol check answered deterministically measures nothing more on a
+        second identical request.
+
+        A rule that repeats must scale `estimated_requests` by `trials`, record one
+        assessment per trial with its 1-based `trial` index, and yield at most one
+        finding per case — `guardana.core.trials.case_outcome` does the last part.
+        """
+        return None
+
     @abstractmethod
     def run(self, target: Target, ctx: RuleContext) -> Iterable[Finding]:
         """Check `target` and yield a finding per problem found.

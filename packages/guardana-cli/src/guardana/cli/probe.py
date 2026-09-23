@@ -158,6 +158,14 @@ def probe(  # noqa: C901, PLR0913, PLR0915, PLR0917 — Typer surface plus targe
     max_duration: Annotated[
         str | None, typer.Option("--max-duration", help="Wall-clock ceiling, e.g. 15m.")
     ] = None,
+    trials: Annotated[
+        int | None,
+        typer.Option(
+            "--trials",
+            min=1,
+            help="Attempts per case for rules that grade a sampled reply; overrides `trials:`.",
+        ),
+    ] = None,
     safety: Annotated[
         str,
         typer.Option(help="How far rules may reach: passive|active|side-effecting"),
@@ -203,10 +211,12 @@ def probe(  # noqa: C901, PLR0913, PLR0915, PLR0917 — Typer surface plus targe
             max_output_tokens=max_output_tokens,
             max_duration=max_duration,
         ),
+        trials=prof.trials if trials is None else trials,
     )
     registry = Registry.discover(resolve_trust(plugins, allow_plugin, no_plugins=False))
     wire_config_evaluators(registry, prof)
     load_custom_rules(registry, prof, rules)
+    registry.apply_trials(prof.trials)
 
     if target is not None:
         conflicting = {

@@ -194,6 +194,11 @@ polls, it doesn't intercept traffic.</p>
 <td>How many rules may query the model at once, per cycle — same meaning as on <code>probe</code></td>
 </tr>
 <tr>
+<td><code>--trials INTEGER</code></td>
+<td><code>1</code> (or <code>trials:</code> in the profile)</td>
+<td>Independent attempts per case in every cycle, for rules that grade a sampled reply — same meaning as on <code>probe</code>, see <a href="usage-probe.html#repeated-trials"><code>usage-probe.md</code></a>. A cycle costs its requests times this</td>
+</tr>
+<tr>
 <td><code>--profile PATH</code></td>
 <td>none (built-in default profile)</td>
 <td>Path to a <code>guardana.yaml</code> policy file</td>
@@ -247,6 +252,8 @@ canary</strong> in a dedicated system prompt (merged with your
 <code>guardana.prompt.system_prompt_leak.canary</code> rule genuinely runs on every
 cycle instead of being skipped for lack of a planted prompt. See
 <a href="usage-probe.html#how-canary-rules-work"><code>usage-probe.md</code></a> for the mechanics.</p>
+<p>With <code>--trials N</code>, every cycle makes N attempts at each case of a rule that repeats, and
+all cycles use the same N, so two cycles always compare.</p>
 <h2 id="how-it-decides-to-alert">How it decides to alert</h2>
 <p>On each cycle, <code>monitor</code> re-runs the full endpoint-rule set against the
 target and checks three things:</p>

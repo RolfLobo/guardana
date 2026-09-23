@@ -133,6 +133,7 @@ was the upper bound. <code>guardana plan</code> states it, and <strong>sends no 
 </code></pre>
 <pre><code class="language-text">14 rule(s) would run, 9 skipped.
 requests: at least 14, at most 47
+trials: 1 attempt(s) per case, counted in the requests above
 
 No request was sent to produce this estimate.
 </code></pre>
@@ -182,6 +183,11 @@ run they are pricing would use, so both take the same plugin-trust flags
 <td>none</td>
 <td>Distribution to trust; repeatable, needs <code>--plugins allowlist</code></td>
 </tr>
+<tr>
+<td><code>--trials INTEGER</code></td>
+<td><code>1</code> (or <code>trials:</code> in the profile)</td>
+<td><code>plan probe</code> only: price the run at this many attempts per case, as <code>probe --trials</code> would make them</td>
+</tr>
 </tbody>
 </table></div>
 <p><code>plan scan</code> also keeps <code>--no-plugins</code> as a deprecated alias for <code>--plugins disabled</code>,
@@ -210,6 +216,22 @@ with outbound connections blocked at the socket layer, and fails — naming the
 rule — if one ever tries to open one: for a rule that only reads files, zero is
 the only honest number, so there is nothing to spend less or more of. Either
 way, the ceiling is a claim somebody checks, not a promise.</p>
+<h2 id="pricing-repeated-trials">Pricing repeated trials</h2>
+<p><code>--trials N</code> multiplies what each rule that repeats will send, and the plan says which
+rules will not repeat, so the count is the run's, not an estimate of it:</p>
+<pre><code class="language-bash">guardana plan probe --mcp https://mcp.example.com --trials 5
+</code></pre>
+<pre><code class="language-text">9 rule(s) would run, 14 skipped.
+requests: at least 9, at most 59
+trials: 5 attempt(s) per case, counted in the requests above
+  9 rule(s) make one attempt per case whatever --trials says, because their verdict does not depend on a sampled reply:
+    • guardana.agent.mcp_server_manifest
+    • guardana.mcp.unauthenticated_access
+    …
+</code></pre>
+<p><code>--format json</code> carries the same facts as <code>trials.per_case</code> and <code>trials.single_attempt</code>
+(plan schema <code>2</code>, <a href="https://github.com/guardana/guardana/blob/main/schemas/plan-v2.schema.json"><code>schemas/plan-v2.schema.json</code></a>). See
+<a href="usage-probe.html#repeated-trials"><code>usage-probe.md</code></a> for what a trial is.</p>
 <h2 id="plan-the-run-you-are-going-to-make">Plan the run you are going to make</h2>
 <p><code>plan probe</code> takes <code>--safety</code> and <code>--allow-destructive</code>, with the same meaning
 they have on <code>probe</code>. They are not decoration: the runner refuses a rule that

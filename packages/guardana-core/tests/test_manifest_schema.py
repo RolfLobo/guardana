@@ -1,4 +1,4 @@
-"""`schemas/run-v6.schema.json` is a published contract, so it is tested.
+"""`schemas/run-v7.schema.json` is a published contract, so it is tested.
 
 A schema nothing validates against is a promise. This asserts the two directions
 that matter: what the engine writes satisfies the schema, and the schema refuses
@@ -30,6 +30,7 @@ from guardana.core.manifest import (
     SourceKind,
     TargetIdentity,
     ToolInfo,
+    TrialSummary,
     digest_of,
 )
 from guardana.core.manifest.serialize import SCHEMA_URL
@@ -39,7 +40,7 @@ from guardana.core.severity import Severity
 from guardana.core.target import TargetKind
 from jsonschema import Draft202012Validator
 
-_SCHEMA_PATH = Path(__file__).resolve().parents[3] / "schemas" / "run-v6.schema.json"
+_SCHEMA_PATH = Path(__file__).resolve().parents[3] / "schemas" / "run-v7.schema.json"
 _NOW = datetime(2026, 8, 2, 10, 0, tzinfo=UTC)
 
 
@@ -132,6 +133,7 @@ def _fully_populated() -> RunManifest:
             max_input_tokens=250_000,
             max_output_tokens=100_000,
             max_duration_seconds=900.0,
+            trials=5,
         ),
         usage=RunUsage(
             requests=118,
@@ -140,7 +142,23 @@ def _fully_populated() -> RunManifest:
             requests_missing_token_counts=0,
             wall_time_seconds=41.5,
         ),
-        rules=(RuleRecord(id="guardana.demo", digest="abc123", version="1", maturity="stable"),),
+        rules=(
+            RuleRecord(
+                id="guardana.demo",
+                digest="abc123",
+                version="1",
+                maturity="stable",
+                declared_requests=20,
+                trial_summary=TrialSummary(
+                    trials_per_case=5,
+                    cases=4,
+                    cases_failed=1,
+                    cases_incomplete=0,
+                    bound=None,
+                    mean_success_rate=0.1,
+                ),
+            ),
+        ),
         evaluators=(
             EvaluatorRecord(
                 id="llm_judge",
@@ -265,7 +283,7 @@ def test_the_schema_requires_usage_keys_even_when_unknown() -> None:
     assert list(_validator().iter_errors(document))
 
 
-@pytest.mark.parametrize("version", [1, 2, 3, 4, 5, 7, "6"])
+@pytest.mark.parametrize("version", [1, 2, 3, 4, 5, 6, 8, "7"])
 def test_the_schema_refuses_any_version_but_the_current_one(version: object) -> None:
     document = _document(_minimal())
     document["schema_version"] = version

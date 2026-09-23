@@ -17,6 +17,7 @@ guardana plan probe --url https://api.example.com --model gpt-4o-mini
 ```text
 14 rule(s) would run, 9 skipped.
 requests: at least 14, at most 47
+trials: 1 attempt(s) per case, counted in the requests above
 
 No request was sent to produce this estimate.
 ```
@@ -52,6 +53,7 @@ run they are pricing would use, so both take the same plugin-trust flags
 | `--target-option KEY=VALUE` | none | Repeatable, non-secret configuration passed to that target |
 | `--plugins [all\|builtins\|allowlist\|disabled]` | `all` | Which installed plugins to load — same meaning as on `probe` |
 | `--allow-plugin TEXT` | none | Distribution to trust; repeatable, needs `--plugins allowlist` |
+| `--trials INTEGER` | `1` (or `trials:` in the profile) | `plan probe` only: price the run at this many attempts per case, as `probe --trials` would make them |
 
 `plan scan` also keeps `--no-plugins` as a deprecated alias for `--plugins disabled`,
 exactly like `guardana scan` does.
@@ -84,6 +86,29 @@ with outbound connections blocked at the socket layer, and fails — naming the
 rule — if one ever tries to open one: for a rule that only reads files, zero is
 the only honest number, so there is nothing to spend less or more of. Either
 way, the ceiling is a claim somebody checks, not a promise.
+
+## Pricing repeated trials
+
+`--trials N` multiplies what each rule that repeats will send, and the plan says which
+rules will not repeat, so the count is the run's, not an estimate of it:
+
+```bash
+guardana plan probe --mcp https://mcp.example.com --trials 5
+```
+
+```text
+9 rule(s) would run, 14 skipped.
+requests: at least 9, at most 59
+trials: 5 attempt(s) per case, counted in the requests above
+  9 rule(s) make one attempt per case whatever --trials says, because their verdict does not depend on a sampled reply:
+    • guardana.agent.mcp_server_manifest
+    • guardana.mcp.unauthenticated_access
+    …
+```
+
+`--format json` carries the same facts as `trials.per_case` and `trials.single_attempt`
+(plan schema `2`, [`schemas/plan-v2.schema.json`](../schemas/plan-v2.schema.json)). See
+[`usage-probe.md`](usage-probe.md#repeated-trials) for what a trial is.
 
 ## Plan the run you are going to make
 

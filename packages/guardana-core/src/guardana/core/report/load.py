@@ -20,6 +20,7 @@ from guardana.core.manifest.migrations import (
     migrate_v3,
     migrate_v4,
     migrate_v5,
+    migrate_v6,
 )
 from guardana.core.manifest.model import RunManifest
 from guardana.core.manifest.usage import RunUsage
@@ -38,7 +39,14 @@ from guardana.core.usage import TargetUsage
 _OUTCOMES = frozenset({"pass", "fail", "inconclusive"})
 _ASSESSMENT_STATUSES = frozenset(str(s) for s in AssessmentStatus)
 _DIRECTIONS = frozenset(str(d) for d in Direction)
-_MIGRATIONS = {1: migrate_v1, 2: migrate_v2, 3: migrate_v3, 4: migrate_v4, 5: migrate_v5}
+_MIGRATIONS = {
+    1: migrate_v1,
+    2: migrate_v2,
+    3: migrate_v3,
+    4: migrate_v4,
+    5: migrate_v5,
+    6: migrate_v6,
+}
 """One step forward per version, keyed by the version the document *is*.
 
 Chained rather than jumped: a schema-1 run goes through 2 on its way to 3, so a
@@ -163,6 +171,13 @@ def _result(raw: dict[str, Any], manifest: RunManifest, path: Path) -> ScanResul
         usage=_target_usage(manifest.usage),
         protocols=dict(manifest.coverage.protocols),
         assessments=_assessments(raw.get("assessments"), path),
+        # Read off the stored summaries, the one place the document records K. A rule
+        # without one made a single attempt per case, which is what an absent key means.
+        trials_per_case={
+            rule.id: rule.trial_summary.trials_per_case
+            for rule in manifest.rules
+            if rule.trial_summary is not None
+        },
     )
 
 
@@ -210,7 +225,21 @@ def _assessment(raw: object, path: Path) -> Assessment:
         dataset=_optional_str(block.get("dataset")),
         rationale=str(block.get("rationale") or ""),
         tags=_str_tuple(block.get("tags"), "assessments[].tags", path),
+        trial=_trial(block.get("trial"), path),
     )
+
+
+def _trial(raw: object, path: Path) -> int | None:
+    """Read which attempt at its case an assessment was, refusing a number that is not one.
+
+    Refused rather than read as null: two trials of one case collapsed to "a single
+    attempt" would each look like the whole case.
+    """
+    if raw is None:
+        return None
+    if isinstance(raw, bool) or not isinstance(raw, int) or raw < 1:
+        raise ReportLoadError(f"{path}: an assessment's 'trial' must be 1 or more, got {raw!r}")
+    return raw
 
 
 def _optional_bool(raw: object) -> bool | None:

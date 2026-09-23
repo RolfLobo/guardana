@@ -170,6 +170,46 @@ def migrate_v5(document: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
+def migrate_v6(document: Mapping[str, Any]) -> dict[str, Any]:
+    """Rewrite a schema-6 saved run as a schema-7 one, recomputing nothing.
+
+    - **`run.rules[].trials` becomes `declared_requests`**, value kept: the same count
+      of declared model calls under a name that no longer collides with trials per case.
+    - **`run.rules[].trial_summary`** arrives null, **`run.execution.trials`** as 1 and
+      every **`assessments[].trial`** as null. No version-6 build could repeat a case,
+      so one attempt per case is what happened rather than a guess; a summary is not
+      computed from the recorded assessments, because that would be this build's
+      reduction written into another build's evidence.
+    """
+    run = _mapping(document.get("run"), "run")
+    rules = run.get("rules")
+    execution = run.get("execution")
+    assessments = document.get("assessments")
+    if assessments is not None and not isinstance(assessments, list):
+        raise ManifestLoadError("'assessments' must be a list")
+    return {
+        **document,
+        "schema_version": 7,
+        "$schema": SCHEMA_URL,
+        "assessments": [
+            {**_mapping(entry, "assessments[]"), "trial": None} for entry in (assessments or [])
+        ],
+        "run": {
+            **run,
+            "execution": {**(execution if isinstance(execution, dict) else {}), "trials": 1},
+            "rules": [
+                _renamed_rule(_mapping(rule, "run.rules[]"))
+                for rule in (rules if isinstance(rules, list) else [])
+            ],
+        },
+    }
+
+
+def _renamed_rule(rule: dict[str, Any]) -> dict[str, Any]:
+    renamed = {key: value for key, value in rule.items() if key != "trials"}
+    return {**renamed, "declared_requests": rule.get("trials"), "trial_summary": None}
+
+
 def _titled(findings: object) -> list[dict[str, Any]]:
     """Add the recorded title to every taxonomy reference in one finding channel.
 

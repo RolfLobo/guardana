@@ -173,6 +173,9 @@ trace:                          # only ever governs `analyze-trace` / `trace ins
 contracts:                      # optional; security contracts to load, files or
   - ./contracts/checkout.yaml   # directories — see usage-contracts.md
 
+trials: 1                       # optional; attempts per case for rules that grade a
+                                # sampled reply — see usage-probe.md#repeated-trials
+
 evaluators:                     # config-wired evaluators — see the section below
   llm_judge:
     endpoint: &quot;http://localhost:11434&quot;   # any OpenAI-compatible server
@@ -253,6 +256,12 @@ evaluators:                     # config-wired evaluators — see the section be
 <td>list of paths</td>
 <td><code>[]</code></td>
 <td>Security contracts to load — files, or directories of <code>.yaml</code>/<code>.yml</code>. Added to anything passed via the repeatable <code>--contract PATH</code> flag. Unlike a malformed <em>rule</em> file, a contract that will not load is a hard error: it is your own threat model, and a silently absent one is a gate you think you have. See <a href="usage-contracts.html"><code>usage-contracts.md</code></a>.</td>
+</tr>
+<tr>
+<td><code>trials</code></td>
+<td>integer ≥ 1</td>
+<td><code>1</code></td>
+<td>How many independent attempts <code>probe</code>, <code>monitor</code> and <code>plan probe</code> make at each case of a rule that grades a sampled model reply. <code>--trials N</code> wins over it. A rule that does not repeat (a protocol check, a <code>stateful</code> scenario) makes one attempt whatever this says, and the run records that. Anything other than a whole number of at least 1 is refused at load. See <a href="usage-probe.html#repeated-trials"><code>usage-probe.md</code></a>.</td>
 </tr>
 <tr>
 <td><code>evaluators</code></td>
@@ -389,6 +398,9 @@ layer runs is already decided by the command (<code>scan</code> runs the build-t
 guardana scan ./data     --preset pre-training  # strict pre-run gate on the training box
 guardana monitor --url … --model … --preset monitor
 </code></pre>
+<p>Every preset makes <strong>one attempt per case</strong> (<code>trials: 1</code>), so choosing a preset never
+multiplies what a gate costs. Raise it with <code>--trials</code> or <code>trials:</code> where you mean to pay
+for it.</p>
 <p><code>--preset</code> and <code>--profile</code> are mutually exclusive — pass one or the other. When
 you need finer control (per-rule config, custom rule directories, a wired judge),
 write an explicit <code>guardana.yaml</code> as shown above; you can still ship as many

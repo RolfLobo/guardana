@@ -27,7 +27,7 @@ from guardana.core.profile import Profile
 from guardana.core.registry import Registry
 from guardana.core.target import ArtifactTarget, Target, TargetKind
 
-PLAN_SCHEMA_VERSION = 1
+PLAN_SCHEMA_VERSION = 2
 
 plan_app = typer.Typer(
     help="Estimate what a run would cost, without sending a single request.",
@@ -51,6 +51,16 @@ def _render_human(run_plan: RunPlan, kind: TargetKind) -> str:
                 else f" — plus {len(run_plan.unknown_cost)} of unknown cost"
             )
         )
+    if kind is not TargetKind.ARTIFACT:
+        lines.append(
+            f"trials: {run_plan.trials} attempt(s) per case, counted in the requests above"
+        )
+    if run_plan.single_attempt:
+        lines.append(
+            f"  {len(run_plan.single_attempt)} rule(s) make one attempt per case whatever "
+            f"--trials says, because their verdict does not depend on a sampled reply:"
+        )
+        lines.extend(f"    • {rule_id}" for rule_id in run_plan.single_attempt)
     if run_plan.unknown_cost:
         lines.append(
             "  these rules do not declare a request count, so the ceiling above is a "
@@ -88,6 +98,10 @@ def _render_json(run_plan: RunPlan) -> str:
                 "max_duration_seconds": run_plan.budgets.max_duration_seconds,
             },
             "fits_budget": not run_plan.exceeds_budget,
+            "trials": {
+                "per_case": run_plan.trials,
+                "single_attempt": list(run_plan.single_attempt),
+            },
         },
         indent=2,
     )
@@ -208,6 +222,14 @@ def plan_probe(  # noqa: PLR0913, PLR0917 — one typer.Option per CLI flag; thi
         list[str],
         typer.Option("--target-option", help="Non-secret key=value for --target; repeatable."),
     ] = [],  # noqa: B006 — typer builds the option from a literal default
+    trials: Annotated[
+        int | None,
+        typer.Option(
+            "--trials",
+            min=1,
+            help="Attempts per case for rules that grade a sampled reply; overrides `trials:`.",
+        ),
+    ] = None,
 ) -> None:
     """Report what probing this endpoint or MCP server would cost, without contacting it.
 
@@ -231,13 +253,19 @@ def plan_probe(  # noqa: PLR0913, PLR0917 — one typer.Option per CLI flag; thi
     """
     trust = resolve_trust(plugins, allow_plugin, no_plugins=False)
     prof = resolve_profile(profile, preset)
-    prof = replace(prof, max_impact=parse_impact(safety), allow_destructive=allow_destructive)
+    prof = replace(
+        prof,
+        max_impact=parse_impact(safety),
+        allow_destructive=allow_destructive,
+        trials=prof.trials if trials is None else trials,
+    )
     legacy_target_options = (url, model, mcp, system_prompt_file)
     if target is not None and any(value is not None for value in legacy_target_options):
         raise typer.BadParameter(
             "--target cannot be combined with --url, --model, --mcp, or --system-prompt-file"
         )
     registry = _registry_for(prof, rules, trust=trust)
+    registry.apply_trials(prof.trials)
     selected = resolve_target(
         registry,
         locator=target,

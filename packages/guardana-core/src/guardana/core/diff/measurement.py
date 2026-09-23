@@ -10,7 +10,7 @@ diff is most careful about. What is new is the denominator, the pairing, and the
 refusal to compare cases whose definition moved.
 """
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
 from guardana.core.assessment import Assessment, AssessmentStatus
@@ -79,16 +79,27 @@ class MeasurementDelta:
         return tuple(lines)
 
 
-def measure(before: Sequence[Assessment], after: Sequence[Assessment]) -> MeasurementDelta:
+def measure(
+    before: Sequence[Assessment],
+    after: Sequence[Assessment],
+    *,
+    before_trials: Mapping[str, int] | None = None,
+    after_trials: Mapping[str, int] | None = None,
+) -> MeasurementDelta:
     """Pair two runs' assessments on `case_id` and count what each population is.
 
     Paired on the case alone, then checked for comparability — not paired on the
     full comparability key. Keying on all three would make an edited expectation
     look like one case disappearing and another arriving, which reads as lost
     coverage plus new coverage: two changes, both wrong, for one edit.
+
+    A rule that repeats records one assessment per trial, so each side is first
+    reduced to cases: a case is measured only when every trial its rule planned was
+    measured, and it passed only when every one of them passed. `*_trials` map a rule
+    to its attempts per case; a rule absent from them made one.
     """
-    lhs = {a.case_id: a for a in before}
-    rhs = {a.case_id: a for a in after}
+    lhs = _cases(before, before_trials or {})
+    rhs = _cases(after, after_trials or {})
     paired = incomparable = passed_before = passed_after = 0
     blinded: list[str] = []
     for case_id in sorted(lhs.keys() & rhs.keys()):
@@ -96,12 +107,9 @@ def measure(before: Sequence[Assessment], after: Sequence[Assessment]) -> Measur
         if was.comparable_key != now.comparable_key:
             incomparable += 1
             continue
-        if was.status is AssessmentStatus.MEASURED and now.status is not AssessmentStatus.MEASURED:
+        if was.measured and not now.measured:
             blinded.append(case_id)
-        if (
-            was.status is not AssessmentStatus.MEASURED
-            or now.status is not AssessmentStatus.MEASURED
-        ):
+        if not was.measured or not now.measured:
             continue
         paired += 1
         passed_before += 1 if was.passed else 0
@@ -115,3 +123,34 @@ def measure(before: Sequence[Assessment], after: Sequence[Assessment]) -> Measur
         passed_after=passed_after,
         blinded=tuple(blinded),
     )
+
+
+@dataclass(frozen=True, slots=True)
+class _Case:
+    """One case of one run, its trials reduced to what a pairing needs."""
+
+    comparable_key: tuple[str, str, str | None]
+    measured: bool
+    passed: bool
+
+
+def _cases(assessments: Sequence[Assessment], trials: Mapping[str, int]) -> dict[str, _Case]:
+    grouped: dict[str, list[Assessment]] = {}
+    for assessment in assessments:
+        grouped.setdefault(assessment.case_id, []).append(assessment)
+    cases = {}
+    for case_id, recorded in grouped.items():
+        planned = trials.get(recorded[0].rule_id)
+        # A rule that recorded trials and has no K on record stopped part-way or never
+        # finished: how many attempts it planned is unknown, so none of its cases counts.
+        if planned is None and any(a.trial is not None for a in recorded):
+            known = False
+        else:
+            known = len(recorded) >= (planned or 1)
+        measured = known and all(a.status is AssessmentStatus.MEASURED for a in recorded)
+        cases[case_id] = _Case(
+            comparable_key=recorded[0].comparable_key,
+            measured=measured,
+            passed=measured and all(a.passed for a in recorded),
+        )
+    return cases

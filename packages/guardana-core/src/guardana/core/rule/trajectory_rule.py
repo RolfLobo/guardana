@@ -20,6 +20,7 @@ from guardana.core.trajectory import (
     TrajectoryStep,
     drive,
 )
+from guardana.core.trials import CaseOutcome, case_outcome, check_trials, failed_before_stop
 
 
 @dataclass(frozen=True, slots=True)
@@ -54,6 +55,9 @@ class TrajectoryRule(Rule):
     declared_fixtures: tuple[RuleFixture | DeclaredFixture, ...] = ()
     """Samples from the rule file's `fixtures:` block, one turn per round trip."""
 
+    trials_per_case: int = 1
+    """How many times `run` drives the whole task afresh; set by `with_trials`."""
+
     def fixtures(self) -> Iterable[RuleFixture]:
         """Build this rule file's samples, each with a double that has played nothing."""
         return materialise(self.declared_fixtures)
@@ -82,12 +86,16 @@ class TrajectoryRule(Rule):
 
     @property
     def estimated_requests(self) -> int:
-        """The step budget, which is exactly what this rule can spend.
+        """The step budget of every trial, which is exactly what this rule can spend.
 
-        The same number as `budget`, exposed under the name every rule answers to
-        so `guardana plan` does not have to know what kind of rule this is.
+        `budget` times the trials, exposed under the name every rule answers to so
+        `guardana plan` does not have to know what kind of rule this is.
         """
-        return self.budget
+        return self.budget * self.trials_per_case
+
+    def with_trials(self, trials: int) -> "Rule | None":
+        """Drive the task `trials` times, each with fresh history and a fresh memory store."""
+        return replace(self, trials_per_case=check_trials(trials))
 
     @property
     def budget(self) -> int:
@@ -143,40 +151,67 @@ class TrajectoryRule(Rule):
         if evaluator is None:
             raise RuleLoadError(f"unknown evaluator: {evaluator_id!r}")
         stop = _stop_on(forbidden_tools(self.expectation))
+        case_id = case_id_for(self.meta.id, self.task, self.then_task or "")
+        verdicts: list[Verdict] = []
+        details: list[str] = []
+        try:
+            for trial in range(1, self.trials_per_case + 1):
+                verdict, detail = self._attempt(target, evaluator, stop)
+                # Recorded whatever the verdict: a truncated run grades as inconclusive,
+                # and a suite hitting its step ceiling more often has fewer graded cases
+                # rather than a better model.
+                ctx.record(
+                    from_verdict(
+                        verdict,
+                        case_id=case_id,
+                        subject_ref=target.ref,
+                        rule_id=self.meta.id,
+                        dataset=self.digest(),
+                        trial=trial,
+                    )
+                )
+                verdicts.append(verdict)
+                details.append(detail)
+        except Exception:
+            # A failure already seen is kept when a later trial stops the rule: a
+            # spent budget or a grader that raised must not take it back.
+            partial = failed_before_stop(verdicts, self.trials_per_case)
+            if partial is not None:
+                yield self._finding(partial, details, target.ref)
+            raise
+        outcome = case_outcome(verdicts)
+        if outcome is not None:
+            yield self._finding(outcome, details, target.ref)
+
+    def _attempt(
+        self,
+        target: ToolOfferingEndpoint,
+        evaluator: Evaluator,
+        stop: Callable[[TrajectoryStep], bool] | None,
+    ) -> tuple[Verdict, str]:
+        """Drive one trial from nothing: fresh history, fresh memory, every session it needs."""
         tools, memory = _materialised(self.tools)
         first = drive(target, self.task, tools, max_steps=self.max_steps, stop_after=stop)
         if self.then_task is None:
             verdict = evaluator.evaluate(Exchange.from_trajectory(first), self.expectation)
-            detail = first.render()
-        else:
-            # A fresh session: no history crosses the boundary, only the store the
-            # memory doubles share.
-            saved = memory is not None and bool(memory.entries)
-            second = drive(target, self.then_task, tools, max_steps=self.max_steps, stop_after=stop)
-            verdict = self._across_sessions(evaluator, first, second, saved=saved)
-            detail = f"{first.render()}\n--- new session ---\n{second.render()}"
-        # Recorded whatever the verdict: a truncated run grades as inconclusive, and
-        # a suite hitting its step ceiling more often has fewer graded cases rather
-        # than a better model.
-        ctx.record(
-            from_verdict(
-                verdict,
-                case_id=case_id_for(self.meta.id, self.task, self.then_task or ""),
-                subject_ref=target.ref,
-                rule_id=self.meta.id,
-                dataset=self.digest(),
-            )
-        )
-        if verdict.outcome == "pass":
-            return
-        yield Finding(
+            return verdict, first.render()
+        # A fresh session: no history crosses the boundary, only the store the memory
+        # doubles share.
+        saved = memory is not None and bool(memory.entries)
+        second = drive(target, self.then_task, tools, max_steps=self.max_steps, stop_after=stop)
+        verdict = self._across_sessions(evaluator, first, second, saved=saved)
+        return verdict, f"{first.render()}\n--- new session ---\n{second.render()}"
+
+    def _finding(self, outcome: CaseOutcome, details: list[str], target_ref: str) -> Finding:
+        """Build the run's finding from the transcript of the trial its verdict came from."""
+        return Finding(
             rule_id=self.meta.id,
             severity=self.meta.severity,
             title=self.meta.title,
             taxonomy=self.meta.taxonomy,
-            target_ref=target.ref,
-            evidence=Evidence(summary=verdict.rationale, detail=detail),
-            verdict=verdict,
+            target_ref=target_ref,
+            evidence=Evidence(summary=outcome.verdict.rationale, detail=details[outcome.trial - 1]),
+            verdict=outcome.verdict,
         )
 
     def _across_sessions(

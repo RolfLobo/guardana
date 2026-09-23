@@ -61,6 +61,7 @@ def assessment_to_dict(assessment: Assessment) -> dict[str, object]:
         "dataset": assessment.dataset,
         "rationale": assessment.rationale,
         "tags": list(assessment.tags),
+        "trial": assessment.trial,
     }
 
 

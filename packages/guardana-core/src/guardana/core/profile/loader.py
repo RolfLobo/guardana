@@ -10,6 +10,7 @@ from guardana.core.profile.model import FailOn, Policy, Profile
 from guardana.core.redaction import DEFAULT_MAX_EVIDENCE_BYTES, EvidenceMode, RedactionPolicy
 from guardana.core.severity import Severity
 from guardana.core.trace.model import Dimension
+from guardana.core.trials import check_trials
 
 # Typos must fail loudly: a misspelled `fail_on:` would otherwise silently
 # fall back to defaults and weaken the gate the user thinks they configured.
@@ -25,6 +26,7 @@ _ALLOWED_PROFILE_KEYS = frozenset(
         "trace",
         "contracts",
         "calibrations",
+        "trials",
     }
 )
 _ALLOWED_RULES_KEYS = frozenset({"include", "exclude", "paths", "paths_exclude"})
@@ -258,6 +260,14 @@ def _required_dimensions(raw: dict[str, Any], path: Path) -> tuple[Dimension, ..
     return tuple(dict.fromkeys(Dimension(name) for name in names))
 
 
+def _trials(raw: object, path: Path) -> int:
+    """Parse `trials:`, refusing anything that is not a whole number of attempts."""
+    try:
+        return check_trials(raw)
+    except ValueError as exc:
+        raise ProfileError(f"invalid profile {path}: {exc}") from exc
+
+
 def load_profile(path: Path) -> Profile:
     """Parse a `guardana.yaml`, rejecting anything it can't honour.
 
@@ -303,4 +313,5 @@ def load_profile(path: Path) -> Profile:
             _as_glob_list(raw.get("contracts"), "contracts", path), path
         ),
         calibration_paths=_as_glob_list(raw.get("calibrations"), "calibrations", path),
+        trials=_trials(raw.get("trials", 1), path),
     )

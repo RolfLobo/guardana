@@ -144,6 +144,7 @@ guardana run inspect run.json
   gate:      pass
   findings:  0 (0 unverified, 0 waived, 0 error(s))
   rules run: 19 (0 skipped)
+  trials:    1 per case asked; 0 rule(s) repeated
   requests:  0
   tokens:    in not recorded, out not recorded
   wall time: 0.42
@@ -194,8 +195,10 @@ read them, one step at a time, so upgrading Guardana does not strand the evidenc
 already have.</p>
 <p>What an older version never recorded arrives as an explicit unknown rather than as a
 default — version 1 has no usage, no execution settings and <strong>no gate verdict</strong>;
-version 2 has no coverage fingerprint and no declared trial counts; version 3 could not
-name a <code>trace</code> target, because that kind did not exist. Recomputing any
+version 2 has no coverage fingerprint and no declared request counts; version 3 could not
+name a <code>trace</code> target, because that kind did not exist; version 6 made one attempt per
+case, so it arrives with <code>execution.trials: 1</code>, <code>trial: null</code> on every assessment and
+no <code>trial_summary</code> on any rule — the summary is not recomputed from its assessments. Recomputing any
 of them during migration would apply today's build to another build's run, which is
 exactly what storing them as fields exists to prevent. <code>inspect</code> says so at the
 bottom of its output, and <code>diff</code> adds a note.</p>
@@ -221,8 +224,8 @@ validates the <em>artifact</em>, parametrised over every field a version-1 run c
 missing.</p>
 <h2 id="the-document">The document</h2>
 <p>The saved-run schema lives at
-<a href="https://github.com/guardana/guardana/blob/main/schemas/run-v6.schema.json"><code>schemas/run-v6.schema.json</code></a>, identified by
-<code>https://guardana.dev/schemas/run/v6.schema.json</code>. The version is in the
+<a href="https://github.com/guardana/guardana/blob/main/schemas/run-v7.schema.json"><code>schemas/run-v7.schema.json</code></a>, identified by
+<code>https://guardana.dev/schemas/run/v7.schema.json</code>. The version is in the
 identifier, so a consumer can tell which contract it is holding before parsing
 anything; it changes whenever the change is not backwards-compatible. A test
 validates what Guardana writes against that file, so the schema cannot drift
@@ -233,7 +236,10 @@ it was written to. Version 4 exists for one reason: it permits a <code>trace</co
 Widening version 3's enum in place was the alternative, and it would have changed a
 contract under a name that promised it had not. Version 6 adds the <code>assessments</code>
 channel and <code>run.rules[].origin</code>; a version-5 document migrates forward with the
-first empty and the second <code>null</code>, because that is what it knew.</p>
+first empty and the second <code>null</code>, because that is what it knew. Version 7 records
+repeated trials: <code>run.execution.trials</code>, <code>assessments[].trial</code> and
+<code>run.rules[].trial_summary</code>, and renames <code>run.rules[].trials</code> to <code>declared_requests</code>,
+which is what it always counted.</p>
 <p>Top level:</p>
 <div class="table-wrap"><table>
 <thead>
@@ -245,7 +251,7 @@ first empty and the second <code>null</code>, because that is what it knew.</p>
 <tbody>
 <tr>
 <td><code>schema_version</code></td>
-<td><code>6</code>. Stated once, for the whole document.</td>
+<td><code>7</code>. Stated once, for the whole document.</td>
 </tr>
 <tr>
 <td><code>run</code></td>
@@ -300,7 +306,7 @@ first empty and the second <code>null</code>, because that is what it knew.</p>
 </tr>
 <tr>
 <td><code>execution</code></td>
-<td>what limits it ran under</td>
+<td>what limits it ran under, and <code>trials</code>: the attempts per case the run asked for</td>
 </tr>
 <tr>
 <td><code>usage</code></td>
@@ -308,7 +314,7 @@ first empty and the second <code>null</code>, because that is what it knew.</p>
 </tr>
 <tr>
 <td><code>rules</code> / <code>evaluators</code></td>
-<td>what did the checking, with digests, declared trial counts and calibration</td>
+<td>what did the checking, with digests, declared request counts, a <code>trial_summary</code> for each rule that repeated, and calibration</td>
 </tr>
 <tr>
 <td><code>coverage</code></td>
@@ -355,7 +361,8 @@ system improved, the test got weaker, or the sample changed.</p>
   &quot;confidence&quot;: 0.6,
   &quot;dataset&quot;: &quot;5435b77094cde319&quot;,
   &quot;rationale&quot;: &quot;Response contains a refusal marker.&quot;,
-  &quot;tags&quot;: []
+  &quot;tags&quot;: [],
+  &quot;trial&quot;: 1
 }
 </code></pre>
 <div class="table-wrap"><table>
@@ -391,19 +398,66 @@ system improved, the test got weaker, or the sample changed.</p>
 <td>how much the assessor trusts itself, when it can say. Never invented</td>
 </tr>
 <tr>
+<td><code>trial</code></td>
+<td>which attempt at the case this was, from <code>1</code>, for a rule that can repeat; <code>null</code> for a rule that cannot, and for a run saved before trials existed. Not part of a case's identity: two runs pair on <code>case_id</code></td>
+</tr>
+<tr>
 <td><code>dataset</code></td>
 <td>which versioned corpus the case came from. For a YAML rule this is its declaration digest, so an edited expectation makes the two runs incomparable rather than making the model look worse</td>
 </tr>
 </tbody>
 </table></div>
 <p><code>run.result_summary</code> carries <code>assessments</code> and <code>measured</code> as two numbers rather
-than one rate. Their difference is the fact that matters: 40 assessments and 3
+than one rate. Both count records, one per attempt, so a rule that repeats five times
+adds five per case. Their difference is the fact that matters: 40 assessments and 3
 measured is a pass rate over three cases, and a summary carrying only the pass
 count would present it with the same confidence as a full run.</p>
 <p>An artifact scan records none of these, and that is correct — reading a file and
 finding nothing is not a measurement. See
 <a href="design/assessment-channel.html"><code>design/assessment-channel.md</code></a> for the reasoning,
 and <a href="usage-diff.html"><code>usage-diff.md</code></a> for what a comparison does with them.</p>
+<h2 id="trial-summaries">Trial summaries</h2>
+<p>Each rule that repeated carries what its attempts added up to, over cases, as the engine
+reduced them when the run was written:</p>
+<pre><code class="language-json">&quot;trial_summary&quot;: {
+  &quot;trials_per_case&quot;: 5,
+  &quot;cases&quot;: 12,
+  &quot;cases_failed&quot;: 0,
+  &quot;cases_incomplete&quot;: 0,
+  &quot;bound&quot;: 0.2209,
+  &quot;mean_success_rate&quot;: 0.0
+}
+</code></pre>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>trials_per_case</code></td>
+<td>the attempts this rule made at every case. It can be lower than <code>execution.trials</code>: a rule that cannot repeat has no summary at all</td>
+</tr>
+<tr>
+<td><code>cases</code>, <code>cases_failed</code>, <code>cases_incomplete</code></td>
+<td>how many cases, how many had a failed attempt, and how many had an attempt nobody could grade and no failure</td>
+</tr>
+<tr>
+<td><code>bound</code></td>
+<td>the 95% upper bound on the share of cases where any attempt fails, over cases, set only when every attempt of every case passed</td>
+</tr>
+<tr>
+<td><code>mean_success_rate</code></td>
+<td>the mean, over cases, of each case's share of failed attempts</td>
+</tr>
+</tbody>
+</table></div>
+<p>The summary is stored rather than recomputed by each reader, as the gate verdict is, so
+a later build prints the verdict this run was written with. A rule that stopped part-way
+is not in <code>rules</code>, so it has no summary to misread. <code>run.rules[].declared_requests</code> is the
+number of requests the rule declared, attempts included.</p>
 <h2 id="field-names-borrowed-on-purpose">Field names borrowed on purpose</h2>
 <p><code>usage.input_tokens</code> and <code>usage.output_tokens</code> are the OpenTelemetry GenAI
 convention's <a href="https://opentelemetry.io/docs/specs/semconv/registry/attributes/gen-ai/"><code>gen_ai.usage.input_tokens</code> /

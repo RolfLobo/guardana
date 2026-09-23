@@ -211,6 +211,61 @@ def test_the_declared_ceiling_is_not_absurdly_loose() -> None:
         )
 
 
+def _repeated(rules: list[Rule], trials: int) -> list[Rule]:
+    """The copies of `rules` that repeat, as `Registry.apply_trials` would make them."""
+    return [copy for copy in (r.with_trials(trials) for r in rules) if copy is not None]
+
+
+def test_a_rule_that_repeats_spends_exactly_what_it_declared_for_every_trial() -> None:
+    # At K = 3 the declaration is the price `plan probe --trials 3` prints, so an
+    # under-count is a paid run nobody priced. Exact, because every trial of these
+    # rules sends every request; only an agent run may stop early on its `stop_after`.
+    repeated = _repeated(_chat_rules(), 3)
+    assert {"guardana.agent.excessive_tool_use", "guardana.output.secrets"} <= {
+        r.meta.id for r in repeated
+    }, "the Python built-ins that sample a reply do not repeat"
+    for rule in repeated:
+        assert rule.trials_per_case == 3
+        declared = rule.estimated_requests
+        assert declared is not None
+        spent = _requests_spent(rule)
+        if isinstance(rule, TrajectoryRule):
+            assert spent <= declared, f"{rule.meta.id} sent {spent} of {declared} at K = 3"
+        else:
+            assert spent == declared, f"{rule.meta.id} sent {spent} of {declared} at K = 3"
+
+
+def test_a_rule_that_repeats_declares_and_spends_the_same_at_one_trial() -> None:
+    for rule in _chat_rules():
+        once = rule.with_trials(1)
+        if once is None:
+            continue
+        assert once.trials_per_case == 1
+        assert once.estimated_requests == rule.estimated_requests, rule.meta.id
+        assert _requests_spent(once) == _requests_spent(rule), rule.meta.id
+
+
+def test_every_rule_that_repeats_is_measured_by_the_chat_gate() -> None:
+    # The gate above runs repeated rules against a chat endpoint. A rule of the MCP
+    # shape that started repeating would be measured refusing to run, not spending.
+    chat = {r.meta.id for r in _chat_rules()}
+    outside = [r.meta.id for r in _repeated(_endpoint_rules(), 3) if r.meta.id not in chat]
+    assert not outside, f"these rules repeat but no gate measures their trials: {outside}"
+
+
+def test_applying_trials_to_the_registry_reaches_the_python_built_ins() -> None:
+    registry = Registry.discover()
+    registry.apply_trials(4)
+
+    by_id = {r.meta.id: r for r in registry.rules()}
+    for rule_id, per_trial in (
+        ("guardana.agent.excessive_tool_use", 1),
+        ("guardana.output.secrets", 3),
+    ):
+        assert by_id[rule_id].trials_per_case == 4
+        assert by_id[rule_id].estimated_requests == per_trial * 4
+
+
 def _mcp_rules() -> list[Rule]:
     """Endpoint rules an MCP server can satisfy — the other run shape a probe has.
 

@@ -167,6 +167,24 @@ ships one of each). Short version: implement <code>guardana.core.rule.Rule</code
 drop a YAML file matching the catalog schema into a rule directory) and
 register it via the <code>guardana.rules</code> entry point in your package's
 <code>pyproject.toml</code>.</p>
+<h3 id="repeated-trials-in-a-python-rule">Repeated trials in a Python rule</h3>
+<p>A YAML rule repeats under <code>--trials</code> without any work from you. A Python rule makes one
+attempt per case unless it opts in, and the saved run records that it did not repeat.
+Opt in only when the verdict depends on a model sampling a reply:</p>
+<ul>
+<li><code>with_trials(k)</code> returns a copy that makes <code>k</code> attempts at every case (the default
+returns <code>None</code>: the rule does not repeat);</li>
+<li><code>trials_per_case</code> reports <code>k</code>, and <code>estimated_requests</code> multiplies by it;</li>
+<li>each attempt records one assessment with <code>from_verdict(..., trial=n)</code>, <code>n</code> from 1;</li>
+<li>a rule that grades one attempt at several checkpoints — a conversation graded per turn —
+returns <code>True</code> from <code>grades_one_case</code>, so its bound counts one case per attempt;</li>
+<li><code>guardana.core.trials.case_outcome(verdicts)</code> turns a case's attempts into at most one
+finding. When a later attempt raises, yield <code>failed_before_stop(...)</code> first so a
+failure already seen is not lost.</li>
+</ul>
+<p>Every attempt must start from nothing. <code>TrajectoryRule</code> rebuilds its memory store per
+attempt, but a <code>ToolDouble</code> of your own that keeps state is not rebuilt: build it inside
+the attempt, or the second attempt reads what the first one left.</p>
 <h2 id="adding-an-evaluator">Adding an Evaluator</h2>
 <p>An <code>Evaluator</code> turns a model response (or artifact observation) into a
 <code>Verdict</code> — the &quot;did it succeed, and how sure are we&quot; judgment that's

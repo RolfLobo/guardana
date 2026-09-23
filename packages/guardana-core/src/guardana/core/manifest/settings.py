@@ -57,6 +57,12 @@ class ExecutionSettings:
     max_input_tokens: int | None = None
     max_output_tokens: int | None = None
     max_duration_seconds: float | None = None
+    trials: int = 1
+    """How many attempts at every case the operator asked for.
+
+    What was asked, not what each rule did: a rule that cannot repeat still makes
+    one attempt, and `RuleRecord.trial_summary` records what it did.
+    """
 
 
 @dataclass(frozen=True, slots=True)

@@ -12,6 +12,7 @@ from guardana.core.manifest.records import (
     EvaluatorRecord,
     ResultSummary,
     RuleRecord,
+    TrialSummary,
 )
 from guardana.core.manifest.settings import (
     ConfigurationRef,
@@ -41,5 +42,6 @@ __all__ = [
     "TargetUsage",
     "TokenUsage",
     "ToolInfo",
+    "TrialSummary",
     "digest_of",
 ]

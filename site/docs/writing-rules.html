@@ -241,7 +241,7 @@ expect:
 <td><code>prompts</code></td>
 <td>yes (at least one)</td>
 <td>list of strings</td>
-<td>The corpus sent to the target, one <code>chat()</code> call per prompt. A scalar string is rejected — it would explode into single-character prompts.</td>
+<td>The corpus sent to the target, one <code>chat()</code> call per prompt and trial. A scalar string is rejected — it would explode into single-character prompts — and so is a prompt listed twice, because a prompt is its own case id.</td>
 </tr>
 <tr>
 <td><code>expect</code></td>
@@ -309,12 +309,12 @@ expect:                  # optional: grade the conversation as a whole
 <tr>
 <td><code>steps</code></td>
 <td>yes (non-empty list)</td>
-<td>The conversation, in order. Each step is a mapping with <code>send</code> (the message) and an optional <code>expect</code> block grading that step's reply.</td>
+<td>The conversation, in order. Each step is a mapping with <code>send</code> (the message) and an optional <code>expect</code> block grading that step's reply. Two graded steps may not send the same message: a graded turn's case id is its message.</td>
 </tr>
 <tr>
 <td><code>stateful</code></td>
 <td>no (default <code>false</code>)</td>
-<td>How conversation context reaches the endpoint. The default (<code>false</code>) replays the whole accumulated conversation on every turn — the right choice for stateless chat APIs, and the model still sees full context. Set <code>true</code> for an endpoint that keeps session state server-side: each turn then sends only the new message.</td>
+<td>How conversation context reaches the endpoint. The default (<code>false</code>) replays the whole accumulated conversation on every turn — the right choice for stateless chat APIs, and the model still sees full context. Set <code>true</code> for an endpoint that keeps session state server-side: each turn then sends only the new message, and the scenario makes one attempt per case whatever <code>--trials</code> says, because nothing can open a fresh server-side session.</td>
 </tr>
 <tr>
 <td><code>expect</code> (top level)</td>

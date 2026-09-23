@@ -57,6 +57,26 @@ drop a YAML file matching the catalog schema into a rule directory) and
 register it via the `guardana.rules` entry point in your package's
 `pyproject.toml`.
 
+### Repeated trials in a Python rule
+
+A YAML rule repeats under `--trials` without any work from you. A Python rule makes one
+attempt per case unless it opts in, and the saved run records that it did not repeat.
+Opt in only when the verdict depends on a model sampling a reply:
+
+- `with_trials(k)` returns a copy that makes `k` attempts at every case (the default
+  returns `None`: the rule does not repeat);
+- `trials_per_case` reports `k`, and `estimated_requests` multiplies by it;
+- each attempt records one assessment with `from_verdict(..., trial=n)`, `n` from 1;
+- a rule that grades one attempt at several checkpoints — a conversation graded per turn —
+  returns `True` from `grades_one_case`, so its bound counts one case per attempt;
+- `guardana.core.trials.case_outcome(verdicts)` turns a case's attempts into at most one
+  finding. When a later attempt raises, yield `failed_before_stop(...)` first so a
+  failure already seen is not lost.
+
+Every attempt must start from nothing. `TrajectoryRule` rebuilds its memory store per
+attempt, but a `ToolDouble` of your own that keeps state is not rebuilt: build it inside
+the attempt, or the second attempt reads what the first one left.
+
 ## Adding an Evaluator
 
 An `Evaluator` turns a model response (or artifact observation) into a

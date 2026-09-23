@@ -9,14 +9,15 @@ environment variable.
 
 import os
 import uuid
-from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from collections.abc import Mapping, Sequence, Set
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from pathlib import Path
 
 import typer
 from guardana.cli.exit_codes import ExitCode
 from guardana.core import __version__
+from guardana.core.assessment import Assessment
 from guardana.core.calibration.store import (
     CalibrationStoreError,
     RecordedCalibration,
@@ -40,7 +41,7 @@ from guardana.core.manifest.coverage import (
     TaxonomyCatalogRecord,
     coverage_digest,
 )
-from guardana.core.manifest.records import EvaluatorRecord, RuleRecord
+from guardana.core.manifest.records import EvaluatorRecord, RuleRecord, TrialSummary
 from guardana.core.manifest.settings import PrivacyRecord
 from guardana.core.manifest.summary import summarize
 from guardana.core.origin import Origin
@@ -50,6 +51,7 @@ from guardana.core.report import CoverageShortfall, ScanResult
 from guardana.core.rule import Rule
 from guardana.core.target import REQUEST_TIMEOUT_SECONDS, Target, TargetKind
 from guardana.core.taxonomy import catalogs
+from guardana.core.trials import reduce_rule
 from guardana.core.usage import TargetUsage
 
 _CI_PROVIDERS = (
@@ -344,7 +346,18 @@ def build_manifest(  # noqa: PLR0913 — a manifest is assembled from independen
     # which was the half of the plugin-override problem nobody could see: an id and
     # a digest a replacement copies exactly, beside the one field that would have
     # told them apart. See docs/design/capability-protocols.md.
-    rules = tuple(_rule_record(rule, registry.origin_of(rule.meta.id)) for rule in ran)
+    recorded: dict[str, list[Assessment]] = {}
+    for assessment in result.assessments:
+        recorded.setdefault(assessment.rule_id, []).append(assessment)
+    reported = {f.rule_id for f in (*result.findings, *result.unverified, *result.waived)}
+    rules = tuple(
+        _rule_record(
+            rule,
+            registry.origin_of(rule.meta.id),
+            _trial_summary(rule, recorded.get(rule.meta.id, []), result, reported),
+        )
+        for rule in ran
+    )
     evaluators = _evaluator_records(ran, calibrations_or_exit(profile))
     target = (
         identity
@@ -372,6 +385,9 @@ def build_manifest(  # noqa: PLR0913 — a manifest is assembled from independen
             max_input_tokens=profile.budgets.max_input_tokens,
             max_output_tokens=profile.budgets.max_output_tokens,
             max_duration_seconds=profile.budgets.max_duration_seconds,
+            # Only an endpoint run makes attempts at a sampled reply; a file scan or a
+            # trace given a profile that says `trials: 5` asked for nothing it could do.
+            trials=profile.trials if target_kind is TargetKind.ENDPOINT else 1,
         ),
         usage=_run_usage(result.usage, started_at, now),
         rules=rules,
@@ -389,7 +405,7 @@ def build_manifest(  # noqa: PLR0913 — a manifest is assembled from independen
     )
 
 
-def _rule_record(rule: Rule, origin: Origin) -> RuleRecord:
+def _rule_record(rule: Rule, origin: Origin, trial_summary: TrialSummary | None) -> RuleRecord:
     """Describe one rule that ran, including which distribution supplied it.
 
     An unattributed origin stays `None` rather than becoming `"unknown"`: a
@@ -402,5 +418,31 @@ def _rule_record(rule: Rule, origin: Origin) -> RuleRecord:
         version=origin.version,
         origin=origin.distribution or origin.source,
         maturity=str(rule.meta.maturity),
-        trials=rule.estimated_requests,
+        declared_requests=rule.estimated_requests,
+        trial_summary=trial_summary,
     )
+
+
+def _trial_summary(
+    rule: Rule, recorded: Sequence[Assessment], result: ScanResult, reported: Set[str]
+) -> TrialSummary | None:
+    """Reduce a repeating rule's recorded trials over its cases; None for a rule that cannot.
+
+    K comes from the rule object that ran, carried on the result, rather than from the
+    registry's copy: a planted copy is what sent the requests. A rule that reported a
+    finding never gets a bound, whatever its recorded trials say: a clean summary beside
+    a finding would be the report contradicting itself in the reassuring direction.
+    """
+    if not any(a.trial is not None for a in recorded):
+        return None
+    rule_id = rule.meta.id
+    trials = reduce_rule(
+        rule_id,
+        recorded,
+        result.trials_per_case.get(rule_id, 1),
+        one_case=rule.grades_one_case,
+    )
+    summary = TrialSummary.from_trials(trials)
+    if summary.bound is not None and rule_id in reported:
+        return replace(summary, bound=None)
+    return summary

@@ -74,7 +74,8 @@ says it is partial.
 
 `scan`, `probe` and `monitor` can produce any of them. `diff` has no target to be
 unavailable, so `4` never occurs there; it uses `2` both for "these runs cannot be
-compared" and for "one of them never finished". `run inspect`, `run migrate`,
+compared" — including a rule whose trials per case changed between the two runs — and
+for "one of them never finished". `run inspect`, `run migrate`,
 `trace inspect` and `plan` produce `0` or `3` — `trace inspect` grades nothing, so
 it has no verdict to report and says what is missing in its output instead.
 `analyze-trace` adds one route to `2` the others do not have: demanded coverage that
