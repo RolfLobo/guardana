@@ -2,12 +2,12 @@
 title: "Declarative fixtures for scenarios and agent runs"
 nav_order: 77
 summary: "one reply per step for a scenario, one scripted turn per round trip for an agent run, the same three outcomes — the fixture law reaches every declarative shape"
-status: accepted
+status: implemented
 ---
 
 # Fixtures for `steps:` and `task:` rules: the same law, two more shapes
 
-**Status:** accepted, implemented — ships in the next release · **Written:** 2026-09-19 · **Roadmap "Now", row 1**
+**Status:** implemented in 0.25.0 · **Written:** 2026-09-19 · **Roadmap "Now", row 1**
 
 ## The question
 

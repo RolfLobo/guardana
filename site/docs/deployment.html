@@ -111,9 +111,9 @@
 <li><a href="design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
 <li><a href="design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
 <li><a href="design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
-<li><a href="design/declarative-fixtures.html">Declarative fixtures for scenarios and agent runs<span class="tag">accepted</span></a></li>
+<li><a href="design/declarative-fixtures.html">Declarative fixtures for scenarios and agent runs<span class="tag">implemented</span></a></li>
 <li><a href="design/pack-scaffolding.html">Scaffolding a pack<span class="tag">accepted</span></a></li>
-<li><a href="design/repeated-trials.html">Repeated trials<span class="tag">accepted</span></a></li>
+<li><a href="design/repeated-trials.html">Repeated trials<span class="tag">implemented</span></a></li>
 <li><a href="design/documentation-site.html">A documentation site<span class="tag">implemented</span></a></li>
 <li><a href="design/judge-error-correction.html">Judge error in a measured rate<span class="tag">proposed</span></a></li>
 <li><a href="design/regrading-stored-exchanges.html">Re-grading stored exchanges<span class="tag">proposed</span></a></li>
@@ -359,7 +359,7 @@ them is worked around silently: each is absent, and says so.</p>
 <pre><code class="language-bash">docker run -d --name guardana-collector \
   -e GUARDANA_DATABASE_URL=&quot;postgresql://guardana:…@db.internal:5432/guardana&quot; \
   -p 127.0.0.1:8000:8000 \
-  ghcr.io/guardana/guardana-collector:0.26
+  ghcr.io/guardana/guardana-collector:0.27
 </code></pre>
 <p>Or without a container at all — <code>pip install &quot;guardana-server[serve]&quot;</code>, then
 <code>guardana-collector migrate</code> and <code>guardana-collector serve</code>. The ASGI server is an
@@ -369,7 +369,7 @@ extra rather than a dependency, so a site that already runs gunicorn points it a
 </main>
 </div>
 <footer class="foot"><div class="bar">
-<span>Guardana 0.26.1 · Apache-2.0</span>
+<span>Guardana 0.27.0 · Apache-2.0</span>
 <a href="https://github.com/guardana/guardana/blob/main/docs/deployment.md">Edit this page on GitHub</a>
 <a href="../llms.txt">llms.txt</a>
 </div></footer>

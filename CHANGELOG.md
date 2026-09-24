@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.27.0] - 2026-09-24 — a clean result states its trial count and upper bound
+
 ### Added
 
 - **`--trials N` repeats eligible cases in `guardana probe`, `guardana monitor`

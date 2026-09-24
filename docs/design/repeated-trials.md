@@ -2,12 +2,12 @@
 title: "Repeated trials"
 nav_order: 79
 summary: "why one reply per prompt cannot support a clean result, what a trial is, how K trials reduce to one case, and the bound a clean result carries instead of reading as safe"
-status: accepted
+status: implemented
 ---
 
 # Repeated trials: "clean" means "not observed in K tries", and says K
 
-**Status:** accepted, implemented — ships in the next release · **Written:** 2026-09-23 · **`ROADMAP.md` "Now", row 1**
+**Status:** implemented in 0.27.0 · **Written:** 2026-09-23 · **`ROADMAP.md` "Now", row 1**
 
 ## The question
 
