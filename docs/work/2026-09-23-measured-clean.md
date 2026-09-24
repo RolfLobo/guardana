@@ -1,6 +1,6 @@
 # A clean result states its trials, its bound and its judge's error
 
-Size: L · Started: 2026-09-23 · Owner: main session · Status: lane 1 shipped in 0.27.0; lane 2 building (design challenge answered)
+Size: L · Started: 2026-09-23 · Owner: main session · Status: lane 1 shipped in 0.27.0; lane 2 committed (7677de3), release 0.28.0 prepared; lane 3 next
 
 ## Goal
 
@@ -182,15 +182,29 @@ an injected `correction`; a migrated v7 run prints "grader error not corrected".
   calibration, this file. To BACKLOG: the failed-rule interval (blocks lane 3), the upgrade
   note, one calibration per id, several assessor ids. For the release commit: the design's
   status becomes `implemented in 0.28.0`.
-- **Next:** full gate → commit lane 2 → release 0.28.0 (push and tags on Konrad's word).
+- **Lane 2 committed** as 7677de3 (gate: every job green; PostgreSQL client NOT RUN;
+  agent-setup red only for `.claude/scheduled_tasks.lock`, an earlier session's file), then
+  `chore(release): v0.28.0`. Push, CI and tags wait on Konrad's word.
 - **Edge left as is:** an evaluator whose verdicts carry several ids is recorded without
   per-class counts; a run then says "lacks per-class counts", and re-recording cannot fix it.
-- **Then lane 3** — `docs/design/quality-suites.md` (+ "Trials and the judge"): `SuiteRule` via
-  `dataset:`, JSONL datasets, `sample:`, `gate.min_pass_rate`/`min_sample` counting complete
-  cases, a t-interval over per-case means at K > 1, `Verdict.measurement`, the deterministic
-  assessors, `keyword.should_refuse`, `reference_judge`, JUnit per suite; the suite gate reads
-  `JudgeCorrection` and is inconclusive on the `unverified` channel when uncorrected. Plan it
-  as its own lanes.
+- **Next: lane 3** — `docs/design/quality-suites.md` (+ "Trials and the judge"). Plan it as
+  its own lanes with `/plan`, in this file:
+  - `SuiteRule` via `dataset:`, JSONL datasets, `sample:`, `gate.min_pass_rate` and
+    `min_sample` counting complete cases, `Verdict.measurement`, the deterministic assessors
+    (`exact_match`, `contains`, `regex`, `json_valid` declare `deterministic = True`),
+    `keyword.should_refuse`, `reference_judge`, JUnit per suite.
+  - The suite pass rate at K > 1 is the mean of per-case pass shares with a t-interval over
+    cases. Lane 2 corrects only ASR@K and the clean bound (`core/judge_error.py::correct`,
+    fed from `cli/_run_meta.py::_trial_summary`); the corrected pass rate is new work, and
+    the per-trial mean is linear, so Rogan-Gladen applies without the K > 1 bias.
+  - The suite gate reads `TrialSummary.correction`-style evidence and is inconclusive on the
+    `unverified` channel with the named reason when the rate is uncorrected — lane 2 only
+    records and prints it; no gate or exit code reads it yet.
+  - **Blocker first:** replace the calibration half of the interval before any gate reads it
+    (BACKLOG, "Judge-error correction"): the failed-rule upper limit undercovers at high rates
+    with Se 0.6–0.7 at 30 per class. Candidates: a score-type Fieller interval or MOVER over
+    the Wilson limits of Se and Sp. The method is Konrad's call; bring the simulation
+    (scratch script re-created from BACKLOG's numbers) to the decision.
 - **How to verify where we are:** `uv run pytest packages/guardana-core/tests/test_trials.py
   packages/guardana-cli/tests/test_trials_cli.py packages/guardana-report/tests/test_trials_rendering.py -q`.
 - **For BACKLOG when row 1 closes:** the collector trend cannot see K (row 6); `plan` does not
