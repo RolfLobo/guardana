@@ -35,8 +35,6 @@ version, it fetches from `origin` and runs the whole gate. Preview with `--dry-r
 `bump_version.py` rewrites every pin and version marker it can discover, and it refuses to run
 if a required marker has gone missing. What it cannot write is prose:
 
-- **the README roadmap table** needs a new row describing what this release did, and
-  `*(current)*` removed from the previous row;
 - **`ROADMAP.md`** — "What ships today (X.Y.Z)", and delete what shipped from the milestone;
 - **`CHANGELOG.md`** — the `[Unreleased]` heading rolled to
   `## [X.Y.Z] - DATE — <one line saying what this release is>`; `release.py` has lost the

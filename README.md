@@ -17,7 +17,7 @@ then compare a release with its accepted baseline.
 [![PyPI](https://img.shields.io/pypi/v/guardana-cli.svg)](https://pypi.org/project/guardana-cli/)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-[Quickstart](#quickstart) · [Features](FEATURES.md) · [Rule catalog](docs/generated/rule-catalog.md) · [Docs](docs/index.md) · [Status & limits](docs/product-status.md) · [Roadmap](ROADMAP.md) · [Partner with us](#partner-with-us)
+[Quickstart](#quickstart) · [Features](FEATURES.md) · [Rule catalog](docs/generated/rule-catalog.md) · [Docs](docs/index.md) · [Status & limits](docs/product-status.md) · [Roadmap](ROADMAP.md) · [Changelog](CHANGELOG.md) · [Partner with us](#partner-with-us)
 
 </div>
 
@@ -250,27 +250,6 @@ The engine and built-in rules are Apache-2.0. Hosting and curated content are th
 planned boundary for a managed service, as recorded in the project
 [principles](CLAUDE.md) and [roadmap](ROADMAP.md).
 
-## Roadmap
-
-| | Outcome |
-|---|---|
-| **0.17** | Added evidence inspection, required dimensions, and versioned security contracts. Uncheckable contracts become `indeterminate`, not passes. |
-| **0.18** | Added positive, negative, and inconclusive rule fixtures; versioned pack validation; and evaluator calibration in run records. |
-| **0.19** | Generated repository documentation and a pre-rendered rule explorer on guardana.dev, plus run-manifest round-trip checks. |
-| **0.20** | Added extension locks by hashed rule declaration, schema 2 control catalogs, and round-trip checks for persisted schemas. |
-| **0.21** | Distinguished human and automated approvers, marked incomplete traces, and stopped all-declined runs from exiting `0`. |
-| **0.22** | Recorded passes as assessments, rejected comparisons when test definitions changed, enabled built-in rules on third-party targets, recorded rule ownership, and added parser property tests. |
-| **0.23** | Completed reference-package conformance fixtures, centralized plugin trust, corrected refusal handling, and added enforced layering, CodeQL, and ten more coverage floors. |
-| **0.24** | Made installed custom target locators work across target-building commands with shared trust, kind, budget, evidence, and exit behavior. Extension API 2 defines the contract while API 1 remains compatible. |
-| **0.25** | Shipped finding, clean, and inconclusive samples for scenario and agent rules, played by `guardana rule test`; 11 of 51 built-ins are fully sampled. Refused scripts that could not play and fixed false greens exposed by writing the samples. |
-| **0.26** *(current)* | Added `guardana new-pack`: one command writes an installable pack — manifest, entry points, a sampled rule for each declarative shape, a locator target and tests — that passes `pack validate` and `rule test` before it is edited. Fixed `pack validate` reporting a clean result about installed packs it had never read, and `new-rule` scaffolding a rule with no samples. 0.26.1 answered the first field report from a production deployment: an artifact the scanner could not read is now inconclusive rather than a low-severity finding a gate waves through. |
-| **next** | Suites with versioned datasets and assessors, then paired statistical diff, then renderer and reporter plugins. |
-| **1.0** | Define the compatibility contract that makes third-party rule packs a stable investment. |
-
-Beyond 1.0, work is organized as milestones. Exit criteria, deferrals, and non-goals
-are in [`ROADMAP.md`](ROADMAP.md). Release history is in
-[`CHANGELOG.md`](CHANGELOG.md).
-
 ## Documentation
 
 - [`docs/index.md`](docs/index.md) — documentation map
@@ -278,6 +257,7 @@ are in [`ROADMAP.md`](ROADMAP.md). Release history is in
 - [`docs/how-it-works.md`](docs/how-it-works.md) — product overview
 - [`docs/install.md`](docs/install.md) · [`docs/profiles.md`](docs/profiles.md) · [`docs/exit-codes.md`](docs/exit-codes.md)
 - [`docs/threat-model.md`](docs/threat-model.md) · [`docs/privacy.md`](docs/privacy.md) · [`docs/safe-testing.md`](docs/safe-testing.md)
+- [`ROADMAP.md`](ROADMAP.md) · [`CHANGELOG.md`](CHANGELOG.md)
 
 ## Contributing
 

@@ -32,6 +32,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   plan schema is `2`, and budget exit `6` remains. `guardana diff` exits `2`
   when trials per case change, separating added sampling from a regression.
 
+### Changed
+
+- **`README.md` drops its per-release Roadmap table and the paragraph below it.** Rows
+  covered each minor release from 0.17 to the current one, plus `next` and `1.0`.
+  `ROADMAP.md` (plan) and `CHANGELOG.md` (release history) were duplicated; `README.md`
+  links both in its top link row and Documentation list. Manual release rewrites made it
+  stale. `scripts/bump_version.py` ceases to require or rewrite `README.md`'s
+  `*(current)*` marker; `test_docs_consistency.py` cuts two table tests; `RELEASING.md`
+  and release checklist omit it.
+
 ## [0.26.1] - 2026-09-21 — a field report, and the audit of its own fix
 
 ### Added

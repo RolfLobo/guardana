@@ -98,8 +98,7 @@ uv run python scripts/clean_install_check.py   # the five packages in an EMPTY v
 python scripts/bump_version.py minor --dry-run   # eyeball it
 python scripts/bump_version.py minor
 
-# 3. Fix the two pieces of prose the bump moves the label on but not the text.
-$EDITOR README.md    # the roadmap table
+# 3. Fix the prose the bump moves the label on but not the text.
 $EDITOR ROADMAP.md   # "## What ships today (X.Y.Z)"
 
 # 4. Roll the changelog: rename "## [X.Y.Z] - Unreleased" to today's date and add

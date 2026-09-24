@@ -43,21 +43,6 @@ def _minor(version: str) -> str:
     return f"{major}.{minor}"
 
 
-def test_the_readme_roadmap_marks_the_released_version_as_current() -> None:
-    match = re.search(r"\| \*\*(\d+\.\d+)\*\* \*\(current\)\*", _read("README.md"))
-    assert match is not None, "README.md no longer marks a version as current"
-    assert match.group(1) == _minor(__version__), (
-        f"README.md calls {match.group(1)} current; the packages are at {__version__}"
-    )
-
-
-def test_no_version_appears_twice_in_the_readme_roadmap() -> None:
-    """A row for 0.6 as current *and* a row for 0.6 as future shipped for a release."""
-    rows = re.findall(r"^\| \*\*(\d+\.\d+)\*\*", _read("README.md"), flags=re.MULTILINE)
-    duplicated = {v for v in rows if rows.count(v) > 1}
-    assert not duplicated, f"README.md's roadmap table lists {sorted(duplicated)} more than once"
-
-
 def test_the_roadmap_describes_the_released_version() -> None:
     match = re.search(r"## What ships today \((\d+\.\d+\.\d+)\)", _read("ROADMAP.md"))
     assert match is not None, "ROADMAP.md no longer states which version ships today"
@@ -275,8 +260,7 @@ def test_the_pin_gate_and_the_release_rewrite_agree_on_which_files_count() -> No
 
 
 # `**vX.Y` — with the `v` — is this repo's idiom for "planned for". Without it,
-# `**0.17**` is a row in the README's roadmap table naming a release that shipped,
-# which is the opposite claim.
+# `**0.17**` names a release that shipped, which is the opposite claim.
 #
 # The closing `**` is deliberately not required. Demanding it made the pattern miss
 # `**v0.7 — company-ready foundation**` in CLAUDE.md, which named the current

@@ -103,7 +103,6 @@ _SITE_VERSION_RE = re.compile(r'(<span class="ver mono">)v\d+\.\d+\.\d+')
 # ships, or a workflow nobody edited changes engine on the next release.
 _ACTION_CLI_RE = re.compile(r'(default: ")\d+\.\d+\.\d+(?:(?:a|b|rc)\d+|\.post\d+|\.dev\d+)?(")')
 _SECURITY_VERSION_RE = re.compile(r"(pre-1\.0 )\(\d+\.\d+\.x\)")
-_README_CURRENT_RE = re.compile(r"\| \*\*\d+\.\d+\*\* \*\(current\)\*")
 # The roadmap's own "what ships today" heading. Rewritten by hand until 0.22.0,
 # where forgetting it aborted the release after the bump.
 _ROADMAP_SHIPS_RE = re.compile(r"(## What ships today \()\d+\.\d+\.\d+(\))")
@@ -178,7 +177,6 @@ def _rewrite_dunder(text: str, new: str) -> str:
 _VERSION_MARKERS: tuple[tuple[Path, re.Pattern[str]], ...] = (
     (Path("site/index.html"), _SITE_VERSION_RE),
     (Path("SECURITY.md"), _SECURITY_VERSION_RE),
-    (Path("README.md"), _README_CURRENT_RE),
     (Path("README.md"), _PIN_PROSE_RE),
     (Path("docs/integrations.md"), _PIN_PROSE_RE),
     (Path("action.yml"), _ACTION_CLI_RE),
@@ -192,7 +190,6 @@ def _documented_versions(new: str) -> tuple[tuple[Path, re.Pattern[str], str], .
     replacements = (
         rf"\g<1>v{new}",
         rf"\g<1>({major}.{minor}.x)",
-        rf"| **{major}.{minor}** *(current)*",
         rf"\g<1>{major}.{minor}\g<2>",
         rf"\g<1>{major}.{minor}\g<2>",
         rf"\g<1>{new}\g<2>",
