@@ -1,6 +1,6 @@
 # A clean result states its trials, its bound and its judge's error
 
-Size: L · Started: 2026-09-23 · Owner: main session · Status: lane 1 built and reviewed, not committed; lane 2 next
+Size: L · Started: 2026-09-23 · Owner: main session · Status: lane 1 committed (5342520, not pushed); lane 2 next
 
 ## Goal
 
@@ -123,14 +123,16 @@ assessment per trial. Cost gate: exact for YAML and scenario rules, `<=` for age
 
 ## Handoff
 
-- **Done (lane 1, uncommitted):** trials core, run schema 7, both Python built-ins, diff
+- **Done (lane 1, commit 5342520, not pushed):** trials core, run schema 7, both Python built-ins, diff
   refusal, `--trials` on probe/monitor/plan probe, plan schema 2, human/SARIF/inspect output,
   docs. Pre-ship review "SHIP AFTER FIXES": all nine findings fixed with tests that go red on
   inversion. Gate: every code gate green; PostgreSQL, PostgreSQL client and Images NOT RUN
   (no Docker, no `pg_dump`), so the collector's coverage floors are red for that reason;
   agent-setup red only for the harness file `.claude/scheduled_tasks.lock`.
-- **Commit lane 1 alone?** Yes as a commit, no as a release: row 1 ships as a whole. Then
-  lane 2 takes run schema **8** — never edit a committed schema 7 in place.
+- **Lane 1 is committed**, so lane 2 takes run schema **8** — never edit schema 7 in place.
+  Row 1 is released as a whole. Before a push: the research design documents, ROADMAP and
+  `docs/index.md` from the measurement audit are still uncommitted, and `site/` must be
+  regenerated with them.
 - **Next: lane 2** — `docs/design/judge-error-correction.md`. Start with `/plan` on this file's
   lane 2 row, then build:
   - `calibration/measure.py`: per-class `positives`, `negatives`, `sensitivity`,
