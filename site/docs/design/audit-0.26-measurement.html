@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The 0.26 measurement audit — Guardana documentation</title>
+<meta name="description" content="what one trial per prompt and an uncalibrated judge let a clean result claim, what the measurement literature and five comparable tools do about it, and why rows 1 and 2 widened and a re-grading row was added">
+<link rel="canonical" href="https://guardana.dev/docs/design/audit-0.26-measurement">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+<link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+<header class="top"><div class="bar">
+<a class="mark" href="../../">guard<span>ana</span></a>
+<nav>
+<a href="../index.html">Documentation</a>
+<a href="../rules/index.html">Rules</a>
+<a href="https://github.com/guardana/guardana">GitHub</a>
+</nav>
+</div></header>
+<div class="shell">
+<nav class="side">
+<ul class="home"><li><a href="../index.html">Overview</a></li></ul>
+<h2>First run</h2><ul>
+<li><a href="../how-it-works.html">How Guardana works</a></li>
+<li><a href="../install.html">Installing</a></li>
+<li><a href="../usage-testing.html">In your test suite</a></li>
+<li><a href="../usage-scan.html">guardana scan</a></li>
+<li><a href="../usage-probe.html">guardana probe</a></li>
+</ul>
+<h2>Run and policy</h2><ul>
+<li><a href="../safe-testing.html">Safe active testing</a></li>
+<li><a href="../usage-doctor.html">guardana doctor</a></li>
+<li><a href="../usage-target.html">guardana target inspect</a></li>
+<li><a href="../usage-plan.html">guardana plan</a></li>
+<li><a href="../exit-codes.html">Exit codes</a></li>
+<li><a href="../profiles.html">Profiles — guardana.yaml</a></li>
+</ul>
+<h2>Evidence and regression</h2><ul>
+<li><a href="../usage-baseline.html">guardana baseline</a></li>
+<li><a href="../usage-diff.html">guardana diff</a></li>
+<li><a href="../usage-monitor.html">guardana monitor</a></li>
+<li><a href="../usage-run.html">guardana run</a></li>
+<li><a href="../usage-calibrate.html">guardana calibrate</a></li>
+<li><a href="../privacy.html">Evidence and redaction</a></li>
+</ul>
+<h2>Recorded applications</h2><ul>
+<li><a href="../usage-analyze-trace.html">guardana analyze-trace</a></li>
+<li><a href="../usage-trace-inspect.html">guardana trace inspect</a></li>
+<li><a href="../usage-contracts.html">Security contracts</a></li>
+<li><a href="../usage-import-observations.html">guardana import-observations</a></li>
+<li><a href="../writing-an-integrator.html">Writing an integrator<span class="tag">beta</span></a></li>
+</ul>
+<h2>Rules and extensions</h2><ul>
+<li><a href="../usage-rules.html">guardana rules</a></li>
+<li><a href="../usage-taxonomy.html">guardana taxonomy</a></li>
+<li><a href="../writing-rules.html">Writing rules</a></li>
+<li><a href="../usage-rule-test.html">guardana rule test</a></li>
+<li><a href="../usage-new-pack.html">guardana new-pack</a></li>
+<li><a href="../usage-pack.html">guardana pack</a></li>
+<li><a href="../extending.html">Extending Guardana</a></li>
+<li><a href="../model-formats.html">Reading model formats</a></li>
+</ul>
+<h2>Collector and deployment</h2><ul>
+<li><a href="../integrations.html">CI and pre-commit</a></li>
+<li><a href="../deployment.html">Deploying the collector<span class="tag">beta</span></a></li>
+<li><a href="../usage-collector.html">The collector<span class="tag">beta</span></a></li>
+</ul>
+<h2>Architecture and security</h2><ul>
+<li><a href="../product-status.html">Product status</a></li>
+<li><a href="../threat-model.html">Threat model</a></li>
+<li><a href="../architecture.html">Architecture</a></li>
+</ul>
+<h2>Reference</h2><ul>
+<li><a href="../rules/index.html">Rule explorer</a></li>
+<li><a href="../generated/rule-summary.html">Rule summary</a></li>
+<li><a href="../generated/rule-catalog.html">Rule catalog</a></li>
+<li><a href="../generated/evaluator-catalog.html">Evaluator catalog</a></li>
+<li><a href="../generated/taxonomy-coverage.html">Taxonomy coverage</a></li>
+</ul>
+<h2>Design documents</h2><ul>
+<li><a href="../design/README.html">How these are written</a></li>
+</ul>
+<h2>Project direction</h2><ul>
+<li><a href="../design/audit-0.23-market.html">The 0.23 repository and market audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-0.25-market.html">The 0.25 roadmap and market audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-0.26-measurement.html" aria-current="page">The 0.26 measurement audit<span class="tag">accepted</span></a></li>
+</ul>
+<h2>Maintainers</h2><ul>
+<li><a href="../maintainers/github-setup.html">GitHub repository setup</a></li>
+<li><a href="../maintainers/ops-catalogue.html">Operations catalogue</a></li>
+<li><a href="../maintainers/lessons.html">Lessons</a></li>
+</ul>
+<h2>Also here</h2><ul>
+<li><a href="../design/trace-domain-model.html">The Trace domain model<span class="tag">implemented</span></a></li>
+<li><a href="../design/trace-producer.html">Producing a trace<span class="tag">implemented</span></a></li>
+<li><a href="../design/framework-adapters.html">Framework adapters<span class="tag">implemented</span></a></li>
+<li><a href="../design/assessment-channel.html">The assessment channel<span class="tag">accepted</span></a></li>
+<li><a href="../design/capability-protocols.html">Capability protocols<span class="tag">accepted</span></a></li>
+<li><a href="../design/production-intake.html">Production intake<span class="tag">proposed</span></a></li>
+<li><a href="../design/audit-0.21.html">The 0.21 audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-0.22.html">The 0.22 audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/security-contracts.html">Security contracts<span class="tag">implemented</span></a></li>
+<li><a href="../design/mcp-protocol-eras.html">MCP has two eras<span class="tag">implemented</span></a></li>
+<li><a href="../design/mcp-authorization-depth.html">MCP authorization depth<span class="tag">implemented</span></a></li>
+<li><a href="../design/taxonomy-editions.html">Taxonomy editions<span class="tag">implemented</span></a></li>
+<li><a href="../design/extension-author-tooling.html">Extension author tooling<span class="tag">accepted</span></a></li>
+<li><a href="../design/target-locators.html">Target locators<span class="tag">implemented</span></a></li>
+<li><a href="../design/output-plugins.html">Output plugins<span class="tag">proposed</span></a></li>
+<li><a href="../design/quality-suites.html">Quality suites<span class="tag">proposed</span></a></li>
+<li><a href="../design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
+<li><a href="../design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
+<li><a href="../design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
+<li><a href="../design/declarative-fixtures.html">Declarative fixtures for scenarios and agent runs<span class="tag">accepted</span></a></li>
+<li><a href="../design/pack-scaffolding.html">Scaffolding a pack<span class="tag">accepted</span></a></li>
+<li><a href="../design/repeated-trials.html">Repeated trials<span class="tag">accepted</span></a></li>
+<li><a href="../design/documentation-site.html">A documentation site<span class="tag">implemented</span></a></li>
+<li><a href="../design/judge-error-correction.html">Judge error in a measured rate<span class="tag">proposed</span></a></li>
+<li><a href="../design/regrading-stored-exchanges.html">Re-grading stored exchanges<span class="tag">proposed</span></a></li>
+<li><a href="../design/anytime-valid-monitoring.html">Anytime-valid monitoring<span class="tag">proposed</span></a></li>
+<li><a href="../design/run-manifest-v2.html">Run manifest v2<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-domain-model.html">Collector domain model<span class="tag">superseded</span></a></li>
+<li><a href="../design/privacy-and-redaction.html">Privacy and redaction<span class="tag">implemented</span></a></li>
+<li><a href="../design/exit-codes.html">Exit codes and gate semantics<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-persistence.html">Collector persistence<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-tenancy.html">Collector tenancy<span class="tag">implemented</span></a></li>
+<li><a href="../design/ai-systems-and-deployments.html">AI systems and deployments<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-runs-and-findings.html">Runs and findings<span class="tag">accepted</span></a></li>
+<li><a href="../design/finding-lifecycle-and-waivers.html">Finding lifecycle and waivers<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-retention-and-deletion.html">Audit, retention and deletion<span class="tag">accepted</span></a></li>
+<li><a href="../design/panel-sessions.html">Panel sessions<span class="tag">accepted</span></a></li>
+</ul>
+</nav>
+<main>
+<h1>The 0.26 measurement audit<span class="status accepted">accepted</span></h1><p class="lede">what one trial per prompt and an uncalibrated judge let a clean result claim, what the measurement literature and five comparable tools do about it, and why rows 1 and 2 widened and a re-grading row was added</p><p><strong>Status:</strong> accepted · <strong>Written:</strong> 2026-09-23 · <strong>Subject:</strong> released 0.26.1, and the
+designs rows 1 and 2 of the &quot;Now&quot; milestone will be built from</p>
+<h2 id="question-and-the-decision-it-informs">Question and the decision it informs</h2>
+<p>What engine-level work, beyond the current &quot;Now&quot; rows, would move Guardana furthest — and
+does any of it change the two designs rows 1 and 2 will be built from
+(<a href="quality-suites.html"><code>quality-suites.md</code></a>,
+<a href="paired-regression-statistics.html"><code>paired-regression-statistics.md</code></a>, both <code>proposed</code>,
+neither implemented)?</p>
+<p>The market and the standards were re-read on 2026-09-20
+(<a href="audit-0.25-market.html"><code>audit-0.25-market.md</code></a>) and moved no row. This pass does not repeat that; it reads the measurement and engine
+literature instead, and the answer lands on rows 1, 2 and the <code>monitor</code> path.</p>
+<h2 id="what-exists-today">What exists today</h2>
+<ul>
+<li><strong>One trial per prompt.</strong> <code>yaml_rule.py:104-105</code> sends each prompt once;
+<code>estimated_requests</code> is <code>len(self.prompts)</code> (<code>yaml_rule.py:71-78</code>). <code>RuleRecord.trials</code>
+(<code>manifest/records.py:37</code>) counts declared calls, not repeats. No samples/epochs option on
+<code>probe</code>. The only repetition is the judge's own <code>min_agreement</code> (<code>llm_judge.py:121</code>).</li>
+<li><strong>Calibration is recorded, never applied to a rate.</strong> <code>calibration/measure.py:14-44</code>
+computes accuracy, Brier and ECE — no sensitivity, no specificity. The record lands in
+<code>EvaluatorRecord.calibration</code> (<code>_run_meta.py:233-237</code>). A hand-entered accuracy caps the
+judge's confidence (<code>llm_judge.py:172</code>) without changing an outcome.</li>
+<li><strong>A saved run cannot be re-graded.</strong> Evidence is written only for non-passing cases
+(<code>yaml_rule.py:129-137</code>); <code>Assessment</code> stores the verdict, not the exchange
+(<code>assessment.py:52-100</code>). <code>SourceKind.REPLAY</code> exists (<code>manifest/identity.py:23</code>) and
+nothing uses it.</li>
+<li><strong><code>monitor</code> compares every cycle with cycle 0, categorically</strong> (<code>core/monitor.py:58-83</code>,
+baseline at <code>:116-117</code>): any <code>appeared</code>/<code>escalated</code>/<code>coverage_lost</code>, more errors, or an
+incomparable cycle alerts. No statistics, no allowance for repeated looks.</li>
+<li><strong><code>diff</code> reports counts, never gates on them</strong> (<code>diff/measurement.py:82-117</code>,
+<code>diff/model.py:170-176</code>). The McNemar design assumes one boolean per case per run.</li>
+<li><strong>Agent rules grade tool calls, not text</strong> (<code>trajectory/drive.py:93-112</code>,
+<code>evaluator/tool_call.py</code>). The only state a double keeps is <code>AgentMemory</code>
+(<code>trajectory/memory.py:11-48</code>).</li>
+<li><strong>No attack transforms in code</strong>; <a href="attack-techniques.html"><code>attack-techniques.md</code></a> is <code>proposed</code>.</li>
+<li><strong>MCP <code>2026-07-28</code> is already handled</strong> — both eras, settled by <code>server/discover</code>
+(<a href="mcp-protocol-eras.html"><code>mcp-protocol-eras.md</code></a>, <code>target/_mcp_wire.py:23-24</code>). Nothing to do.</li>
+</ul>
+<h2 id="evidence">Evidence</h2>
+<p>Quotes were read through a web extractor on 2026-09-23; re-check a quote on its page before
+citing it publicly.</p>
+<p><strong>One sample understates attack success, by a lot.</strong></p>
+<ul>
+<li>Best-of-N: &quot;89% on GPT-4o and 78% on Claude 3.5 Sonnet when sampling 10,000 augmented
+prompts&quot;; ASR vs N &quot;follows power-law-like behavior&quot;. [arXiv 2412.03556]</li>
+<li>Decoding alone: &quot;increase the misalignment rate from 0% to more than 95% across 11
+language models&quot;. [arXiv 2310.06987]</li>
+<li>Boa: greedy evaluation &quot;suggests only 10.3% success—yet … 90% of these prompts can produce
+jailbreaks through alternative generation paths&quot;. [arXiv 2506.17299]</li>
+<li>SABER: single-shot evaluation &quot;underestimates real-world risk&quot;; a per-prompt Beta fit on
+n=100 predicts ASR@1000 with MAE 1.66 vs 12.04. [arXiv 2601.22636]</li>
+<li>Frontier practice reports k=1, 10 and 100 attempts (Opus 4.5 system card, Gray Swan).
+τ-bench adds pass^k — success on all k trials — for reliability. [arXiv 2406.12045]</li>
+</ul>
+<p><strong>How to put error bars on it</strong> (Miller, [arXiv 2411.00640]): standard errors over
+<em>question-level means</em> when resampling K answers (&quot;a pooled standard error across all KN
+answers will be inconsistent&quot;); clustered SEs &quot;can be over 3X larger than naive&quot;; paired
+differences are &quot;a 'free' reduction in estimator variance&quot;; power analysis gives a minimum
+detectable effect — at n=198, K from 1 to 10 cuts the MDE from 13.2% to 7.5%. Never lower
+temperature to reduce variance.</p>
+<p><strong>The judge's error is measurable and correctable.</strong></p>
+<ul>
+<li>Red-teaming judges: LLM judges &quot;show erratic recall (0.06 to 0.65)&quot;; benign wrappers flip
+every judge &quot;between 57% and 100% of the time&quot;; recommends reporting &quot;ASR corrected for
+judge precision&quot;. [arXiv 2606.25487]</li>
+<li>Rogan–Gladen with sensitivity and specificity from a labelled set, uncertainty from both
+sets propagated. [arXiv 2511.21140] Two limits the paper states for its own setting: the
+shift-robustness assumes the judge behaves the same <em>given the true label</em> in both
+populations, and &quot;m ≈ 200 calibration examples&quot; for an interval under 0.1 is one
+illustrated configuration, not a general requirement.</li>
+<li>Prediction-powered inference gives valid intervals from few labels plus many judge
+outputs. [arXiv 2301.09633, 2311.01453, 2403.07008]</li>
+<li>Shared calibration across two compared models &quot;can introduce severe bias, including …
+the wrong direction with high apparent confidence&quot;. [arXiv 2605.06939]</li>
+</ul>
+<p><strong>Repeated looks inflate false alarms.</strong> p-values &quot;are wholly unreliable if users …
+continuously monitor&quot; [arXiv 1512.04922]; confidence sequences are &quot;uniformly valid over an
+unbounded time horizon&quot; [arXiv 1810.08240], with a betting construction for bounded means
+[arXiv 2010.09686] and an ML-monitoring use that does not raise the false-alarm rate
+[arXiv 2110.06177].</p>
+<p><strong>What the comparable tools ship</strong> (docs and source at HEAD):</p>
+<ul>
+<li>Repeats: Inspect (epochs + reducers incl. <code>pass_at_k</code>, <code>pass_k</code>), garak (<code>generations</code>
+default 5), promptfoo (<code>--repeat</code>, cached unless <code>--no-cache</code>), lm-eval (<code>repeats</code>).</li>
+<li>Clustered SE: Inspect only. garak bootstraps over attempts pooled across generations.</li>
+<li>Paired comparison of two runs: <strong>none of the five</strong>. lm-eval compares with an unpaired z;
+Inspect suggests interval overlap; promptfoo's compare is a text diff.</li>
+<li>Judge-error correction: garak only — point estimates, a silent <code>(1.0, 1.0)</code> fallback when
+detector metrics are missing, uncorrected CI when Se+Sp−1 ≈ 0. PyRIT measures judges and
+does not correct rates.</li>
+<li>Anytime-valid monitoring: <strong>none of the five</strong>.</li>
+<li>Re-grading stored transcripts: Inspect (<code>inspect score --scorer</code>), PyRIT (on main, not
+released), promptfoo (Enterprise only), garak (not found).</li>
+</ul>
+<p><strong>Attack engine and agents, for the deferred lane.</strong> PyRIT 1.0 is &quot;dataset × techniques ×
+jailbreaks&quot;; garak buffs, promptfoo strategies — all a transform registry with a small
+default set, none documented as priced against a budget before the run. &quot;The Attacker Moves
+Second&quot; bypasses 12 defenses at &gt;90% ASR, most of which &quot;originally reported near-zero&quot;
+[arXiv 2510.09023]. AgentDojo, AgentHarm and WASP grade environment state or tool calls,
+report utility and utility-under-attack beside ASR, and keep partial success apart.</p>
+<h2 id="options">Options</h2>
+<p><strong>A. Trials as an engine concept (rows 1 and 2).</strong> A case becomes a prompt with K trials; an
+assessment records every trial. A rule reports the finding on any success (ASR@K), and a clean
+result carries its bound instead of reading as safe. The bound is computed over <em>cases</em>, never
+over pooled trials: K trials of one prompt are correlated, so &quot;0 of 60 trials&quot; is not sixty
+independent observations. Statistics cluster on the case: suites use per-case means, and
+<code>diff</code> uses a paired difference of per-case means (McNemar remains the K=1 special case) with
+the minimum detectable effect printed. It refuses to compare runs with unequal K. A planned
+trial that did not resolve to pass, fail or inconclusive is counted and blocks &quot;clean&quot;, which
+extends to trials the run-level rule <code>diff/gate.py</code> already applies to an incomplete run.
+Costs ×K requests, which <code>plan</code> already prices and a budget already bounds, plus a manifest
+schema bump. This serves principle 10 directly: today &quot;clean&quot; means &quot;not observed in
+one trial&quot;.</p>
+<p><strong>B. Judge-aware rates (row 1).</strong> <code>calibrate</code> records per-class counts: sensitivity,
+specificity, m₀, m₁. A rate graded by a non-deterministic evaluator is Rogan–Gladen corrected,
+with the calibration uncertainty in the interval. A missing calibration, or Se+Sp−1 near zero,
+never falls back silently to the raw number; it is its own outcome. Two runs that share one
+calibration are flagged in <code>diff</code>. No new dependency. It extends a record that already exists.</p>
+<p><strong>C. Re-gradable evidence (a new row before output plugins).</strong> Persist the redacted exchange
+for every assessed case, passes included, and add <code>guardana run regrade &lt;run&gt; --evaluator …</code>
+on the unused <code>REPLAY</code> source kind. A judge upgrade then costs no target traffic. Grading the
+same transcripts under two assessors measures assessor drift on its own, the one change <code>diff</code>
+currently can only refuse. Costs a persisted schema change and more stored text, which argues
+for opt-in and redaction on write.</p>
+<p><strong>D. Anytime-valid <code>monitor</code> (Next item 3, own design).</strong> Rate checks in <code>monitor</code> use a
+confidence sequence, betting over a bounded mean with only <code>math</code>, so a schedule of looks does
+not buy false alarms. Categorical changes (a new finding) stay as they are. The design rejected
+sequential testing because it &quot;belongs with the intake lane&quot;, but <code>monitor</code> already looks
+repeatedly today. The estimand is still open: cycle versus a fixed baseline on a target that
+may be redeployed between looks tests a moving hypothesis, and many rules looked at together
+still need multiplicity control. That is a design question, not a formula. Until it is
+answered, an alpha-spending rule keeps the false-alarm rate bounded over any number of cycles.</p>
+<p><strong>Not now — techniques, adaptive attackers, stateful agent doubles.</strong> Each adds coverage
+volume. The milestone outranks coverage, and each becomes honest only once A and B exist:
+Best-of-N is K trials over transforms, and an adaptive attacker needs a judge whose error is
+known. One cheap piece belongs in A: the human report states K and &quot;static prompt set, no
+adaptive attacker&quot;, so a clean result is never read as robustness.</p>
+<h2 id="decision">Decision</h2>
+<p>Amend the two proposed designs before any code: fold <strong>A</strong> and <strong>B</strong> into row 1, and
+<strong>A's statistics</strong> into row 2. Add <strong>C</strong> as a new row between the paired diff and the output
+plugins. <strong>D</strong> gets its own design document in the Next lane, where the sequential question
+already lives, and row 2 applies alpha-spending to <code>monitor</code> meanwhile. Nothing shipped
+changes shape.</p>
+<p>The designs that carry it:</p>
+<ul>
+<li><a href="repeated-trials.html"><code>repeated-trials.md</code></a> — A, row 1</li>
+<li><a href="judge-error-correction.html"><code>judge-error-correction.md</code></a> — B, row 1</li>
+<li><a href="quality-suites.html"><code>quality-suites.md</code></a> and
+<a href="paired-regression-statistics.html"><code>paired-regression-statistics.md</code></a> — amended for A and B,
+plus the minimum detectable effect, Holm across gated suites, and alpha-spending in <code>monitor</code></li>
+<li><a href="regrading-stored-exchanges.html"><code>regrading-stored-exchanges.md</code></a> — C, row 3</li>
+<li><a href="anytime-valid-monitoring.html"><code>anytime-valid-monitoring.md</code></a> — D, Next item 3 The order of the existing rows stays. The
+milestone's exit criteria gain one clause: &quot;a clean result states its trials and its judge's
+measured error&quot;.</li>
+</ul>
+<p>Why: all four close a gap by the project's own definition of a false green, and A–C land in
+shapes still on paper. Three of the four are absent from all five comparable tools: paired
+comparison, propagated judge correction and anytime-valid monitoring. That matches the
+audit's finding that rows 1–3 are where Guardana follows no one.</p>
+<p>Defers: techniques and adaptive attackers stay under &quot;Researched after the foundations&quot;, now
+with a stated prerequisite (A and B). Stateful agent doubles go to the parallel lane.</p>
+<h2 id="second-opinion">Second opinion</h2>
+<p>GPT answered. Gemini did not: its quota was exhausted on the day of writing. This is one
+model family's view, not a consensus, recorded as a gap in the method. GPT orders A+B, then C,
+then D, and says B must ship with A because judge error compounds across K. Its objections are
+folded in above: correlated trials, unequal K, the limits of Rogan–Gladen, and D's estimand.
+Its C objection is not resolved: redaction is not a dependable privacy boundary, and
+persisting every passing transcript widens what a leak exposes. It argues for opt-in, and
+possibly for storing only what a regrade needs. Its one addition, a completeness gate for
+trials, is now part of A.</p>
+<h2 id="decided-defaults">Decided defaults</h2>
+<ol>
+<li><strong>K is 1 in every preset</strong> (<code>ci</code>, <code>pre-training</code>, <code>monitor</code>), recorded and printed. K is
+raised with <code>--trials</code> or <code>trials:</code> in <code>guardana.yaml</code>, and the documentation recommends 5
+for a release gate, which is garak's default. No preset raises it, because a preset that
+multiplied requests would change the cost of a gate nobody edited.</li>
+<li>A gate over a judge-graded rate with no usable calibration is <strong>inconclusive</strong>, with the
+uncorrected rate shown and labelled, never gated.</li>
+<li>Keeping passing exchanges for re-grading is <strong>opt-in, redacted on write</strong>, in a sidecar the
+collector never receives.</li>
+</ol>
+<h2 id="sources">Sources</h2>
+<p>arXiv 2412.03556 · 2310.06987 · 2506.17299 · 2601.22636 · 2406.12045 · 2411.00640 ·
+2606.25487 · 2511.21140 · 2301.09633 · 2311.01453 · 2403.07008 · 2605.06939 · 1512.04922 ·
+1810.08240 · 2010.09686 · 2110.06177 · 2510.09023 · 2406.13352 (AgentDojo) · 2410.09024
+(AgentHarm) · 2504.18575 (WASP). Inspect: inspect.aisi.org.uk/metrics.html,
+/scoring-workflow.html. garak: reference.garak.ai, <code>garak/analyze/bootstrap_ci.py</code>.
+promptfoo: promptfoo.dev/docs (configuration/caching, releases). PyRIT:
+github.com/microsoft/PyRIT <code>doc/code/framework.md</code>. lm-eval: <code>scripts/model_comparator.py</code>.
+All read 2026-09-23.</p>
+
+</main>
+</div>
+<footer class="foot"><div class="bar">
+<span>Guardana 0.26.1 · Apache-2.0</span>
+<a href="https://github.com/guardana/guardana/blob/main/docs/design/audit-0.26-measurement.md">Edit this page on GitHub</a>
+<a href="../../llms.txt">llms.txt</a>
+</div></footer>
+</body>
+</html>

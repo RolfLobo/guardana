@@ -7,7 +7,7 @@ status: proposed
 
 # Paired regression statistics: "worse" with a p-value, or "cannot tell"
 
-**Status:** proposed · **Written:** 2026-09-02 · **Cycle 3 of the extensibility program** ([`audit-0.22.md`](audit-0.22.md))
+**Status:** proposed · **Written:** 2026-09-02 · **Amended:** 2026-09-23 (trials, power, judges, several suites, `monitor`) · **Cycle 3 of the extensibility program** ([`audit-0.22.md`](audit-0.22.md))
 
 ## Where 0.22.0 stopped
 
@@ -44,6 +44,49 @@ and `p ≤ max_p_value`. A **rate improvement** is the mirror image. Anything el
 a note that says which condition was not met and by how much: "12 paired cases,
 below the 30 this policy needs", "pass rate fell 0.03 on 80 cases, below the
 minimum effect 0.05", "3 cases got worse and 2 got better; p = 0.63".
+
+### With K trials per case
+
+When a case has K trials ([`repeated-trials.md`](repeated-trials.md)), its
+reading is no longer a boolean. It is the share of its trials that passed: `x`
+before and `y` after. The paired difference `d = x − y` is positive when worse.
+The effect is the mean of `d` over paired cases. Its standard error is the sample
+standard deviation of `d` divided by √paired, and the p-value is the two-sided
+normal tail, `math.erfc`, which `min_sample ≥ 30` makes adequate. The three
+conditions are unchanged. Exact McNemar is the `K = 1` case of the same question
+and stays the test there.
+
+Two runs whose K differs for a suite are `incomparable` for that suite, with the
+reason `trials changed`. More trials change what a case's number means.
+
+### What the sample can detect
+
+Every rate comparison also prints its **minimum detectable effect**: the smallest
+change this sample would detect four times in five at the policy's
+`max_p_value`, (z₁₋α/₂ + z₀.₈) × SE, about 2.8 × SE at 0.05. When the policy's
+`min_effect` is below it, the note says so: "this sample detects changes of 0.09
+or more; the policy asks about 0.05". A clean comparison on an underpowered
+sample is the false green this design exists to refuse, and the fix it names
+(more cases, or more trials) is the one [Miller](https://arxiv.org/abs/2411.00640)
+quantifies. At 198 cases, raising K from 1 to 10 lowers the detectable effect
+from 13.2% to 7.5%.
+
+### Judge-graded outcomes
+
+When the assessor is a judge, the test runs on the judge's raw outcomes. The
+corrected effect is printed beside it with its assumption stated
+([`judge-error-correction.md`](judge-error-correction.md), decision 5). The sign
+and the p-value survive a judge that errs the same way on both runs. A corrected
+size does not survive a judge that errs differently, and the note says which one
+the reader is looking at.
+
+### Several suites in one comparison
+
+When more than one suite gates in the same `diff`, their p-values are adjusted
+with Holm's step-down procedure before the `max_p_value` condition is applied.
+Twenty suites each tested at 0.05 would otherwise produce about one false
+regression per comparison in which nothing changed. Holm is a sort and a loop.
+Slices stay ungated, as below.
 
 ## Numeric cases
 
@@ -93,11 +136,17 @@ suite's threshold finding as `appeared` exactly as it would any other finding.
 
 ### `monitor`
 
-Inherits everything through `compare`. One addition: at start-up it says, once,
-which suites are below `min_sample` — "suite X has 20 cases, below
-regression.min_sample 30; rate changes will be reported, not alerted" — because a
-monitor that silently cannot alert is the blind spot the intake design names
-first.
+Inherits everything through `compare`, with one exception: `monitor` looks again
+on every cycle, and a fixed level on every look buys false alarms. A rate alert
+on cycle *i* therefore tests at `6·max_p_value / (π²·i²)`. These levels sum to
+`max_p_value` over an unbounded schedule. The reasoning and the confidence
+sequence meant to replace this are in
+[`anytime-valid-monitoring.md`](anytime-valid-monitoring.md).
+
+At start-up it says, once, which suites are below `min_sample` — "suite X has 20
+cases, below regression.min_sample 30; rate changes will be reported, not
+alerted" — and that the level falls with each cycle. A monitor that silently
+cannot alert is the blind spot the intake design names first.
 
 ## Rejected
 
@@ -112,7 +161,9 @@ risk score: it would hide which condition was unmet.
 
 **Sequential testing and early stopping.** Worth having for a monitor that samples
 continuously; belongs with the intake lane, where the sample arrives over time.
-A one-shot `diff` has both runs in hand.
+A one-shot `diff` has both runs in hand. `monitor` already looks repeatedly
+today, so it gets the alpha-spending rule above now. The sequential design is
+[`anytime-valid-monitoring.md`](anytime-valid-monitoring.md).
 
 **Bayesian intervals.** Defensible, and a prior is a policy decision this tool
 has no standing to set for somebody else's suite.
@@ -120,5 +171,7 @@ has no standing to set for somebody else's suite.
 ## See also
 
 - [`quality-suites.md`](quality-suites.md) — where the paired sample comes from
+- [`repeated-trials.md`](repeated-trials.md) — per-case rates, and why K must match
+- [`judge-error-correction.md`](judge-error-correction.md) — raw test, corrected effect
 - [`assessment-channel.md`](assessment-channel.md) — the comparability key
 - [`../usage-diff.md`](../usage-diff.md) — the user page

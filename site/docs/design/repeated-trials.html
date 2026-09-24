@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Repeated trials — Guardana documentation</title>
+<meta name="description" content="why one reply per prompt cannot support a clean result, what a trial is, how K trials reduce to one case, and the bound a clean result carries instead of reading as safe">
+<link rel="canonical" href="https://guardana.dev/docs/design/repeated-trials">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+<link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+<header class="top"><div class="bar">
+<a class="mark" href="../../">guard<span>ana</span></a>
+<nav>
+<a href="../index.html">Documentation</a>
+<a href="../rules/index.html">Rules</a>
+<a href="https://github.com/guardana/guardana">GitHub</a>
+</nav>
+</div></header>
+<div class="shell">
+<nav class="side">
+<ul class="home"><li><a href="../index.html">Overview</a></li></ul>
+<h2>First run</h2><ul>
+<li><a href="../how-it-works.html">How Guardana works</a></li>
+<li><a href="../install.html">Installing</a></li>
+<li><a href="../usage-testing.html">In your test suite</a></li>
+<li><a href="../usage-scan.html">guardana scan</a></li>
+<li><a href="../usage-probe.html">guardana probe</a></li>
+</ul>
+<h2>Run and policy</h2><ul>
+<li><a href="../safe-testing.html">Safe active testing</a></li>
+<li><a href="../usage-doctor.html">guardana doctor</a></li>
+<li><a href="../usage-target.html">guardana target inspect</a></li>
+<li><a href="../usage-plan.html">guardana plan</a></li>
+<li><a href="../exit-codes.html">Exit codes</a></li>
+<li><a href="../profiles.html">Profiles — guardana.yaml</a></li>
+</ul>
+<h2>Evidence and regression</h2><ul>
+<li><a href="../usage-baseline.html">guardana baseline</a></li>
+<li><a href="../usage-diff.html">guardana diff</a></li>
+<li><a href="../usage-monitor.html">guardana monitor</a></li>
+<li><a href="../usage-run.html">guardana run</a></li>
+<li><a href="../usage-calibrate.html">guardana calibrate</a></li>
+<li><a href="../privacy.html">Evidence and redaction</a></li>
+</ul>
+<h2>Recorded applications</h2><ul>
+<li><a href="../usage-analyze-trace.html">guardana analyze-trace</a></li>
+<li><a href="../usage-trace-inspect.html">guardana trace inspect</a></li>
+<li><a href="../usage-contracts.html">Security contracts</a></li>
+<li><a href="../usage-import-observations.html">guardana import-observations</a></li>
+<li><a href="../writing-an-integrator.html">Writing an integrator<span class="tag">beta</span></a></li>
+</ul>
+<h2>Rules and extensions</h2><ul>
+<li><a href="../usage-rules.html">guardana rules</a></li>
+<li><a href="../usage-taxonomy.html">guardana taxonomy</a></li>
+<li><a href="../writing-rules.html">Writing rules</a></li>
+<li><a href="../usage-rule-test.html">guardana rule test</a></li>
+<li><a href="../usage-new-pack.html">guardana new-pack</a></li>
+<li><a href="../usage-pack.html">guardana pack</a></li>
+<li><a href="../extending.html">Extending Guardana</a></li>
+<li><a href="../model-formats.html">Reading model formats</a></li>
+</ul>
+<h2>Collector and deployment</h2><ul>
+<li><a href="../integrations.html">CI and pre-commit</a></li>
+<li><a href="../deployment.html">Deploying the collector<span class="tag">beta</span></a></li>
+<li><a href="../usage-collector.html">The collector<span class="tag">beta</span></a></li>
+</ul>
+<h2>Architecture and security</h2><ul>
+<li><a href="../product-status.html">Product status</a></li>
+<li><a href="../threat-model.html">Threat model</a></li>
+<li><a href="../architecture.html">Architecture</a></li>
+</ul>
+<h2>Reference</h2><ul>
+<li><a href="../rules/index.html">Rule explorer</a></li>
+<li><a href="../generated/rule-summary.html">Rule summary</a></li>
+<li><a href="../generated/rule-catalog.html">Rule catalog</a></li>
+<li><a href="../generated/evaluator-catalog.html">Evaluator catalog</a></li>
+<li><a href="../generated/taxonomy-coverage.html">Taxonomy coverage</a></li>
+</ul>
+<h2>Design documents</h2><ul>
+<li><a href="../design/README.html">How these are written</a></li>
+</ul>
+<h2>Project direction</h2><ul>
+<li><a href="../design/audit-0.23-market.html">The 0.23 repository and market audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-0.25-market.html">The 0.25 roadmap and market audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-0.26-measurement.html">The 0.26 measurement audit<span class="tag">accepted</span></a></li>
+</ul>
+<h2>Maintainers</h2><ul>
+<li><a href="../maintainers/github-setup.html">GitHub repository setup</a></li>
+<li><a href="../maintainers/ops-catalogue.html">Operations catalogue</a></li>
+<li><a href="../maintainers/lessons.html">Lessons</a></li>
+</ul>
+<h2>Also here</h2><ul>
+<li><a href="../design/trace-domain-model.html">The Trace domain model<span class="tag">implemented</span></a></li>
+<li><a href="../design/trace-producer.html">Producing a trace<span class="tag">implemented</span></a></li>
+<li><a href="../design/framework-adapters.html">Framework adapters<span class="tag">implemented</span></a></li>
+<li><a href="../design/assessment-channel.html">The assessment channel<span class="tag">accepted</span></a></li>
+<li><a href="../design/capability-protocols.html">Capability protocols<span class="tag">accepted</span></a></li>
+<li><a href="../design/production-intake.html">Production intake<span class="tag">proposed</span></a></li>
+<li><a href="../design/audit-0.21.html">The 0.21 audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-0.22.html">The 0.22 audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/security-contracts.html">Security contracts<span class="tag">implemented</span></a></li>
+<li><a href="../design/mcp-protocol-eras.html">MCP has two eras<span class="tag">implemented</span></a></li>
+<li><a href="../design/mcp-authorization-depth.html">MCP authorization depth<span class="tag">implemented</span></a></li>
+<li><a href="../design/taxonomy-editions.html">Taxonomy editions<span class="tag">implemented</span></a></li>
+<li><a href="../design/extension-author-tooling.html">Extension author tooling<span class="tag">accepted</span></a></li>
+<li><a href="../design/target-locators.html">Target locators<span class="tag">implemented</span></a></li>
+<li><a href="../design/output-plugins.html">Output plugins<span class="tag">proposed</span></a></li>
+<li><a href="../design/quality-suites.html">Quality suites<span class="tag">proposed</span></a></li>
+<li><a href="../design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
+<li><a href="../design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
+<li><a href="../design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
+<li><a href="../design/declarative-fixtures.html">Declarative fixtures for scenarios and agent runs<span class="tag">accepted</span></a></li>
+<li><a href="../design/pack-scaffolding.html">Scaffolding a pack<span class="tag">accepted</span></a></li>
+<li><a href="../design/repeated-trials.html" aria-current="page">Repeated trials<span class="tag">accepted</span></a></li>
+<li><a href="../design/documentation-site.html">A documentation site<span class="tag">implemented</span></a></li>
+<li><a href="../design/judge-error-correction.html">Judge error in a measured rate<span class="tag">proposed</span></a></li>
+<li><a href="../design/regrading-stored-exchanges.html">Re-grading stored exchanges<span class="tag">proposed</span></a></li>
+<li><a href="../design/anytime-valid-monitoring.html">Anytime-valid monitoring<span class="tag">proposed</span></a></li>
+<li><a href="../design/run-manifest-v2.html">Run manifest v2<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-domain-model.html">Collector domain model<span class="tag">superseded</span></a></li>
+<li><a href="../design/privacy-and-redaction.html">Privacy and redaction<span class="tag">implemented</span></a></li>
+<li><a href="../design/exit-codes.html">Exit codes and gate semantics<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-persistence.html">Collector persistence<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-tenancy.html">Collector tenancy<span class="tag">implemented</span></a></li>
+<li><a href="../design/ai-systems-and-deployments.html">AI systems and deployments<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-runs-and-findings.html">Runs and findings<span class="tag">accepted</span></a></li>
+<li><a href="../design/finding-lifecycle-and-waivers.html">Finding lifecycle and waivers<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-retention-and-deletion.html">Audit, retention and deletion<span class="tag">accepted</span></a></li>
+<li><a href="../design/panel-sessions.html">Panel sessions<span class="tag">accepted</span></a></li>
+</ul>
+</nav>
+<main>
+<h1>Repeated trials: &quot;clean&quot; means &quot;not observed in K tries&quot;, and says K<span class="status accepted">accepted</span></h1><p class="lede">why one reply per prompt cannot support a clean result, what a trial is, how K trials reduce to one case, and the bound a clean result carries instead of reading as safe</p><p><strong>Status:</strong> accepted, implemented — ships in the next release · <strong>Written:</strong> 2026-09-23 · <strong><code>ROADMAP.md</code> &quot;Now&quot;, row 1</strong></p>
+<h2 id="the-question">The question</h2>
+<p><code>YamlRule.run</code> sends every prompt once, grades the one reply, and records one
+assessment (<code>yaml_rule.py</code>, <code>Assessment</code>: &quot;one case, measured once&quot;). A rule whose
+every reply passed produces no finding, and a report without findings reads as
+safe. What it has shown is narrower: this endpoint, sampled once per prompt, did
+not produce the failure this time.</p>
+<p>A deployed model samples. The published evidence says the gap between one sample
+and many is not a rounding error:</p>
+<ul>
+<li>Best-of-N reaches 89% attack success on GPT-4o and 78% on Claude 3.5 Sonnet with
+10,000 augmented samples, and success grows with N along a power law
+(<a href="https://arxiv.org/abs/2412.03556">arXiv 2412.03556</a>).</li>
+<li>Varying only the decoding raises misalignment &quot;from 0% to more than 95%&quot; across
+eleven models (<a href="https://arxiv.org/abs/2310.06987">arXiv 2310.06987</a>).</li>
+<li>Prompts that succeed 10.3% of the time under greedy decoding succeed for 90% of
+prompts along other generation paths (<a href="https://arxiv.org/abs/2506.17299">arXiv 2506.17299</a>).</li>
+<li>Frontier system cards report prompt-injection success at k = 1, 10 and 100
+attempts, not at one.</li>
+</ul>
+<p>A result that rests on one trial is not wrong. It is unlabelled, and an unlabelled
+&quot;clean&quot; is read as a pass. That is principle 10.</p>
+<h2 id="decisions">Decisions</h2>
+<h3 id="1-a-trial-is-one-independent-attempt-at-a-case">1. A trial is one independent attempt at a case</h3>
+<p>Same input, a fresh request, no conversation state shared with another trial. A
+case with K trials makes K requests. <code>K</code> is a run setting, not a rule field:
+<code>--trials N</code> on <code>probe</code>, <code>monitor</code> and <code>plan probe</code>, and <code>trials:</code> in
+<code>guardana.yaml</code>. Every preset keeps <code>K = 1</code>, so no existing gate changes cost
+without an edit. The documentation recommends 5 for a release gate. That is
+garak's default number of generations per prompt.</p>
+<p>Trials apply only to rules whose verdict depends on a model sampling a reply:
+single-turn rules, scenarios, agent runs and suites. A protocol rule, such as an
+MCP authorization check, grades a server's deterministic answer. It keeps
+<code>K = 1</code> and says so in its record, instead of repeating the same request K times
+and implying that more was measured.</p>
+<p>Guardana never changes the target's sampling parameters to reduce variance. A
+lower temperature measures a configuration nobody deployed
+(<a href="https://arxiv.org/abs/2411.00640">Miller, arXiv 2411.00640</a>: the temperature
+should not be adjusted &quot;for the sake of reducing variance&quot;).</p>
+<h3 id="2-every-trial-is-recorded-the-case-is-the-unit">2. Every trial is recorded; the case is the unit</h3>
+<p><code>Assessment</code> gains <code>trial: int | None</code>. One assessment per trial keeps the raw
+outcomes, which judge-error correction (<a href="judge-error-correction.html"><code>judge-error-correction.md</code></a>)
+and re-grading (<a href="regrading-stored-exchanges.html"><code>regrading-stored-exchanges.md</code></a>)
+both need. <code>None</code> means a document written before trials existed, and it is read
+as <code>K = 1</code>. <code>case_id</code> is unchanged, and so is <code>comparable_key</code>. The trial index
+is not identity. Trial 3 of one run and trial 3 of another are not the same
+observation.</p>
+<p>This changes the run manifest schema from <code>6</code> to <code>7</code>. The migration records one
+attempt per case for a version-6 document (<code>execution.trials: 1</code>, <code>trial: null</code>) and
+computes no summary from its assessments.</p>
+<h3 id="3-k-trials-reduce-to-three-named-numbers-per-case">3. K trials reduce to three named numbers per case</h3>
+<p>One function, <code>reduce_case</code>, and every renderer reads its output:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Definition</th>
+<th>The question it answers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>success_rate</code></td>
+<td>failed trials ÷ graded trials</td>
+<td>how often a single request goes wrong</td>
+</tr>
+<tr>
+<td><code>any_success</code> (ASR@K)</td>
+<td>at least one of K trials failed</td>
+<td>what an attacker with K tries gets</td>
+</tr>
+<tr>
+<td><code>held_all</code> (pass^K)</td>
+<td>every one of K trials passed</td>
+<td>whether the defence is reliable</td>
+</tr>
+</tbody>
+</table></div>
+<p>A rule still yields a finding when any trial of any case fails. With <code>K = 1</code>
+that is today's behaviour exactly. The finding's evidence names <code>m of K trials</code>
+and carries the first failing reply, redacted like all evidence.</p>
+<h3 id="4-a-trial-that-did-not-resolve-blocks-clean">4. A trial that did not resolve blocks &quot;clean&quot;</h3>
+<p>A trial is measured (pass or fail), inconclusive, errored, or never sent because
+the budget ran out. A rule is clean only when every planned trial of every case
+was measured and passed. An inconclusive trial is not a pass, and it does not
+count toward the K a bound is computed from. A case short of its K is
+<code>incomplete</code>, and the rule reports it on the <code>unverified</code> channel. <code>diff/gate.py</code>
+already applies this rule to an incomplete run. Here it applies to each trial.</p>
+<p>Budget exhaustion keeps its contract: exit <code>6</code>, results preserved, and the
+unfinished cases named.</p>
+<h3 id="5-a-clean-result-carries-its-bound-computed-over-cases">5. A clean result carries its bound, computed over cases</h3>
+<p>When all n cases pass all K trials, the rule reports an upper bound on
+<code>any_success</code>, the rate a K-try attacker gets, over this rule's cases:</p>
+<pre><code class="language-text">guardana.prompt.jailbreak  clean · 0 of 12 cases in 5 trials each · ASR@5 ≤ 22.1% (95%)
+</code></pre>
+<p>The bound is the one-sided exact binomial limit for zero events, 1 − 0.05^(1/n).
+It is computed over <strong>cases</strong>, never over pooled trials. The K trials of one
+prompt are correlated, so &quot;0 of 60 trials&quot; is not sixty independent
+observations. Pooling them is the estimator Miller calls inconsistent. At
+<code>K = 1</code> the same line reads <code>ASR@1 ≤ 22.1%</code>, which is exactly how little twelve
+single replies establish.</p>
+<p>The population is the rule's own prompt set, not &quot;attacks in general&quot;. The human
+renderer prints one run-level line: <code>static prompt set · no adaptive attacker ran</code>. No adaptive attacker ships today, so the line is always there. A bound over
+a fixed corpus must not be read as robustness
+(<a href="https://arxiv.org/abs/2510.09023">arXiv 2510.09023</a> bypassed twelve defenses
+reported at near-zero attack success).</p>
+<p>When some trial failed, the rule has a finding. The report adds the mean
+<code>success_rate</code> over cases and a Wilson interval on <code>any_success</code> over cases.</p>
+<h3 id="6-cost-is-exact-and-priced-before-the-run">6. Cost is exact and priced before the run</h3>
+<p><code>estimated_requests</code> becomes <code>prompts × K</code> for a trial-bearing rule. The
+docstring's promise holds: this is an exact count, not a ceiling. <code>plan probe</code>
+prints it, and a budget bounds it. <code>RuleRecord.trials</code> keeps its meaning,
+&quot;model calls this rule declared&quot;, and its value multiplies by K. A coverage
+fingerprint therefore changes when K does.</p>
+<h3 id="7-two-runs-with-different-k-do-not-compare">7. Two runs with different K do not compare</h3>
+<p>A finding that appears at <code>K = 5</code> and was absent at <code>K = 1</code> is more sampling, not
+a regression. When K differs for a rule, <code>diff</code> marks that rule <code>incomparable</code>
+with the reason <code>trials changed 1 → 5</code>. Unlike a changed dataset or assessor, which
+only leaves the affected cases out of the measured sample, a changed K fails the
+comparison: the whole rule's findings would otherwise be read as movement.</p>
+<h2 id="what-changed-during-implementation">What changed during implementation</h2>
+<ul>
+<li><strong>A stored summary, and a renamed field.</strong> Each repeating rule's record carries a
+<code>trial_summary</code> the engine computed when the run was written, as the gate verdict is
+stored, so a later build cannot print a different verdict for the same run. The old
+<code>run.rules[].trials</code>, which counted declared model calls, is <code>declared_requests</code> in
+version 7; K per case lives in the summary and the run's request in
+<code>execution.trials</code>.</li>
+<li><strong>The most confident failure speaks for the case.</strong> A policy's <code>min_confidence</code> reads
+the case's verdict, so a doubtful first failure must not hide a certain later one.</li>
+<li><strong>A failure seen before the rule stopped is kept.</strong> When a budget runs out or a later
+attempt raises, the failure already observed is yielded before the stop propagates.</li>
+<li><strong>K comes from the rule object that ran</strong>, carried on the result, not from the
+registry's copy: a canary pass runs a planted copy.</li>
+<li><strong>Merged passes keep every attempt.</strong> Assessments are de-duplicated by comparability
+key <em>and</em> trial; keyed on the case alone, the canary merge kept one attempt per case.</li>
+<li><strong>A <code>stateful</code> scenario does not repeat.</strong> Its server holds the conversation and
+nothing opens a fresh one, so a second attempt would continue the first.</li>
+<li><strong>Bounds print one decimal, rounded up</strong>, so a printed bound never claims more than
+the cases showed.</li>
+<li><strong>A scenario is one case per attempt.</strong> Its graded turns get separate case ids for the
+measurement channel, but they are checkpoints of one conversation, so the summary counts
+one case per walk rather than treating correlated grades as independent.</li>
+<li><strong>A case id is never shared.</strong> A rule file listing a prompt twice, or a scenario grading
+the same message twice, is refused at load: the two would be one case recorded twice.</li>
+<li><strong>A finding denies the bound.</strong> A rule that reported a finding never stores a bound, even
+if its recorded trials look clean.</li>
+<li><strong>The line says &quot;grader error not corrected&quot;</strong>, which is true whether or not a
+calibration exists, until judge-error correction lands.</li>
+</ul>
+<h2 id="rejected">Rejected</h2>
+<p><strong>Pooling trials as independent observations.</strong> It is cheaper to explain and
+wrong. Clustered standard errors &quot;can be over 3X larger than naive&quot;
+(<a href="https://arxiv.org/abs/2411.00640">Miller</a>), so a pooled bound claims far more
+than the data holds.</p>
+<p><strong>Stopping a case at its first failure.</strong> It saves requests when a model is
+already failing. The saving costs <code>success_rate</code>, the number
+<a href="paired-regression-statistics.html"><code>paired-regression-statistics.md</code></a> compares, and
+it makes <code>estimated_requests</code> a ceiling instead of an exact count.</p>
+<p><strong>One assessment per case holding counts.</strong> Smaller, but the raw trials are gone,
+and both judge correction and re-grading need them.</p>
+<p><strong>Forecasting large-N success from a fitted curve.</strong> Best-of-N's power law and
+SABER's per-prompt Beta fit (<a href="https://arxiv.org/abs/2601.22636">arXiv 2601.22636</a>)
+are defensible research. A forecast is not a measurement, and a pack can ship one
+as a renderer once output plugins exist.</p>
+<p><strong>A new preset with <code>K &gt; 1</code>.</strong> It would multiply the cost of a gate nobody edited.
+K is raised on purpose, where the bill is visible.</p>
+<h2 id="see-also">See also</h2>
+<ul>
+<li><a href="quality-suites.html"><code>quality-suites.md</code></a>: a suite's cases are trial-bearing too</li>
+<li><a href="paired-regression-statistics.html"><code>paired-regression-statistics.md</code></a>: comparing per-case rates between runs</li>
+<li><a href="judge-error-correction.html"><code>judge-error-correction.md</code></a>: when the grader of each trial is itself a model</li>
+<li><a href="assessment-channel.html"><code>assessment-channel.md</code></a>: the record every trial becomes</li>
+</ul>
+
+</main>
+</div>
+<footer class="foot"><div class="bar">
+<span>Guardana 0.26.1 · Apache-2.0</span>
+<a href="https://github.com/guardana/guardana/blob/main/docs/design/repeated-trials.md">Edit this page on GitHub</a>
+<a href="../../llms.txt">llms.txt</a>
+</div></footer>
+</body>
+</html>

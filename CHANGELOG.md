@@ -41,6 +41,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   stale. `scripts/bump_version.py` ceases to require or rewrite `README.md`'s
   `*(current)*` marker; `test_docs_consistency.py` cuts two table tests; `RELEASING.md`
   and release checklist omit it.
+- **`ROADMAP.md` puts repeated trials and judge-error correction first.** "Now" row 1
+  widens suites, versioned datasets and assessors to include them; paired diff row 2
+  rejects unequal trials, prints minimum detectable effect and adjusts for several gated
+  suites. Row 3 retains opted-in redacted exchanges for `guardana run regrade` with a
+  new assessor without target traffic; old rows 3-5 become 4-6. Clean results give trial
+  counts; judge-graded rates correct for measured error or decline to gate.
+  `guardana probe` ran once per prompt; `guardana calibrate` measures error but does
+  not correct rates. Published evidence shows one sample understates attack success.
+  "Next" item 3 replaces a fixed level per look with a confidence sequence. Reusable
+  attack techniques and adaptive attackers are under "Researched after the foundations",
+  behind repeated trials and judge-error correction. No code or behavior changed. See
+  [`docs/design/audit-0.26-measurement.md`](docs/design/audit-0.26-measurement.md).
 
 ## [0.26.1] - 2026-09-21 — a field report, and the audit of its own fix
 

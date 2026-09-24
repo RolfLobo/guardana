@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Re-grading stored exchanges — Guardana documentation</title>
+<meta name="description" content="keeping the redacted exchange behind every assessment so a new assessor can grade an old run without touching the target, why it is opt-in, and why an exchange redaction altered cannot be re-graded into a pass">
+<link rel="canonical" href="https://guardana.dev/docs/design/regrading-stored-exchanges">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+<link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+<header class="top"><div class="bar">
+<a class="mark" href="../../">guard<span>ana</span></a>
+<nav>
+<a href="../index.html">Documentation</a>
+<a href="../rules/index.html">Rules</a>
+<a href="https://github.com/guardana/guardana">GitHub</a>
+</nav>
+</div></header>
+<div class="shell">
+<nav class="side">
+<ul class="home"><li><a href="../index.html">Overview</a></li></ul>
+<h2>First run</h2><ul>
+<li><a href="../how-it-works.html">How Guardana works</a></li>
+<li><a href="../install.html">Installing</a></li>
+<li><a href="../usage-testing.html">In your test suite</a></li>
+<li><a href="../usage-scan.html">guardana scan</a></li>
+<li><a href="../usage-probe.html">guardana probe</a></li>
+</ul>
+<h2>Run and policy</h2><ul>
+<li><a href="../safe-testing.html">Safe active testing</a></li>
+<li><a href="../usage-doctor.html">guardana doctor</a></li>
+<li><a href="../usage-target.html">guardana target inspect</a></li>
+<li><a href="../usage-plan.html">guardana plan</a></li>
+<li><a href="../exit-codes.html">Exit codes</a></li>
+<li><a href="../profiles.html">Profiles — guardana.yaml</a></li>
+</ul>
+<h2>Evidence and regression</h2><ul>
+<li><a href="../usage-baseline.html">guardana baseline</a></li>
+<li><a href="../usage-diff.html">guardana diff</a></li>
+<li><a href="../usage-monitor.html">guardana monitor</a></li>
+<li><a href="../usage-run.html">guardana run</a></li>
+<li><a href="../usage-calibrate.html">guardana calibrate</a></li>
+<li><a href="../privacy.html">Evidence and redaction</a></li>
+</ul>
+<h2>Recorded applications</h2><ul>
+<li><a href="../usage-analyze-trace.html">guardana analyze-trace</a></li>
+<li><a href="../usage-trace-inspect.html">guardana trace inspect</a></li>
+<li><a href="../usage-contracts.html">Security contracts</a></li>
+<li><a href="../usage-import-observations.html">guardana import-observations</a></li>
+<li><a href="../writing-an-integrator.html">Writing an integrator<span class="tag">beta</span></a></li>
+</ul>
+<h2>Rules and extensions</h2><ul>
+<li><a href="../usage-rules.html">guardana rules</a></li>
+<li><a href="../usage-taxonomy.html">guardana taxonomy</a></li>
+<li><a href="../writing-rules.html">Writing rules</a></li>
+<li><a href="../usage-rule-test.html">guardana rule test</a></li>
+<li><a href="../usage-new-pack.html">guardana new-pack</a></li>
+<li><a href="../usage-pack.html">guardana pack</a></li>
+<li><a href="../extending.html">Extending Guardana</a></li>
+<li><a href="../model-formats.html">Reading model formats</a></li>
+</ul>
+<h2>Collector and deployment</h2><ul>
+<li><a href="../integrations.html">CI and pre-commit</a></li>
+<li><a href="../deployment.html">Deploying the collector<span class="tag">beta</span></a></li>
+<li><a href="../usage-collector.html">The collector<span class="tag">beta</span></a></li>
+</ul>
+<h2>Architecture and security</h2><ul>
+<li><a href="../product-status.html">Product status</a></li>
+<li><a href="../threat-model.html">Threat model</a></li>
+<li><a href="../architecture.html">Architecture</a></li>
+</ul>
+<h2>Reference</h2><ul>
+<li><a href="../rules/index.html">Rule explorer</a></li>
+<li><a href="../generated/rule-summary.html">Rule summary</a></li>
+<li><a href="../generated/rule-catalog.html">Rule catalog</a></li>
+<li><a href="../generated/evaluator-catalog.html">Evaluator catalog</a></li>
+<li><a href="../generated/taxonomy-coverage.html">Taxonomy coverage</a></li>
+</ul>
+<h2>Design documents</h2><ul>
+<li><a href="../design/README.html">How these are written</a></li>
+</ul>
+<h2>Project direction</h2><ul>
+<li><a href="../design/audit-0.23-market.html">The 0.23 repository and market audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-0.25-market.html">The 0.25 roadmap and market audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-0.26-measurement.html">The 0.26 measurement audit<span class="tag">accepted</span></a></li>
+</ul>
+<h2>Maintainers</h2><ul>
+<li><a href="../maintainers/github-setup.html">GitHub repository setup</a></li>
+<li><a href="../maintainers/ops-catalogue.html">Operations catalogue</a></li>
+<li><a href="../maintainers/lessons.html">Lessons</a></li>
+</ul>
+<h2>Also here</h2><ul>
+<li><a href="../design/trace-domain-model.html">The Trace domain model<span class="tag">implemented</span></a></li>
+<li><a href="../design/trace-producer.html">Producing a trace<span class="tag">implemented</span></a></li>
+<li><a href="../design/framework-adapters.html">Framework adapters<span class="tag">implemented</span></a></li>
+<li><a href="../design/assessment-channel.html">The assessment channel<span class="tag">accepted</span></a></li>
+<li><a href="../design/capability-protocols.html">Capability protocols<span class="tag">accepted</span></a></li>
+<li><a href="../design/production-intake.html">Production intake<span class="tag">proposed</span></a></li>
+<li><a href="../design/audit-0.21.html">The 0.21 audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-0.22.html">The 0.22 audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/security-contracts.html">Security contracts<span class="tag">implemented</span></a></li>
+<li><a href="../design/mcp-protocol-eras.html">MCP has two eras<span class="tag">implemented</span></a></li>
+<li><a href="../design/mcp-authorization-depth.html">MCP authorization depth<span class="tag">implemented</span></a></li>
+<li><a href="../design/taxonomy-editions.html">Taxonomy editions<span class="tag">implemented</span></a></li>
+<li><a href="../design/extension-author-tooling.html">Extension author tooling<span class="tag">accepted</span></a></li>
+<li><a href="../design/target-locators.html">Target locators<span class="tag">implemented</span></a></li>
+<li><a href="../design/output-plugins.html">Output plugins<span class="tag">proposed</span></a></li>
+<li><a href="../design/quality-suites.html">Quality suites<span class="tag">proposed</span></a></li>
+<li><a href="../design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
+<li><a href="../design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
+<li><a href="../design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
+<li><a href="../design/declarative-fixtures.html">Declarative fixtures for scenarios and agent runs<span class="tag">accepted</span></a></li>
+<li><a href="../design/pack-scaffolding.html">Scaffolding a pack<span class="tag">accepted</span></a></li>
+<li><a href="../design/repeated-trials.html">Repeated trials<span class="tag">accepted</span></a></li>
+<li><a href="../design/documentation-site.html">A documentation site<span class="tag">implemented</span></a></li>
+<li><a href="../design/judge-error-correction.html">Judge error in a measured rate<span class="tag">proposed</span></a></li>
+<li><a href="../design/regrading-stored-exchanges.html" aria-current="page">Re-grading stored exchanges<span class="tag">proposed</span></a></li>
+<li><a href="../design/anytime-valid-monitoring.html">Anytime-valid monitoring<span class="tag">proposed</span></a></li>
+<li><a href="../design/run-manifest-v2.html">Run manifest v2<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-domain-model.html">Collector domain model<span class="tag">superseded</span></a></li>
+<li><a href="../design/privacy-and-redaction.html">Privacy and redaction<span class="tag">implemented</span></a></li>
+<li><a href="../design/exit-codes.html">Exit codes and gate semantics<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-persistence.html">Collector persistence<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-tenancy.html">Collector tenancy<span class="tag">implemented</span></a></li>
+<li><a href="../design/ai-systems-and-deployments.html">AI systems and deployments<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-runs-and-findings.html">Runs and findings<span class="tag">accepted</span></a></li>
+<li><a href="../design/finding-lifecycle-and-waivers.html">Finding lifecycle and waivers<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-retention-and-deletion.html">Audit, retention and deletion<span class="tag">accepted</span></a></li>
+<li><a href="../design/panel-sessions.html">Panel sessions<span class="tag">accepted</span></a></li>
+</ul>
+</nav>
+<main>
+<h1>Re-grading stored exchanges: a new judge, the same replies<span class="status proposed">proposed</span></h1><p class="lede">keeping the redacted exchange behind every assessment so a new assessor can grade an old run without touching the target, why it is opt-in, and why an exchange redaction altered cannot be re-graded into a pass</p><p><strong>Status:</strong> proposed · <strong>Written:</strong> 2026-09-23 · <strong><code>ROADMAP.md</code> &quot;Now&quot;, row 3</strong></p>
+<h2 id="the-question">The question</h2>
+<p>A team upgrades its judge: a new rubric, a new judge model, or a calibrated
+<code>reference_judge</code>. The next <code>diff</code> correctly refuses to compare the old run with
+the new one, because the assessor changed
+(<a href="assessment-channel.html"><code>assessment-channel.md</code></a>). The only way forward today is
+to probe again. That costs the target traffic a second time, and it mixes two
+changes, since the target may have moved as well. The question &quot;how different is
+the new judge from the old one on the same replies&quot; has no answer at all.</p>
+<p>A saved run cannot answer it. Evidence is written only for a non-passing case
+(<code>yaml_rule.py</code>), and <code>Assessment</code> stores a verdict, not the exchange behind it.
+<code>SourceKind.REPLAY</code> exists in the manifest and nothing produces it.</p>
+<p>Among comparable tools, Inspect re-scores a stored log with a different scorer
+(<code>inspect score --scorer</code>), PyRIT has stored-response scoring on its main branch,
+and promptfoo sells re-grading in its Enterprise tier.</p>
+<h2 id="decisions">Decisions</h2>
+<h3 id="1-keeping-exchanges-is-opt-in">1. Keeping exchanges is opt-in</h3>
+<p><code>evidence.keep_exchanges: true</code> in <code>guardana.yaml</code>, or <code>--keep-exchanges</code> on
+<code>probe</code> and <code>monitor</code>. The default is off. Redaction is not a dependable privacy
+boundary, and keeping every passing reply widens what a leaked run exposes. That
+is a decision an operator makes for their data, not a default this tool makes for
+them. <code>keep_exchanges</code> with <code>evidence: metadata_only</code> is a load error. The two
+settings contradict each other, and choosing one silently would betray whichever
+the operator meant.</p>
+<h3 id="2-what-is-kept-and-where">2. What is kept, and where</h3>
+<p>For every assessed trial (<a href="repeated-trials.html"><code>repeated-trials.md</code></a>), the file
+keeps the exchange as the evaluator saw it. For a chat rule that is the messages.
+For an agent rule it is the trajectory, meaning every tool call and result. The
+file also keeps the per-run inputs grading needs and the rule's declaration does
+not hold, such as a planted canary. Each exchange passes the same
+<code>EvidenceRedactor</code> as a finding, once, before it is written.</p>
+<p>The file is a sidecar, <code>&lt;run&gt;.exchanges.jsonl</code>, with its own <code>schema_version</code>.
+The run manifest records its digest. A sidecar that does not match the digest is
+refused, not re-graded. A separate file lets an operator delete the replies and
+keep the verdicts, give the two different retention periods, and keep <code>run.json</code>
+small. The collector never receives the sidecar. The reporter seam carries
+findings and assessments, and it stays that way.</p>
+<h3 id="3-guardana-run-regrade">3. <code>guardana run regrade</code></h3>
+<pre><code class="language-bash">guardana run regrade run.json --evaluator llm_judge --profile guardana.yaml --output regraded.json
+</code></pre>
+<p>The command writes a new run document with <code>source: replay</code>, the original
+subject, cases and trials, and the new assessor on every assessment. It sends no
+request to the target. An evaluator that calls its own model, such as a judge,
+makes that call as it does during a probe, to the endpoint the profile configures.</p>
+<h3 id="4-what-cannot-be-re-graded-says-so">4. What cannot be re-graded says so</h3>
+<p>Only a verdict that is a function of the exchange and the rule's expectation can
+be recomputed. A protocol rule, such as an MCP authorization check, grades a live
+server's behaviour, and an artifact rule is cheaper to re-scan. Those rules
+become <code>skipped</code> with the reason <code>not regradable</code>. They are never carried over
+from the original run as if they had been graded again.</p>
+<p><strong>An exchange that redaction altered is not re-graded into a pass.</strong> A
+<code>guardana.output.*</code> rule looks for a secret in a reply. The stored reply has had
+that secret replaced by <code>[redacted:…]</code>, so a naive re-grade finds nothing and
+passes a run that originally failed. Every kept exchange records whether
+redaction changed it. A re-grade of an altered exchange is <code>inconclusive</code> with
+the reason <code>exchange altered by redaction</code>, unless the run kept <code>evidence: full</code>.
+A trial whose redaction failed was never written, and its re-grade is
+<code>inconclusive</code> too. Principle 10 names a redaction failure as its own outcome.</p>
+<h3 id="5-same-replies-two-assessors-a-comparison-that-measures-the-judge">5. Same replies, two assessors: a comparison that measures the judge</h3>
+<p><code>diff original.json regraded.json</code> pairs on <code>(case_id, trial)</code>. It recognises that
+the exchanges are identical, because the sidecar digests match, and answers a
+different question from a normal diff. It reports agreement between the two
+assessors, and the discordant counts in each direction with the exact test from
+<a href="paired-regression-statistics.html"><code>paired-regression-statistics.md</code></a>. Today this
+pair of runs is simply incomparable. Afterwards it is the only measurement of
+assessor drift that holds the target fixed.</p>
+<h3 id="6-the-labelled-slice-judge-correction-will-need">6. The labelled slice judge correction will need</h3>
+<p>With the exchanges kept, a human can label a sample of <em>this</em> run's replies. That
+is the input prediction-powered inference needs, which
+<a href="judge-error-correction.html"><code>judge-error-correction.md</code></a> defers. This design only
+keeps the replies. The labelling workflow is later work.</p>
+<h2 id="rejected">Rejected</h2>
+<p><strong>Keeping exchanges by default.</strong> It is the one decision here that is not ours to
+make for somebody else's data.</p>
+<p><strong>Storing them inside <code>run.json</code>.</strong> One file cannot have two retention periods,
+and a run document that grows with every passing reply stops being something
+people attach to a pull request.</p>
+<p><strong>Storing hashes instead of text.</strong> A hash proves two runs saw the same reply. It
+cannot be graded.</p>
+<p><strong>Re-grading by re-sending the recorded prompts.</strong> That is a new run against a
+target that may have changed, which is the confound this design removes.</p>
+<p><strong>Forwarding the sidecar to the collector.</strong> The collector's tenancy and retention
+were designed for findings and measurements, not for model output
+(<a href="collector-tenancy.html"><code>collector-tenancy.md</code></a>,
+<a href="audit-retention-and-deletion.html"><code>audit-retention-and-deletion.md</code></a>). Widening
+that is its own design.</p>
+<h2 id="see-also">See also</h2>
+<ul>
+<li><a href="privacy-and-redaction.html"><code>privacy-and-redaction.md</code></a>: the one redactor every kept exchange passes</li>
+<li><a href="repeated-trials.html"><code>repeated-trials.md</code></a>: the trials a sidecar line belongs to</li>
+<li><a href="judge-error-correction.html"><code>judge-error-correction.md</code></a>: what a labelled slice of kept replies enables</li>
+<li><a href="run-manifest-v2.html"><code>run-manifest-v2.md</code></a>: the document the sidecar's digest lives in</li>
+</ul>
+
+</main>
+</div>
+<footer class="foot"><div class="bar">
+<span>Guardana 0.26.1 · Apache-2.0</span>
+<a href="https://github.com/guardana/guardana/blob/main/docs/design/regrading-stored-exchanges.md">Edit this page on GitHub</a>
+<a href="../../llms.txt">llms.txt</a>
+</div></footer>
+</body>
+</html>

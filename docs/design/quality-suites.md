@@ -7,7 +7,7 @@ status: proposed
 
 # Quality suites: did the model get worse, on a sample we can name?
 
-**Status:** proposed · **Written:** 2026-09-02 · **Cycle 2 of the extensibility program** ([`audit-0.22.md`](audit-0.22.md))
+**Status:** proposed · **Written:** 2026-09-02 · **Amended:** 2026-09-23 (trials, judge error) · **Cycle 2 of the extensibility program** ([`audit-0.22.md`](audit-0.22.md))
 
 ## The question
 
@@ -129,6 +129,31 @@ thirty-case suite unable to fail at all below a catastrophic drop, which is a
 gate people would learn to trust for the wrong reason. Movement *between* runs is
 a different question with different statistics —
 [`paired-regression-statistics.md`](paired-regression-statistics.md).
+
+### Trials and the judge
+
+Two later designs change what a suite's numbers mean. Neither changes the
+shape above.
+
+**A case can have K trials** ([`repeated-trials.md`](repeated-trials.md)). A
+suite's cases are trial-bearing like any rule that grades a model's reply. With
+`K > 1`, a case's score is the share of its trials that passed, and the pass rate
+is the mean of those shares over cases. The interval is a t-interval over the
+per-case means, never a Wilson interval over pooled trials, because trials of one
+case are correlated. At `K = 1` both readings are the Wilson interval in the
+table. `min_sample` counts **cases** whose every planned trial was measured. A
+case short of its K is counted as not measured, so a budget that ran out shrinks
+the denominator visibly instead of quietly thinning each case.
+
+**A judge-graded suite gates on the corrected rate**
+([`judge-error-correction.md`](judge-error-correction.md)). When the suite's
+assessor is not `deterministic`, the gate compares the rate corrected for the
+judge's measured sensitivity and specificity with `min_pass_rate`. It does not
+compare the raw rate. Without a matching calibration that clears the per-class
+minimum, the gate is `inconclusive` on the `unverified` channel, and the raw rate
+is printed as `uncorrected — judge error not measured`. The deterministic
+assessors below need none of this. That is one more reason to prefer them where
+a reference answer exists.
 
 **Rejected: a finding per failed case.** Four hundred cases at a 90% bar is forty
 findings for a passing suite. A case failure is a measurement; the finding is the

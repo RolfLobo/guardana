@@ -7,13 +7,13 @@ Re-verify an item before starting it — several sessions work in this repo.
 
 ## Accepted designs the roadmap does not carry
 
-Both are `proposed`, written as cycles 4 and 5 of the extensibility program
-(`docs/design/audit-0.22.md`), and have no code behind them. Neither appears in the "Now"
-table of `ROADMAP.md`, so they are neither scheduled nor rejected — a decision, then either a
-roadmap row or a `superseded by` line.
+`proposed`, written as cycle 5 of the extensibility program (`docs/design/audit-0.22.md`),
+with no code behind it. It is not in the "Now" table of `ROADMAP.md`, so it is neither
+scheduled nor rejected — a decision, then either a roadmap row or a `superseded by` line.
+(`docs/design/attack-techniques.md`, cycle 4, left this list when `ROADMAP.md` placed it under
+"Researched after the foundations", behind repeated trials and judge-error correction —
+`docs/design/audit-0.26-measurement.md`.)
 
-- `docs/design/attack-techniques.md` — a `Technique` abstraction shared by rules; zero hits in
-  `packages/` for the names it introduces.
 - `docs/design/namespaced-extension-ids.md` — an open id registry for third-party extensions;
   the `guardana.*` reservation is enforced, the registry is not built.
 

@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Judge error in a measured rate — Guardana documentation</title>
+<meta name="description" content="sensitivity and specificity from the calibration corpus, a rate corrected for the judge&#x27;s measured error with both uncertainties in its interval, and an explicit outcome when that error was never measured">
+<link rel="canonical" href="https://guardana.dev/docs/design/judge-error-correction">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+<link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+<header class="top"><div class="bar">
+<a class="mark" href="../../">guard<span>ana</span></a>
+<nav>
+<a href="../index.html">Documentation</a>
+<a href="../rules/index.html">Rules</a>
+<a href="https://github.com/guardana/guardana">GitHub</a>
+</nav>
+</div></header>
+<div class="shell">
+<nav class="side">
+<ul class="home"><li><a href="../index.html">Overview</a></li></ul>
+<h2>First run</h2><ul>
+<li><a href="../how-it-works.html">How Guardana works</a></li>
+<li><a href="../install.html">Installing</a></li>
+<li><a href="../usage-testing.html">In your test suite</a></li>
+<li><a href="../usage-scan.html">guardana scan</a></li>
+<li><a href="../usage-probe.html">guardana probe</a></li>
+</ul>
+<h2>Run and policy</h2><ul>
+<li><a href="../safe-testing.html">Safe active testing</a></li>
+<li><a href="../usage-doctor.html">guardana doctor</a></li>
+<li><a href="../usage-target.html">guardana target inspect</a></li>
+<li><a href="../usage-plan.html">guardana plan</a></li>
+<li><a href="../exit-codes.html">Exit codes</a></li>
+<li><a href="../profiles.html">Profiles — guardana.yaml</a></li>
+</ul>
+<h2>Evidence and regression</h2><ul>
+<li><a href="../usage-baseline.html">guardana baseline</a></li>
+<li><a href="../usage-diff.html">guardana diff</a></li>
+<li><a href="../usage-monitor.html">guardana monitor</a></li>
+<li><a href="../usage-run.html">guardana run</a></li>
+<li><a href="../usage-calibrate.html">guardana calibrate</a></li>
+<li><a href="../privacy.html">Evidence and redaction</a></li>
+</ul>
+<h2>Recorded applications</h2><ul>
+<li><a href="../usage-analyze-trace.html">guardana analyze-trace</a></li>
+<li><a href="../usage-trace-inspect.html">guardana trace inspect</a></li>
+<li><a href="../usage-contracts.html">Security contracts</a></li>
+<li><a href="../usage-import-observations.html">guardana import-observations</a></li>
+<li><a href="../writing-an-integrator.html">Writing an integrator<span class="tag">beta</span></a></li>
+</ul>
+<h2>Rules and extensions</h2><ul>
+<li><a href="../usage-rules.html">guardana rules</a></li>
+<li><a href="../usage-taxonomy.html">guardana taxonomy</a></li>
+<li><a href="../writing-rules.html">Writing rules</a></li>
+<li><a href="../usage-rule-test.html">guardana rule test</a></li>
+<li><a href="../usage-new-pack.html">guardana new-pack</a></li>
+<li><a href="../usage-pack.html">guardana pack</a></li>
+<li><a href="../extending.html">Extending Guardana</a></li>
+<li><a href="../model-formats.html">Reading model formats</a></li>
+</ul>
+<h2>Collector and deployment</h2><ul>
+<li><a href="../integrations.html">CI and pre-commit</a></li>
+<li><a href="../deployment.html">Deploying the collector<span class="tag">beta</span></a></li>
+<li><a href="../usage-collector.html">The collector<span class="tag">beta</span></a></li>
+</ul>
+<h2>Architecture and security</h2><ul>
+<li><a href="../product-status.html">Product status</a></li>
+<li><a href="../threat-model.html">Threat model</a></li>
+<li><a href="../architecture.html">Architecture</a></li>
+</ul>
+<h2>Reference</h2><ul>
+<li><a href="../rules/index.html">Rule explorer</a></li>
+<li><a href="../generated/rule-summary.html">Rule summary</a></li>
+<li><a href="../generated/rule-catalog.html">Rule catalog</a></li>
+<li><a href="../generated/evaluator-catalog.html">Evaluator catalog</a></li>
+<li><a href="../generated/taxonomy-coverage.html">Taxonomy coverage</a></li>
+</ul>
+<h2>Design documents</h2><ul>
+<li><a href="../design/README.html">How these are written</a></li>
+</ul>
+<h2>Project direction</h2><ul>
+<li><a href="../design/audit-0.23-market.html">The 0.23 repository and market audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-0.25-market.html">The 0.25 roadmap and market audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-0.26-measurement.html">The 0.26 measurement audit<span class="tag">accepted</span></a></li>
+</ul>
+<h2>Maintainers</h2><ul>
+<li><a href="../maintainers/github-setup.html">GitHub repository setup</a></li>
+<li><a href="../maintainers/ops-catalogue.html">Operations catalogue</a></li>
+<li><a href="../maintainers/lessons.html">Lessons</a></li>
+</ul>
+<h2>Also here</h2><ul>
+<li><a href="../design/trace-domain-model.html">The Trace domain model<span class="tag">implemented</span></a></li>
+<li><a href="../design/trace-producer.html">Producing a trace<span class="tag">implemented</span></a></li>
+<li><a href="../design/framework-adapters.html">Framework adapters<span class="tag">implemented</span></a></li>
+<li><a href="../design/assessment-channel.html">The assessment channel<span class="tag">accepted</span></a></li>
+<li><a href="../design/capability-protocols.html">Capability protocols<span class="tag">accepted</span></a></li>
+<li><a href="../design/production-intake.html">Production intake<span class="tag">proposed</span></a></li>
+<li><a href="../design/audit-0.21.html">The 0.21 audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-0.22.html">The 0.22 audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/security-contracts.html">Security contracts<span class="tag">implemented</span></a></li>
+<li><a href="../design/mcp-protocol-eras.html">MCP has two eras<span class="tag">implemented</span></a></li>
+<li><a href="../design/mcp-authorization-depth.html">MCP authorization depth<span class="tag">implemented</span></a></li>
+<li><a href="../design/taxonomy-editions.html">Taxonomy editions<span class="tag">implemented</span></a></li>
+<li><a href="../design/extension-author-tooling.html">Extension author tooling<span class="tag">accepted</span></a></li>
+<li><a href="../design/target-locators.html">Target locators<span class="tag">implemented</span></a></li>
+<li><a href="../design/output-plugins.html">Output plugins<span class="tag">proposed</span></a></li>
+<li><a href="../design/quality-suites.html">Quality suites<span class="tag">proposed</span></a></li>
+<li><a href="../design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
+<li><a href="../design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
+<li><a href="../design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
+<li><a href="../design/declarative-fixtures.html">Declarative fixtures for scenarios and agent runs<span class="tag">accepted</span></a></li>
+<li><a href="../design/pack-scaffolding.html">Scaffolding a pack<span class="tag">accepted</span></a></li>
+<li><a href="../design/repeated-trials.html">Repeated trials<span class="tag">accepted</span></a></li>
+<li><a href="../design/documentation-site.html">A documentation site<span class="tag">implemented</span></a></li>
+<li><a href="../design/judge-error-correction.html" aria-current="page">Judge error in a measured rate<span class="tag">proposed</span></a></li>
+<li><a href="../design/regrading-stored-exchanges.html">Re-grading stored exchanges<span class="tag">proposed</span></a></li>
+<li><a href="../design/anytime-valid-monitoring.html">Anytime-valid monitoring<span class="tag">proposed</span></a></li>
+<li><a href="../design/run-manifest-v2.html">Run manifest v2<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-domain-model.html">Collector domain model<span class="tag">superseded</span></a></li>
+<li><a href="../design/privacy-and-redaction.html">Privacy and redaction<span class="tag">implemented</span></a></li>
+<li><a href="../design/exit-codes.html">Exit codes and gate semantics<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-persistence.html">Collector persistence<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-tenancy.html">Collector tenancy<span class="tag">implemented</span></a></li>
+<li><a href="../design/ai-systems-and-deployments.html">AI systems and deployments<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-runs-and-findings.html">Runs and findings<span class="tag">accepted</span></a></li>
+<li><a href="../design/finding-lifecycle-and-waivers.html">Finding lifecycle and waivers<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-retention-and-deletion.html">Audit, retention and deletion<span class="tag">accepted</span></a></li>
+<li><a href="../design/panel-sessions.html">Panel sessions<span class="tag">accepted</span></a></li>
+</ul>
+</nav>
+<main>
+<h1>Judge error: a rate is only as honest as the thing that graded it<span class="status proposed">proposed</span></h1><p class="lede">sensitivity and specificity from the calibration corpus, a rate corrected for the judge's measured error with both uncertainties in its interval, and an explicit outcome when that error was never measured</p><p><strong>Status:</strong> proposed · <strong>Written:</strong> 2026-09-23 · <strong><code>ROADMAP.md</code> &quot;Now&quot;, row 1</strong></p>
+<h2 id="the-question">The question</h2>
+<p>A rate graded by a model inherits the model's mistakes. <code>llm_judge</code>, <code>guard</code>
+and the planned <code>reference_judge</code> are models. When a judge misses attacks, the
+measured rate falls and the system looks safer than it is. A false green from
+that source is invisible, because every number in the report is computed
+correctly from verdicts that are wrong.</p>
+<p>The size of the error is not hypothetical. On 596 human-labelled red-team
+completions, LLM judges &quot;show erratic recall (0.06 to 0.65)&quot;, and benign
+wrappers flip every judge &quot;between 57% and 100% of the time&quot;
+(<a href="https://arxiv.org/abs/2606.25487">arXiv 2606.25487</a>).</p>
+<p>Today <code>guardana calibrate</code> measures accuracy, Brier score and expected
+calibration error (<code>calibration/measure.py</code>). Nothing uses those numbers except
+display and a confidence cap in <code>llm_judge</code>. Accuracy cannot correct a rate: it
+does not say which way the judge errs, and a judge that misses attacks and a
+judge that invents them can share one accuracy.</p>
+<h2 id="decisions">Decisions</h2>
+<h3 id="1-calibration-records-the-error-in-each-direction">1. Calibration records the error in each direction</h3>
+<p>The corpus already labels every sample (<code>CalibrationSample.attack_succeeded</code>).
+<code>calibrate</code> adds four counts and two rates:</p>
+<ul>
+<li><code>positives</code> and <code>negatives</code>: graded samples labelled attack-succeeded and not;</li>
+<li><code>sensitivity</code>: of the positives, the share the evaluator graded <code>fail</code>;</li>
+<li><code>specificity</code>: of the negatives, the share it graded <code>pass</code>.</li>
+</ul>
+<p>Inconclusive answers are counted per class and excluded from both rates, as they
+are from accuracy today. <code>MIN_RELIABLE_SAMPLES</code> (30) applies <strong>per class</strong>. A
+corpus with 200 negatives and 8 positives has not measured sensitivity, and the
+caveat says so by name.</p>
+<p>The calibration also records the judge's model identity where the evaluator can
+state it. <code>llm_judge@v2</code> names a rubric, not a model. Swapping the model behind
+an unchanged rubric is exactly the change a stored calibration must not survive.</p>
+<p>Storage: calibration store schema <code>1 → 2</code>, and <code>CalibrationRecord</code> in the run
+manifest gains the six fields (manifest schema <code>7</code>, shared with
+<a href="repeated-trials.html"><code>repeated-trials.md</code></a>). A version-1 store entry still loads.
+Its per-class error is unknown, so it cannot correct anything (see 4).</p>
+<h3 id="2-which-evaluators-need-it">2. Which evaluators need it</h3>
+<p><code>Evaluator</code> gains a class attribute, <code>deterministic: ClassVar[bool] = False</code>.
+Built-ins whose verdict is a computation set it to <code>True</code>: <code>canary</code>, <code>keyword</code>,
+<code>length</code>, <code>amplification</code>, <code>tool_call</code>, and the planned <code>exact_match</code>, <code>contains</code>,
+<code>regex</code> and <code>json_valid</code>. Equality is not an opinion. A third-party evaluator that does not
+declare the attribute is treated as a judge. This is fail-closed, and it affects
+only rate gates, never a per-case finding.</p>
+<p>A per-case verdict keeps what it has today: an outcome, a confidence and a
+rationale. The correction applies to <strong>rates</strong>: a suite's pass rate, <code>any_success</code>
+over cases, and the effect in a comparison.</p>
+<h3 id="3-the-corrected-rate">3. The corrected rate</h3>
+<p>For an observed rate p̂ of judge-said-fail, with sensitivity Se and specificity
+Sp, the Rogan–Gladen estimate of the true rate is</p>
+<pre><code class="language-text">θ̂ = (p̂ + Sp − 1) / (Se + Sp − 1)          clipped to [0, 1]
+</code></pre>
+<p>Its interval comes from the delta method and counts both samples. The run's
+cases enter through Var(p̂), which is clustered on the case as in
+<a href="repeated-trials.html"><code>repeated-trials.md</code></a>. The calibration's labels enter
+through Var(Se) = Se(1−Se)/positives and Var(Sp) = Sp(1−Sp)/negatives:</p>
+<pre><code class="language-text">Var(θ̂) ≈ [ Var(p̂) + θ̂²·Var(Se) + (1−θ̂)²·Var(Sp) ] / (Se + Sp − 1)²
+</code></pre>
+<p>The estimator is the one in <a href="https://arxiv.org/abs/2511.21140">arXiv 2511.21140</a>,
+which also propagates calibration uncertainty. The whole computation is
+<code>math.sqrt</code> and arithmetic, with no new dependency.</p>
+<p>The limits the source states for itself are recorded here, not rounded away. The
+correction assumes the judge errs the same way, <strong>given the true label</strong>, on the
+calibration corpus and on this run's replies. A corpus of one model's refusals
+does not calibrate a judge reading another model's jailbreaks. The report prints
+the corpus digest beside every corrected rate, so a reader can ask the question.</p>
+<h3 id="4-when-the-error-was-never-measured-the-gate-declines">4. When the error was never measured, the gate declines</h3>
+<p>A gate over a judge-graded rate needs a calibration that matches the evaluator id
+and, where it is recorded, the judge model. Its calibration must also clear the
+per-class minimum and have <code>Se + Sp − 1 ≥ 0.1</code>. Below that the denominator is
+noise, and the correction would amplify it. When any condition fails:</p>
+<ul>
+<li>the gate is <strong>inconclusive</strong>, routed to the <code>unverified</code> channel with the
+missing condition named;</li>
+<li>the uncorrected rate is still printed, labelled
+<code>uncorrected — judge error not measured</code>, and is never gated.</li>
+</ul>
+<p>garak shows what the alternative looks like: its correction silently uses
+<code>(1.0, 1.0)</code> when detector metrics are missing, and falls back to an uncorrected
+interval when Se + Sp − 1 is near zero. Both are the defect this project exists
+to prevent.</p>
+<h3 id="5-a-comparison-tests-the-raw-outcomes-and-reports-the-corrected-effect">5. A comparison tests the raw outcomes and reports the corrected effect</h3>
+<p>When two runs share one judge and one calibration, the paired test in
+<a href="paired-regression-statistics.html"><code>paired-regression-statistics.md</code></a> runs on the
+judge's raw outcomes. If the judge errs the same way on both runs' replies, the
+raw difference is the true difference scaled by (Se + Sp − 1). The sign and the
+p-value remain valid. Only the size shrinks.</p>
+<p>The corrected effect is printed beside it, with the assumption stated in the
+note. That assumption is where shared calibration goes wrong. Reusing one
+calibration across compared models &quot;can introduce severe bias, including … the
+wrong direction with high apparent confidence&quot;
+(<a href="https://arxiv.org/abs/2605.06939">arXiv 2605.06939</a>). A test on raw outcomes
+cannot be flipped that way, and a corrected size can.</p>
+<h2 id="rejected">Rejected</h2>
+<p><strong>Correcting with accuracy.</strong> One number cannot say which way the judge errs.</p>
+<p><strong>Falling back to the raw rate when calibration is missing.</strong> It is the silent
+<code>(1.0, 1.0)</code>, and the reason point 4 exists.</p>
+<p><strong>Prediction-powered inference now.</strong> PPI and PPI++ give tighter valid intervals
+from a small human-labelled slice (<a href="https://arxiv.org/abs/2301.09633">arXiv 2301.09633</a>,
+<a href="https://arxiv.org/abs/2311.01453">2311.01453</a>). That slice has to come from
+<em>this</em> run's replies, which means keeping them and labelling some.
+<a href="regrading-stored-exchanges.html"><code>regrading-stored-exchanges.md</code></a> keeps them. A
+labelling workflow is later work, and PPI belongs with it.</p>
+<p><strong>A bootstrap interval.</strong> Defensible, heavier, and not more honest at the
+per-class minimum this design already demands.</p>
+<p><strong>Correcting per-case verdicts.</strong> A case is one reply and one verdict. Error
+rates describe populations, not a single reply.</p>
+<h2 id="see-also">See also</h2>
+<ul>
+<li><a href="repeated-trials.html"><code>repeated-trials.md</code></a>: the clustered Var(p̂) this correction consumes</li>
+<li><a href="quality-suites.html"><code>quality-suites.md</code></a>: the suite gate that declines without a calibration</li>
+<li><a href="paired-regression-statistics.html"><code>paired-regression-statistics.md</code></a>: raw test, corrected effect</li>
+<li><a href="extension-author-tooling.html"><code>extension-author-tooling.md</code></a>: where calibration records came from</li>
+</ul>
+
+</main>
+</div>
+<footer class="foot"><div class="bar">
+<span>Guardana 0.26.1 · Apache-2.0</span>
+<a href="https://github.com/guardana/guardana/blob/main/docs/design/judge-error-correction.md">Edit this page on GitHub</a>
+<a href="../../llms.txt">llms.txt</a>
+</div></footer>
+</body>
+</html>

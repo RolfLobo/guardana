@@ -4,12 +4,14 @@
   <url><loc>https://guardana.dev/docs/deployment</loc></url>
   <url><loc>https://guardana.dev/docs/design/README</loc></url>
   <url><loc>https://guardana.dev/docs/design/ai-systems-and-deployments</loc></url>
+  <url><loc>https://guardana.dev/docs/design/anytime-valid-monitoring</loc></url>
   <url><loc>https://guardana.dev/docs/design/assessment-channel</loc></url>
   <url><loc>https://guardana.dev/docs/design/attack-techniques</loc></url>
   <url><loc>https://guardana.dev/docs/design/audit-0.21</loc></url>
   <url><loc>https://guardana.dev/docs/design/audit-0.22</loc></url>
   <url><loc>https://guardana.dev/docs/design/audit-0.23-market</loc></url>
   <url><loc>https://guardana.dev/docs/design/audit-0.25-market</loc></url>
+  <url><loc>https://guardana.dev/docs/design/audit-0.26-measurement</loc></url>
   <url><loc>https://guardana.dev/docs/design/audit-retention-and-deletion</loc></url>
   <url><loc>https://guardana.dev/docs/design/capability-protocols</loc></url>
   <url><loc>https://guardana.dev/docs/design/collector-domain-model</loc></url>
@@ -22,6 +24,7 @@
   <url><loc>https://guardana.dev/docs/design/extension-author-tooling</loc></url>
   <url><loc>https://guardana.dev/docs/design/finding-lifecycle-and-waivers</loc></url>
   <url><loc>https://guardana.dev/docs/design/framework-adapters</loc></url>
+  <url><loc>https://guardana.dev/docs/design/judge-error-correction</loc></url>
   <url><loc>https://guardana.dev/docs/design/mcp-authorization-depth</loc></url>
   <url><loc>https://guardana.dev/docs/design/mcp-protocol-eras</loc></url>
   <url><loc>https://guardana.dev/docs/design/namespaced-extension-ids</loc></url>
@@ -32,6 +35,8 @@
   <url><loc>https://guardana.dev/docs/design/privacy-and-redaction</loc></url>
   <url><loc>https://guardana.dev/docs/design/production-intake</loc></url>
   <url><loc>https://guardana.dev/docs/design/quality-suites</loc></url>
+  <url><loc>https://guardana.dev/docs/design/regrading-stored-exchanges</loc></url>
+  <url><loc>https://guardana.dev/docs/design/repeated-trials</loc></url>
   <url><loc>https://guardana.dev/docs/design/run-manifest-v2</loc></url>
   <url><loc>https://guardana.dev/docs/design/security-contracts</loc></url>
   <url><loc>https://guardana.dev/docs/design/target-locators</loc></url>

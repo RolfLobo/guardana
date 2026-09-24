@@ -40,17 +40,21 @@ repeatable extension into measurement a team can compare and operate. The order 
 [0.23 repository and market audit](docs/design/audit-0.23-market.md): author
 workflow and honest measurement come before additional output destinations. The
 [0.25 audit](docs/design/audit-0.25-market.md) re-read the standards and the
-comparable projects a month later and moved no row.
+comparable projects a month later and moved no row. The
+[0.26 measurement audit](docs/design/audit-0.26-measurement.md) widened rows 1 and
+2 and added row 3: a clean result that rests on one trial per prompt, graded by a
+judge whose error was never measured, is not yet a measurement.
 
 | Order | Deliverable | Done when |
 |---:|---|---|
-| 1 | Suites, versioned datasets, and assessors | a run records the sample, assessor, denominator, and uncertainty rather than only findings |
-| 2 | Paired statistical diff | comparison refuses unequal or undersized samples and gates only on a declared minimum effect |
-| 3 | Renderer and reporter plugins | outputs are discoverable entry points and every output remains behind the common redaction boundary |
-| 4 | Provider conformance matrix | documented endpoint support is backed by repeatable capability tests |
-| 5 | Assessments in the collector | trends are keyed by system, deployment, dataset, and assessor version; findings and quality measurements stay separate |
+| 1 | Suites, versioned datasets, and assessors, with repeated trials and judge-error correction | a run records the sample, trials, assessor, denominator, and uncertainty rather than only findings; a clean result states its trials and bound; a judge-graded rate is corrected for the judge's measured error or declines to gate |
+| 2 | Paired statistical diff | comparison refuses unequal or undersized samples and unequal trials, prints the smallest effect its sample can detect, adjusts for several gated suites, and gates only on a declared minimum effect |
+| 3 | Re-gradable evidence | an opted-in run keeps its redacted exchanges, and `guardana run regrade` grades them with a new assessor without target traffic |
+| 4 | Renderer and reporter plugins | outputs are discoverable entry points and every output remains behind the common redaction boundary |
+| 5 | Provider conformance matrix | documented endpoint support is backed by repeatable capability tests |
+| 6 | Assessments in the collector | trends are keyed by system, deployment, dataset, and assessor version; findings and quality measurements stay separate |
 
-Design inputs exist for everything shipped so far and for rows 1, 2 and 3:
+Design inputs exist for everything shipped so far and for rows 1 to 4:
 
 - [target locators](docs/design/target-locators.md)
 - [declarative fixtures](docs/design/declarative-fixtures.md)
@@ -59,10 +63,13 @@ Design inputs exist for everything shipped so far and for rows 1, 2 and 3:
 - [extension author tooling](docs/design/extension-author-tooling.md)
 - [quality suites](docs/design/quality-suites.md)
 - [paired regression statistics](docs/design/paired-regression-statistics.md)
+- [repeated trials](docs/design/repeated-trials.md)
+- [judge error in a measured rate](docs/design/judge-error-correction.md)
+- [re-grading stored exchanges](docs/design/regrading-stored-exchanges.md)
 
 The full OTLP intake remains in the next milestone because the OpenTelemetry
 GenAI agent conventions are still changing. A compatibility spike may proceed
-after items 1 and 2, in parallel with items 4 and 5, but it must normalize an
+after items 1 and 2, in parallel with items 5 and 6, but it must normalize an
 explicit supported subset behind an adapter rather than make a development
 convention a persisted Guardana schema.
 
@@ -72,6 +79,8 @@ convention a persisted Guardana schema.
   modifying Guardana; target locators satisfy the target part from 0.24.0, and
   `guardana new-pack` scaffolds the rest.
 - A suite records passes as well as failures and names its dataset version.
+- A clean result states how many trials it rests on, and a rate graded by a judge
+  is corrected for that judge's measured error or declines to gate.
 - `guardana diff` can say better, worse, unchanged, or incomparable with an
   auditable statistical reason.
 - The collector can plot measurements without turning missing samples into zero.
@@ -83,7 +92,9 @@ inline control.
 
 1. OTLP intake with redaction before persistence or queuing.
 2. A bounded queue, backpressure, sampling, and stateless workers.
-3. Continuous rules over synthetic runs and recorded traffic.
+3. Continuous rules over synthetic runs and recorded traffic, alerting through a
+   confidence sequence rather than a fixed level on every look
+   ([anytime-valid monitoring](docs/design/anytime-valid-monitoring.md)).
 4. Prometheus and webhook outputs through the reporter seam.
 5. Retention, deletion, and audit behavior proven under the new data volume.
 
@@ -125,15 +136,24 @@ One taxonomy update is open now: the MITRE ATLAS catalogue records a data-format
 version rather than the content release its entries were transcribed from, and
 three content releases have landed since.
 
+Stateful tool doubles are open in this lane too. Agent rules grade tool calls
+today; a double that keeps state would let a rule assert on what an agent left
+behind, and report utility under attack beside attack success.
+
 ## Researched after the foundations
 
 - multi-agent protocols and delegated identity;
 - multimodal attack carriers;
 - adaptive attack generation inside a strict sandbox;
+- reusable attack techniques composed with rules
+  ([design](docs/design/attack-techniques.md));
 - broader multilingual and domain-specific corpora.
 
 These need measured evaluation quality and bounded execution first. They are not
-shortcuts around the current milestone.
+shortcuts around the current milestone. Repeated trials and judge-error
+correction are that measurement: sampling many transformed attacks is trials over
+techniques, and an adaptive attacker is only as honest as the judge that scores
+it.
 
 ## Non-goals
 

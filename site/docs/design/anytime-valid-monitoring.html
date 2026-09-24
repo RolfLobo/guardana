@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anytime-valid monitoring — Guardana documentation</title>
+<meta name="description" content="why a monitor that tests every cycle at a fixed level eventually alerts on noise, the alpha-spending rule that keeps it honest now, and the questions a confidence sequence must answer before it replaces that rule">
+<link rel="canonical" href="https://guardana.dev/docs/design/anytime-valid-monitoring">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+<link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+<header class="top"><div class="bar">
+<a class="mark" href="../../">guard<span>ana</span></a>
+<nav>
+<a href="../index.html">Documentation</a>
+<a href="../rules/index.html">Rules</a>
+<a href="https://github.com/guardana/guardana">GitHub</a>
+</nav>
+</div></header>
+<div class="shell">
+<nav class="side">
+<ul class="home"><li><a href="../index.html">Overview</a></li></ul>
+<h2>First run</h2><ul>
+<li><a href="../how-it-works.html">How Guardana works</a></li>
+<li><a href="../install.html">Installing</a></li>
+<li><a href="../usage-testing.html">In your test suite</a></li>
+<li><a href="../usage-scan.html">guardana scan</a></li>
+<li><a href="../usage-probe.html">guardana probe</a></li>
+</ul>
+<h2>Run and policy</h2><ul>
+<li><a href="../safe-testing.html">Safe active testing</a></li>
+<li><a href="../usage-doctor.html">guardana doctor</a></li>
+<li><a href="../usage-target.html">guardana target inspect</a></li>
+<li><a href="../usage-plan.html">guardana plan</a></li>
+<li><a href="../exit-codes.html">Exit codes</a></li>
+<li><a href="../profiles.html">Profiles — guardana.yaml</a></li>
+</ul>
+<h2>Evidence and regression</h2><ul>
+<li><a href="../usage-baseline.html">guardana baseline</a></li>
+<li><a href="../usage-diff.html">guardana diff</a></li>
+<li><a href="../usage-monitor.html">guardana monitor</a></li>
+<li><a href="../usage-run.html">guardana run</a></li>
+<li><a href="../usage-calibrate.html">guardana calibrate</a></li>
+<li><a href="../privacy.html">Evidence and redaction</a></li>
+</ul>
+<h2>Recorded applications</h2><ul>
+<li><a href="../usage-analyze-trace.html">guardana analyze-trace</a></li>
+<li><a href="../usage-trace-inspect.html">guardana trace inspect</a></li>
+<li><a href="../usage-contracts.html">Security contracts</a></li>
+<li><a href="../usage-import-observations.html">guardana import-observations</a></li>
+<li><a href="../writing-an-integrator.html">Writing an integrator<span class="tag">beta</span></a></li>
+</ul>
+<h2>Rules and extensions</h2><ul>
+<li><a href="../usage-rules.html">guardana rules</a></li>
+<li><a href="../usage-taxonomy.html">guardana taxonomy</a></li>
+<li><a href="../writing-rules.html">Writing rules</a></li>
+<li><a href="../usage-rule-test.html">guardana rule test</a></li>
+<li><a href="../usage-new-pack.html">guardana new-pack</a></li>
+<li><a href="../usage-pack.html">guardana pack</a></li>
+<li><a href="../extending.html">Extending Guardana</a></li>
+<li><a href="../model-formats.html">Reading model formats</a></li>
+</ul>
+<h2>Collector and deployment</h2><ul>
+<li><a href="../integrations.html">CI and pre-commit</a></li>
+<li><a href="../deployment.html">Deploying the collector<span class="tag">beta</span></a></li>
+<li><a href="../usage-collector.html">The collector<span class="tag">beta</span></a></li>
+</ul>
+<h2>Architecture and security</h2><ul>
+<li><a href="../product-status.html">Product status</a></li>
+<li><a href="../threat-model.html">Threat model</a></li>
+<li><a href="../architecture.html">Architecture</a></li>
+</ul>
+<h2>Reference</h2><ul>
+<li><a href="../rules/index.html">Rule explorer</a></li>
+<li><a href="../generated/rule-summary.html">Rule summary</a></li>
+<li><a href="../generated/rule-catalog.html">Rule catalog</a></li>
+<li><a href="../generated/evaluator-catalog.html">Evaluator catalog</a></li>
+<li><a href="../generated/taxonomy-coverage.html">Taxonomy coverage</a></li>
+</ul>
+<h2>Design documents</h2><ul>
+<li><a href="../design/README.html">How these are written</a></li>
+</ul>
+<h2>Project direction</h2><ul>
+<li><a href="../design/audit-0.23-market.html">The 0.23 repository and market audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-0.25-market.html">The 0.25 roadmap and market audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-0.26-measurement.html">The 0.26 measurement audit<span class="tag">accepted</span></a></li>
+</ul>
+<h2>Maintainers</h2><ul>
+<li><a href="../maintainers/github-setup.html">GitHub repository setup</a></li>
+<li><a href="../maintainers/ops-catalogue.html">Operations catalogue</a></li>
+<li><a href="../maintainers/lessons.html">Lessons</a></li>
+</ul>
+<h2>Also here</h2><ul>
+<li><a href="../design/trace-domain-model.html">The Trace domain model<span class="tag">implemented</span></a></li>
+<li><a href="../design/trace-producer.html">Producing a trace<span class="tag">implemented</span></a></li>
+<li><a href="../design/framework-adapters.html">Framework adapters<span class="tag">implemented</span></a></li>
+<li><a href="../design/assessment-channel.html">The assessment channel<span class="tag">accepted</span></a></li>
+<li><a href="../design/capability-protocols.html">Capability protocols<span class="tag">accepted</span></a></li>
+<li><a href="../design/production-intake.html">Production intake<span class="tag">proposed</span></a></li>
+<li><a href="../design/audit-0.21.html">The 0.21 audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-0.22.html">The 0.22 audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/security-contracts.html">Security contracts<span class="tag">implemented</span></a></li>
+<li><a href="../design/mcp-protocol-eras.html">MCP has two eras<span class="tag">implemented</span></a></li>
+<li><a href="../design/mcp-authorization-depth.html">MCP authorization depth<span class="tag">implemented</span></a></li>
+<li><a href="../design/taxonomy-editions.html">Taxonomy editions<span class="tag">implemented</span></a></li>
+<li><a href="../design/extension-author-tooling.html">Extension author tooling<span class="tag">accepted</span></a></li>
+<li><a href="../design/target-locators.html">Target locators<span class="tag">implemented</span></a></li>
+<li><a href="../design/output-plugins.html">Output plugins<span class="tag">proposed</span></a></li>
+<li><a href="../design/quality-suites.html">Quality suites<span class="tag">proposed</span></a></li>
+<li><a href="../design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
+<li><a href="../design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
+<li><a href="../design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
+<li><a href="../design/declarative-fixtures.html">Declarative fixtures for scenarios and agent runs<span class="tag">accepted</span></a></li>
+<li><a href="../design/pack-scaffolding.html">Scaffolding a pack<span class="tag">accepted</span></a></li>
+<li><a href="../design/repeated-trials.html">Repeated trials<span class="tag">accepted</span></a></li>
+<li><a href="../design/documentation-site.html">A documentation site<span class="tag">implemented</span></a></li>
+<li><a href="../design/judge-error-correction.html">Judge error in a measured rate<span class="tag">proposed</span></a></li>
+<li><a href="../design/regrading-stored-exchanges.html">Re-grading stored exchanges<span class="tag">proposed</span></a></li>
+<li><a href="../design/anytime-valid-monitoring.html" aria-current="page">Anytime-valid monitoring<span class="tag">proposed</span></a></li>
+<li><a href="../design/run-manifest-v2.html">Run manifest v2<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-domain-model.html">Collector domain model<span class="tag">superseded</span></a></li>
+<li><a href="../design/privacy-and-redaction.html">Privacy and redaction<span class="tag">implemented</span></a></li>
+<li><a href="../design/exit-codes.html">Exit codes and gate semantics<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-persistence.html">Collector persistence<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-tenancy.html">Collector tenancy<span class="tag">implemented</span></a></li>
+<li><a href="../design/ai-systems-and-deployments.html">AI systems and deployments<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-runs-and-findings.html">Runs and findings<span class="tag">accepted</span></a></li>
+<li><a href="../design/finding-lifecycle-and-waivers.html">Finding lifecycle and waivers<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-retention-and-deletion.html">Audit, retention and deletion<span class="tag">accepted</span></a></li>
+<li><a href="../design/panel-sessions.html">Panel sessions<span class="tag">accepted</span></a></li>
+</ul>
+</nav>
+<main>
+<h1>Anytime-valid monitoring: a schedule of looks must not buy false alarms<span class="status proposed">proposed</span></h1><p class="lede">why a monitor that tests every cycle at a fixed level eventually alerts on noise, the alpha-spending rule that keeps it honest now, and the questions a confidence sequence must answer before it replaces that rule</p><p><strong>Status:</strong> proposed · <strong>Written:</strong> 2026-09-23 · <strong><code>ROADMAP.md</code> &quot;Next&quot;, item 3</strong></p>
+<h2 id="the-question">The question</h2>
+<p><code>guardana monitor</code> re-probes a deployment on a schedule and compares every cycle
+with the first (<code>core/monitor.py</code>). Today the comparison is categorical: a new
+finding, an escalation, lost coverage, more errors, or an incomparable cycle.
+<a href="paired-regression-statistics.html"><code>paired-regression-statistics.md</code></a> adds rate
+regressions and says <code>monitor</code> &quot;inherits everything through <code>compare</code>&quot;. Taken
+literally, every cycle then runs a test at the same fixed level against the same
+baseline.</p>
+<p>Repeated looks at a fixed level do not keep that level. Under no change, the
+chance of at least one false alarm grows with every cycle, towards certainty:
+p-values &quot;are wholly unreliable if users … continuously monitor&quot;
+(<a href="https://arxiv.org/abs/1512.04922">arXiv 1512.04922</a>). The cycles are correlated
+through their shared baseline, so the growth is slower than for independent
+tests, but it does not stop. A monitor that pages on noise is soon ignored. An
+alert that is ignored is worse than no alert, because it looks like coverage.</p>
+<h2 id="decided-now-for-row-2-spend-the-error-rate-over-the-cycles">Decided now, for row 2: spend the error rate over the cycles</h2>
+<p>Until the design below is accepted, a rate alert in <code>monitor</code> tests cycle <em>i</em>
+(counting from 1) at</p>
+<pre><code class="language-text">α_i = 6·α / (π²·i²)
+</code></pre>
+<p>The sum of α_i over every cycle, however many there are, is exactly α, because
+Σ 1/i² = π²/6. The union bound then keeps the chance of any false alarm over an
+unbounded schedule at or below the policy's <code>max_p_value</code>. It uses only <code>math</code>,
+it is exact to state, and it needs no assumption about how cycles depend on each
+other.</p>
+<p>Its cost is power. Cycle 1 tests at 0.61α and cycle 10 at 0.006α, so a regression
+that appears late in a long watch must be large before it is reported. <code>monitor</code>
+states this once at start-up, beside its existing notice about suites below
+<code>min_sample</code>. A monitor that has quietly become unable to alert is the blind
+spot <a href="production-intake.html"><code>production-intake.md</code></a> names first.</p>
+<p>Categorical changes are unaffected. A finding that appears is an observed
+failure, not an estimate, and it alerts on the cycle it appears.</p>
+<h2 id="proposed-a-confidence-sequence-on-the-paired-difference">Proposed: a confidence sequence on the paired difference</h2>
+<p>A confidence sequence is &quot;a sequence of confidence intervals that is uniformly
+valid over an unbounded time horizon&quot; (<a href="https://arxiv.org/abs/1810.08240">arXiv 1810.08240</a>).
+For a bounded mean there is a betting construction
+(<a href="https://arxiv.org/abs/2010.09686">arXiv 2010.09686</a>). Each cycle contributes its
+paired per-case differences against the baseline, each in [−1, 1] and signed so
+that positive is worse. The sequence alerts when its lower bound clears
+<code>min_effect</code>. The same idea has been applied to monitoring deployed models
+without raising the false-alarm rate (<a href="https://arxiv.org/abs/2110.06177">arXiv 2110.06177</a>).
+The computation is a running product and a search over a bounded interval, all
+with <code>math</code>.</p>
+<p>It keeps power where alpha-spending loses it, because evidence accumulates
+across cycles instead of each cycle being tested alone against a shrinking
+threshold.</p>
+<h3 id="why-this-is-proposed-not-accepted">Why this is proposed, not accepted</h3>
+<p>The formula is the easy part. The estimand is not settled yet:</p>
+<ol>
+<li><strong>A redeploy changes the hypothesis.</strong> A sequence measures one stable process.
+<code>monitor</code> already takes <code>--deployment-id</code>. Leaning: a change of deployment id
+ends the sequence, compares the new deployment with the old baseline once, as
+a one-shot paired test, and starts a fresh sequence with a fresh baseline.</li>
+<li><strong>The baseline is itself one sample.</strong> Every cycle shares its noise. Leaning:
+the baseline is the pooled first <em>B</em> cycles, with <em>B</em> declared in the policy,
+instead of cycle 0 alone.</li>
+<li><strong>Several suites watched at once.</strong> Each sequence at α gives a family-wise rate
+above α. Leaning: split α evenly across the gated suites, which matches Holm
+in <code>diff</code>. Averaging e-values is the more powerful alternative, and it needs a
+reader to understand e-values.</li>
+<li><strong>What the operator reads.</strong> &quot;The pass rate is at least 4 points worse than
+baseline, valid at any time&quot; has to be one line a person on call can act on.</li>
+</ol>
+<h2 id="rejected">Rejected</h2>
+<p><strong>A fixed level on every cycle.</strong> That is the inherited reading of the row 2
+design, and it guarantees false alarms in a long enough watch.</p>
+<p><strong>Comparing each cycle with the previous one.</strong> It removes the shared baseline
+and misses a slow decline in which every step is below <code>min_effect</code>.</p>
+<p><strong>Stopping the watch after the first alarm.</strong> Sequential tests are usually built
+to stop. A monitor exists to keep watching, and it keeps reporting after an
+alert.</p>
+<p><strong>A Bayesian sequential test.</strong> It is defensible, but a prior is a policy decision
+this tool has no standing to make for somebody else's deployment. That is the
+reason <a href="paired-regression-statistics.html"><code>paired-regression-statistics.md</code></a>
+already gives.</p>
+<h2 id="see-also">See also</h2>
+<ul>
+<li><a href="paired-regression-statistics.html"><code>paired-regression-statistics.md</code></a>: the paired test each cycle runs</li>
+<li><a href="repeated-trials.html"><code>repeated-trials.md</code></a>: per-case rates, the quantity being watched</li>
+<li><a href="production-intake.html"><code>production-intake.md</code></a>: the lane where samples arrive over time</li>
+</ul>
+
+</main>
+</div>
+<footer class="foot"><div class="bar">
+<span>Guardana 0.26.1 · Apache-2.0</span>
+<a href="https://github.com/guardana/guardana/blob/main/docs/design/anytime-valid-monitoring.md">Edit this page on GitHub</a>
+<a href="../../llms.txt">llms.txt</a>
+</div></footer>
+</body>
+</html>

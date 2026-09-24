@@ -93,6 +93,7 @@ not task guides and may describe rejected or superseded alternatives.
 - [`../ROADMAP.md`](../ROADMAP.md) — ordered next work and exit criteria
 - [`design/audit-0.23-market.md`](design/audit-0.23-market.md) — repository audit, market evidence, and the rationale for the current order
 - [`design/audit-0.25-market.md`](design/audit-0.25-market.md) — whether that order still follows from evidence, and the validation plan that replaces the one it could not run
+- [`design/audit-0.26-measurement.md`](design/audit-0.26-measurement.md) — what a clean result rests on, and why rows 1 and 2 widened and a re-grading row was added
 - [`../CHANGELOG.md`](../CHANGELOG.md) — release history
 
 ## Maintainers

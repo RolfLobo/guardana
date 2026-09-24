@@ -84,6 +84,7 @@
 <h2>Project direction</h2><ul>
 <li><a href="../design/audit-0.23-market.html">The 0.23 repository and market audit<span class="tag">accepted</span></a></li>
 <li><a href="../design/audit-0.25-market.html">The 0.25 roadmap and market audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-0.26-measurement.html">The 0.26 measurement audit<span class="tag">accepted</span></a></li>
 </ul>
 <h2>Maintainers</h2><ul>
 <li><a href="../maintainers/github-setup.html">GitHub repository setup</a></li>
@@ -112,7 +113,11 @@
 <li><a href="../design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
 <li><a href="../design/declarative-fixtures.html">Declarative fixtures for scenarios and agent runs<span class="tag">accepted</span></a></li>
 <li><a href="../design/pack-scaffolding.html">Scaffolding a pack<span class="tag">accepted</span></a></li>
+<li><a href="../design/repeated-trials.html">Repeated trials<span class="tag">accepted</span></a></li>
 <li><a href="../design/documentation-site.html">A documentation site<span class="tag">implemented</span></a></li>
+<li><a href="../design/judge-error-correction.html">Judge error in a measured rate<span class="tag">proposed</span></a></li>
+<li><a href="../design/regrading-stored-exchanges.html">Re-grading stored exchanges<span class="tag">proposed</span></a></li>
+<li><a href="../design/anytime-valid-monitoring.html">Anytime-valid monitoring<span class="tag">proposed</span></a></li>
 <li><a href="../design/run-manifest-v2.html">Run manifest v2<span class="tag">implemented</span></a></li>
 <li><a href="../design/collector-domain-model.html">Collector domain model<span class="tag">superseded</span></a></li>
 <li><a href="../design/privacy-and-redaction.html">Privacy and redaction<span class="tag">implemented</span></a></li>
@@ -127,7 +132,7 @@
 </ul>
 </nav>
 <main>
-<h1>Paired regression statistics: &quot;worse&quot; with a p-value, or &quot;cannot tell&quot;<span class="status proposed">proposed</span></h1><p class="lede">how diff and monitor decide that a measured sample got worse — an exact test on the discordant pairs, a minimum effect, a minimum sample, and a refusal for anything short of all three</p><p><strong>Status:</strong> proposed · <strong>Written:</strong> 2026-09-02 · <strong>Cycle 3 of the extensibility program</strong> (<a href="audit-0.22.html"><code>audit-0.22.md</code></a>)</p>
+<h1>Paired regression statistics: &quot;worse&quot; with a p-value, or &quot;cannot tell&quot;<span class="status proposed">proposed</span></h1><p class="lede">how diff and monitor decide that a measured sample got worse — an exact test on the discordant pairs, a minimum effect, a minimum sample, and a refusal for anything short of all three</p><p><strong>Status:</strong> proposed · <strong>Written:</strong> 2026-09-02 · <strong>Amended:</strong> 2026-09-23 (trials, power, judges, several suites, <code>monitor</code>) · <strong>Cycle 3 of the extensibility program</strong> (<a href="audit-0.22.html"><code>audit-0.22.md</code></a>)</p>
 <h2 id="where-0220-stopped">Where 0.22.0 stopped</h2>
 <p><code>guardana diff</code> pairs two runs' assessments on <code>case_id</code>, refuses a pair whose
 assessor or dataset changed, and prints the population: paired, incomparable,
@@ -157,6 +162,40 @@ and <code>p ≤ max_p_value</code>. A <strong>rate improvement</strong> is the m
 a note that says which condition was not met and by how much: &quot;12 paired cases,
 below the 30 this policy needs&quot;, &quot;pass rate fell 0.03 on 80 cases, below the
 minimum effect 0.05&quot;, &quot;3 cases got worse and 2 got better; p = 0.63&quot;.</p>
+<h3 id="with-k-trials-per-case">With K trials per case</h3>
+<p>When a case has K trials (<a href="repeated-trials.html"><code>repeated-trials.md</code></a>), its
+reading is no longer a boolean. It is the share of its trials that passed: <code>x</code>
+before and <code>y</code> after. The paired difference <code>d = x − y</code> is positive when worse.
+The effect is the mean of <code>d</code> over paired cases. Its standard error is the sample
+standard deviation of <code>d</code> divided by √paired, and the p-value is the two-sided
+normal tail, <code>math.erfc</code>, which <code>min_sample ≥ 30</code> makes adequate. The three
+conditions are unchanged. Exact McNemar is the <code>K = 1</code> case of the same question
+and stays the test there.</p>
+<p>Two runs whose K differs for a suite are <code>incomparable</code> for that suite, with the
+reason <code>trials changed</code>. More trials change what a case's number means.</p>
+<h3 id="what-the-sample-can-detect">What the sample can detect</h3>
+<p>Every rate comparison also prints its <strong>minimum detectable effect</strong>: the smallest
+change this sample would detect four times in five at the policy's
+<code>max_p_value</code>, (z₁₋α/₂ + z₀.₈) × SE, about 2.8 × SE at 0.05. When the policy's
+<code>min_effect</code> is below it, the note says so: &quot;this sample detects changes of 0.09
+or more; the policy asks about 0.05&quot;. A clean comparison on an underpowered
+sample is the false green this design exists to refuse, and the fix it names
+(more cases, or more trials) is the one <a href="https://arxiv.org/abs/2411.00640">Miller</a>
+quantifies. At 198 cases, raising K from 1 to 10 lowers the detectable effect
+from 13.2% to 7.5%.</p>
+<h3 id="judge-graded-outcomes">Judge-graded outcomes</h3>
+<p>When the assessor is a judge, the test runs on the judge's raw outcomes. The
+corrected effect is printed beside it with its assumption stated
+(<a href="judge-error-correction.html"><code>judge-error-correction.md</code></a>, decision 5). The sign
+and the p-value survive a judge that errs the same way on both runs. A corrected
+size does not survive a judge that errs differently, and the note says which one
+the reader is looking at.</p>
+<h3 id="several-suites-in-one-comparison">Several suites in one comparison</h3>
+<p>When more than one suite gates in the same <code>diff</code>, their p-values are adjusted
+with Holm's step-down procedure before the <code>max_p_value</code> condition is applied.
+Twenty suites each tested at 0.05 would otherwise produce about one false
+regression per comparison in which nothing changed. Holm is a sort and a loop.
+Slices stay ungated, as below.</p>
 <h2 id="numeric-cases">Numeric cases</h2>
 <p>For paired measurements with the same unit, direction and threshold: the mean of
 the paired differences, signed so that positive is worse, with a 95% interval
@@ -193,11 +232,16 @@ the second and not the first (it fell from 99% to 93% against a 90% bar). Both
 are reported, neither is folded into the other, and the change list shows a
 suite's threshold finding as <code>appeared</code> exactly as it would any other finding.</p>
 <h3 id="monitor"><code>monitor</code></h3>
-<p>Inherits everything through <code>compare</code>. One addition: at start-up it says, once,
-which suites are below <code>min_sample</code> — &quot;suite X has 20 cases, below
-regression.min_sample 30; rate changes will be reported, not alerted&quot; — because a
-monitor that silently cannot alert is the blind spot the intake design names
-first.</p>
+<p>Inherits everything through <code>compare</code>, with one exception: <code>monitor</code> looks again
+on every cycle, and a fixed level on every look buys false alarms. A rate alert
+on cycle <em>i</em> therefore tests at <code>6·max_p_value / (π²·i²)</code>. These levels sum to
+<code>max_p_value</code> over an unbounded schedule. The reasoning and the confidence
+sequence meant to replace this are in
+<a href="anytime-valid-monitoring.html"><code>anytime-valid-monitoring.md</code></a>.</p>
+<p>At start-up it says, once, which suites are below <code>min_sample</code> — &quot;suite X has 20
+cases, below regression.min_sample 30; rate changes will be reported, not
+alerted&quot; — and that the level falls with each cycle. A monitor that silently
+cannot alert is the blind spot the intake design names first.</p>
 <h2 id="rejected">Rejected</h2>
 <p><strong><code>scipy</code>, <code>numpy</code>, <code>statsmodels</code>.</strong> Principle 6. Everything above is
 <code>math.comb</code>, <code>math.sqrt</code> and a loop.</p>
@@ -207,12 +251,16 @@ a regression, and it is what every dashboard already does.</p>
 risk score: it would hide which condition was unmet.</p>
 <p><strong>Sequential testing and early stopping.</strong> Worth having for a monitor that samples
 continuously; belongs with the intake lane, where the sample arrives over time.
-A one-shot <code>diff</code> has both runs in hand.</p>
+A one-shot <code>diff</code> has both runs in hand. <code>monitor</code> already looks repeatedly
+today, so it gets the alpha-spending rule above now. The sequential design is
+<a href="anytime-valid-monitoring.html"><code>anytime-valid-monitoring.md</code></a>.</p>
 <p><strong>Bayesian intervals.</strong> Defensible, and a prior is a policy decision this tool
 has no standing to set for somebody else's suite.</p>
 <h2 id="see-also">See also</h2>
 <ul>
 <li><a href="quality-suites.html"><code>quality-suites.md</code></a> — where the paired sample comes from</li>
+<li><a href="repeated-trials.html"><code>repeated-trials.md</code></a> — per-case rates, and why K must match</li>
+<li><a href="judge-error-correction.html"><code>judge-error-correction.md</code></a> — raw test, corrected effect</li>
 <li><a href="assessment-channel.html"><code>assessment-channel.md</code></a> — the comparability key</li>
 <li><a href="../usage-diff.html"><code>../usage-diff.md</code></a> — the user page</li>
 </ul>
