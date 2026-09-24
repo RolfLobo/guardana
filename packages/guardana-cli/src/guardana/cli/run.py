@@ -92,7 +92,8 @@ def _calibration_lines(manifest: RunManifest) -> list[str]:
     no age is a claim about an evaluator that may not exist any more.
 
     An unmeasured evaluator says so rather than being left out. Omitting it would let
-    a reader assume the ones listed are all of them.
+    a reader assume the ones listed are all of them. A calibration without per-class
+    counts says so too, because it is one no rate in the run was corrected with.
     """
     evaluators = manifest.evaluators
     if not evaluators:
@@ -103,9 +104,22 @@ def _calibration_lines(manifest: RunManifest) -> list[str]:
         if calibration is None:
             lines.append(f"    {evaluator.id} — confidence not measured")
             continue
+        positives, negatives = calibration.positives, calibration.negatives
+        sensitivity, specificity = calibration.sensitivity, calibration.specificity
+        if positives is None or negatives is None or sensitivity is None or specificity is None:
+            lines.append(
+                f"    {evaluator.id} — brier {_value(calibration.brier)}, "
+                f"ECE {_value(calibration.ece)}, measured {_value(calibration.measured_at)} · "
+                f"per-class error not measured"
+            )
+            continue
         lines.append(
-            f"    {evaluator.id} — brier {_value(calibration.brier)}, "
-            f"ECE {_value(calibration.ece)}, measured {_value(calibration.measured_at)}"
+            f"    {evaluator.id} · sens {sensitivity:.2f}/{positives} pos · "
+            f"spec {specificity:.2f}/{negatives} neg · "
+            f"judge {calibration.judge_identity or 'not stated'} · "
+            f"brier {_value(calibration.brier)} · ECE {_value(calibration.ece)} · "
+            f"measured {_value(calibration.measured_at)}"
+            + (" · starter corpus" if calibration.starter_corpus is True else "")
         )
     return lines
 

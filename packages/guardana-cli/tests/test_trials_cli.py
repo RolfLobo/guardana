@@ -46,7 +46,7 @@ def test_a_probe_with_trials_saves_every_trial_and_what_each_rule_did(
 
     document = json.loads(out.read_text(encoding="utf-8"))
     run = document["run"]
-    assert document["schema_version"] == 7
+    assert document["schema_version"] == 8
     assert run["execution"]["trials"] == 3
     repeating = [r for r in run["rules"] if r["trial_summary"] is not None]
     assert repeating, "no rule repeated at --trials 3"
@@ -121,7 +121,12 @@ def test_the_human_report_states_the_trials_and_the_bound(
     assert result.exit_code == 0, result.output
     assert "Trials" in result.output
     assert "cases in 2 trials each · ASR@2 ≤" in result.output
-    assert "grader error not corrected" in result.output
+    assert (
+        "graded by keyword · uncorrected — judge error not measured: no calibration "
+        "recorded for keyword"
+    ) in result.output
+    assert "graded by canary\n" in result.output
+    assert "grader error not corrected" not in result.output
     assert "static prompt set · no adaptive attacker ran" in result.output
 
 
@@ -237,7 +242,7 @@ def test_a_profile_asking_for_trials_changes_nothing_about_a_file_scan(tmp_path:
 
 
 def test_a_rule_that_reported_a_finding_never_gets_a_bound() -> None:
-    from guardana.cli._run_meta import _trial_summary  # noqa: PLC0415
+    from guardana.cli._run_meta import _Grading, _trial_summary  # noqa: PLC0415
     from guardana.core.assessment import Assessment  # noqa: PLC0415
     from guardana.core.evaluator.base import Expectation  # noqa: PLC0415
     from guardana.core.report import ScanResult  # noqa: PLC0415
@@ -258,13 +263,20 @@ def test_a_rule_that_reported_a_finding_never_gets_a_bound() -> None:
     ]
     result = ScanResult((), ("acme.p",), (), assessments=tuple(passes))
 
-    clean = _trial_summary(rule, passes, result, set())
-    contradicted = _trial_summary(rule, passes, result, {"acme.p"})
+    grading = _Grading(evaluators={}, calibrations={}, starter_digest="sha256:0")
+
+    clean = _trial_summary(rule, passes, result, set(), grading)
+    contradicted = _trial_summary(rule, passes, result, {"acme.p"}, grading)
 
     assert clean is not None
     assert clean.bound is not None
     assert contradicted is not None
     assert contradicted.bound is None
+    assert contradicted.correction is not None
+    assert contradicted.correction.status == "uncorrected"
+    assert contradicted.correction.reason == (
+        "judge error not measured: no calibration recorded for k"
+    )
 
 
 def test_a_scenario_graded_at_several_turns_is_one_case_in_the_saved_summary(

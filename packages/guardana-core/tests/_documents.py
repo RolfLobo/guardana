@@ -12,6 +12,7 @@ at once.
 
 from dataclasses import replace
 from datetime import UTC, datetime
+from typing import Any
 
 from guardana.core.assessment import Assessment, AssessmentStatus, Direction
 from guardana.core.evaluator.base import Verdict
@@ -27,7 +28,9 @@ from guardana.core.manifest.identity import (
 from guardana.core.manifest.model import RunManifest
 from guardana.core.manifest.records import (
     CalibrationRecord,
+    CorrectionStatus,
     EvaluatorRecord,
+    JudgeCorrection,
     ResultSummary,
     RuleRecord,
     TrialSummary,
@@ -156,6 +159,18 @@ def run_manifest() -> RunManifest:
                     cases_incomplete=0,
                     bound=0.95,
                     mean_success_rate=0.0,
+                    correction=JudgeCorrection(
+                        status=CorrectionStatus.CORRECTED,
+                        assessor="llm_judge@2025.1",
+                        rate=0.0,
+                        low=0.0,
+                        high=0.97,
+                        sensitivity=0.9,
+                        specificity=0.95,
+                        dataset_digest="sha256:abab",
+                        positives=120,
+                        negatives=130,
+                    ),
                 ),
             ),
         ),
@@ -169,6 +184,15 @@ def run_manifest() -> RunManifest:
                     measured_at=datetime(2026, 7, 1, tzinfo=UTC),
                     brier=0.08,
                     ece=0.03,
+                    assessor="llm_judge@2025.1",
+                    judge_identity="model=m;endpoint=sha256:acac;samples=1",
+                    starter_corpus=False,
+                    positives=30,
+                    negatives=31,
+                    positives_inconclusive=2,
+                    negatives_inconclusive=1,
+                    sensitivity=0.9,
+                    specificity=0.95,
                 ),
             ),
         ),
@@ -279,3 +303,37 @@ def scan_result() -> ScanResult:
         protocols={"mcp": "2026-07-28"},
         trials_per_case={"guardana.prompt.jailbreak": 3},
     )
+
+
+def saved_run_at_v7(document: dict[str, Any]) -> dict[str, Any]:
+    """Rewrite a document this build wrote into the shape a version-7 build wrote."""
+    run = document["run"]
+    return {
+        **document,
+        "schema_version": 7,
+        "$schema": "https://guardana.dev/schemas/run/v7.schema.json",
+        "run": {
+            **run,
+            "rules": [
+                {
+                    **rule,
+                    "trial_summary": None
+                    if rule["trial_summary"] is None
+                    else {k: v for k, v in rule["trial_summary"].items() if k != "correction"},
+                }
+                for rule in run["rules"]
+            ],
+            "evaluators": [
+                {
+                    **entry,
+                    "calibration": None
+                    if entry["calibration"] is None
+                    else {k: v for k, v in entry["calibration"].items() if k in _V7_CALIBRATION},
+                }
+                for entry in run["evaluators"]
+            ],
+        },
+    }
+
+
+_V7_CALIBRATION = frozenset({"dataset_digest", "measured_at", "brier", "ece"})

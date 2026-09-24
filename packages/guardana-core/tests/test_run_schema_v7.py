@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from _documents import run_manifest, scan_result
+from _documents import run_manifest, saved_run_at_v7, scan_result
 from guardana.core.assessment import Assessment, AssessmentStatus
 from guardana.core.fingerprint import digest_of
 from guardana.core.manifest.coverage import coverage_digest
@@ -20,7 +20,7 @@ from guardana.core.manifest.load import ManifestLoadError, manifest_from_dict
 from guardana.core.manifest.migrations import migrate_v6
 from guardana.core.manifest.records import RuleRecord, TrialSummary
 from guardana.core.manifest.serialize import manifest_to_dict
-from guardana.core.report.load import ReportLoadError, load_report, migrate_forward
+from guardana.core.report.load import ReportLoadError, load_report
 from guardana.core.report.result import ScanResult
 from guardana.core.report.serialize import run_to_dict
 from guardana.core.trials import clean_bound, reduce_rule
@@ -44,6 +44,11 @@ def _write(document: dict[str, Any], tmp_path: Path) -> Path:
     path = tmp_path / "run.json"
     path.write_text(json.dumps(document), encoding="utf-8")
     return path
+
+
+def _v7() -> dict[str, Any]:
+    """The fully populated saved run, in the shape a version-7 build wrote."""
+    return saved_run_at_v7(run_to_dict(scan_result(), run_manifest()))
 
 
 def _as_v6(document: dict[str, Any]) -> dict[str, Any]:
@@ -90,10 +95,8 @@ def _trials(*outcomes: bool | None) -> tuple[Assessment, ...]:
     )
 
 
-def test_the_written_document_satisfies_the_v7_schema() -> None:
-    document = run_to_dict(scan_result(), run_manifest())
-
-    assert not _errors(document, 7)
+def test_the_version_7_fixture_satisfies_the_v7_schema() -> None:
+    assert not _errors(_v7(), 7)
 
 
 def test_every_new_field_is_written_and_read_back() -> None:
@@ -103,7 +106,8 @@ def test_every_new_field_is_written_and_read_back() -> None:
     assert block["execution"]["trials"] == 3  # type: ignore[index]
     rules = {rule["id"]: rule for rule in block["rules"]}  # type: ignore[attr-defined]
     assert rules[_RULE]["declared_requests"] == 3
-    assert rules[_RULE]["trial_summary"] == {
+    summary = {k: v for k, v in rules[_RULE]["trial_summary"].items() if k != "correction"}
+    assert summary == {
         "trials_per_case": 3,
         "cases": 1,
         "cases_failed": 0,
@@ -235,29 +239,29 @@ def test_the_loader_refuses_an_assessment_trial_that_is_not_one(
     [("execution", 0), ("assessment", 0), ("summary", 1.2)],
 )
 def test_the_v7_schema_refuses_what_the_loader_refuses(where: str, value: object) -> None:
-    document = run_to_dict(scan_result(), run_manifest())
+    document = _v7()
     if where == "execution":
-        document["run"]["execution"]["trials"] = value  # type: ignore[index]
+        document["run"]["execution"]["trials"] = value
     elif where == "assessment":
-        document["assessments"][0]["trial"] = value  # type: ignore[index]
+        document["assessments"][0]["trial"] = value
     else:
-        document["run"]["rules"][1]["trial_summary"]["bound"] = value  # type: ignore[index]
+        document["run"]["rules"][1]["trial_summary"]["bound"] = value
 
     assert _errors(document, 7)
 
 
 def test_the_v7_schema_refuses_the_old_field_name() -> None:
-    document = run_to_dict(scan_result(), run_manifest())
-    document["run"]["rules"][0]["trials"] = 4  # type: ignore[index]
+    document = _v7()
+    document["run"]["rules"][0]["trials"] = 4
 
     assert _errors(document, 7)
 
 
 def test_a_v6_run_migrates_to_7_keeping_the_count_and_inventing_nothing(tmp_path: Path) -> None:
-    v6 = _as_v6(run_to_dict(scan_result(), run_manifest()))
+    v6 = _as_v6(_v7())
     assert not _errors(v6, 6), "the fixture must be a real version-6 document"
 
-    migrated = migrate_forward(v6, 6)
+    migrated = migrate_v6(v6)
 
     assert migrated["schema_version"] == 7
     assert migrated["$schema"].endswith("/v7.schema.json")
@@ -277,7 +281,7 @@ def test_a_v6_run_migrates_to_7_keeping_the_count_and_inventing_nothing(tmp_path
 
 
 def test_a_v6_run_that_recorded_no_declared_count_keeps_it_unknown() -> None:
-    v6 = _as_v6(run_to_dict(scan_result(), run_manifest()))
+    v6 = _as_v6(_v7())
     del v6["run"]["rules"][0]["trials"]
 
     migrated = migrate_v6(v6)
@@ -286,7 +290,7 @@ def test_a_v6_run_that_recorded_no_declared_count_keeps_it_unknown() -> None:
 
 
 def test_the_migration_refuses_an_assessment_channel_that_is_not_a_list() -> None:
-    v6 = _as_v6(run_to_dict(scan_result(), run_manifest()))
+    v6 = _as_v6(_v7())
     v6["assessments"] = {"case": "one"}
 
     with pytest.raises(ManifestLoadError, match="assessments"):

@@ -37,3 +37,9 @@ def test_rule_context_get_returns_default() -> None:
     ctx = RuleContext(config={"threshold": 5})
     assert ctx.get("threshold", 0) == 5
     assert ctx.get("missing", 42) == 42
+
+
+def test_a_rule_that_does_not_declare_determinism_counts_as_a_judge() -> None:
+    # Claiming determinism by default would let a third-party opinion skip the correction.
+    assert _AlwaysFinds.deterministic is False
+    assert Rule.deterministic is False

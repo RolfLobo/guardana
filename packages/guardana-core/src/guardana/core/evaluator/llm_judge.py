@@ -4,7 +4,13 @@ from dataclasses import dataclass
 from typing import ClassVar
 
 from guardana.core.calibration.report import MIN_RELIABLE_SAMPLES
-from guardana.core.evaluator.base import Evaluator, Expectation, Outcome, Verdict
+from guardana.core.evaluator.base import (
+    Evaluator,
+    Expectation,
+    Outcome,
+    Verdict,
+    check_judge_identity,
+)
 from guardana.core.exchange import Exchange
 
 DEFAULT_CONFIDENCE = 0.8
@@ -67,7 +73,9 @@ class LlmJudgeEvaluator(Evaluator):
     The judge is injected as a plain `str -> str` callable so tests can use a
     scripted stand-in with no network calls; production wires it to a target's
     chat completion. The judging prompt is versioned so results stay
-    reproducible even as the template evolves.
+    reproducible even as the template evolves. The prompt version is in the
+    verdict's id; `judge_identity` states the rest (model, endpoint, samples per
+    verdict) as the wiring knows it.
     """
 
     id = "llm_judge"
@@ -79,6 +87,8 @@ class LlmJudgeEvaluator(Evaluator):
         prompt_version: str = "2025.1",
         min_agreement: int = 1,
         calibration: "JudgeCalibration | None" = None,
+        *,
+        judge_identity: str | None = None,
     ) -> None:
         if prompt_version not in PROMPT_TEMPLATES:
             raise ValueError(
@@ -86,6 +96,7 @@ class LlmJudgeEvaluator(Evaluator):
             )
         if min_agreement < 1:
             raise ValueError(f"min_agreement must be >= 1, got {min_agreement}")
+        self.judge_identity = check_judge_identity(judge_identity)
         self._judge = judge
         self._prompt_version = prompt_version
         self._min_agreement = min_agreement

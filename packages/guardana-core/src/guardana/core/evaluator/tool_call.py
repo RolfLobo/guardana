@@ -32,6 +32,7 @@ class ToolCallEvaluator(Evaluator):
     """
 
     id = "tool_call"
+    deterministic: ClassVar[bool] = True
     expects: ClassVar[Mapping[str, bool]] = {
         "forbidden_tools": False,
         "canary_in_arguments": False,

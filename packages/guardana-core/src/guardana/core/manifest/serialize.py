@@ -4,9 +4,11 @@ from datetime import UTC, datetime
 
 from guardana.core.manifest.coverage import CoverageRecord
 from guardana.core.manifest.identity import DeploymentRef, RunSource, TargetIdentity, ToolInfo
-from guardana.core.manifest.model import RunManifest
+from guardana.core.manifest.model import MANIFEST_SCHEMA_VERSION, RunManifest
 from guardana.core.manifest.records import (
+    CalibrationRecord,
     EvaluatorRecord,
+    JudgeCorrection,
     ResultSummary,
     RuleRecord,
     TrialSummary,
@@ -14,7 +16,13 @@ from guardana.core.manifest.records import (
 from guardana.core.manifest.settings import ConfigurationRef, ExecutionSettings, PrivacyRecord
 from guardana.core.manifest.usage import RunUsage
 
-SCHEMA_URL = "https://guardana.dev/schemas/run/v7.schema.json"
+
+def schema_url(version: int) -> str:
+    """Return the identifier of the saved-run contract at `version`."""
+    return f"https://guardana.dev/schemas/run/v{version}.schema.json"
+
+
+SCHEMA_URL = schema_url(MANIFEST_SCHEMA_VERSION)
 """Identifier of the saved-run document, carrying its major version in the path.
 
 The practice in-toto and SLSA settled on, for the reason they settled on it: a
@@ -132,6 +140,23 @@ def _trial_summary(summary: TrialSummary) -> dict[str, object]:
         "cases_incomplete": summary.cases_incomplete,
         "bound": summary.bound,
         "mean_success_rate": summary.mean_success_rate,
+        "correction": None if summary.correction is None else _correction(summary.correction),
+    }
+
+
+def _correction(correction: JudgeCorrection) -> dict[str, object]:
+    return {
+        "status": str(correction.status),
+        "assessor": correction.assessor,
+        "reason": correction.reason,
+        "rate": correction.rate,
+        "low": correction.low,
+        "high": correction.high,
+        "sensitivity": correction.sensitivity,
+        "specificity": correction.specificity,
+        "dataset_digest": correction.dataset_digest,
+        "positives": correction.positives,
+        "negatives": correction.negatives,
     }
 
 
@@ -161,14 +186,25 @@ def _evaluator(evaluator: EvaluatorRecord) -> dict[str, object]:
         "id": evaluator.id,
         "version": evaluator.version,
         "digest": evaluator.digest,
-        "calibration": None
-        if calibration is None
-        else {
-            "dataset_digest": calibration.dataset_digest,
-            "measured_at": _utc(calibration.measured_at),
-            "brier": calibration.brier,
-            "ece": calibration.ece,
-        },
+        "calibration": None if calibration is None else _calibration(calibration),
+    }
+
+
+def _calibration(calibration: CalibrationRecord) -> dict[str, object]:
+    return {
+        "dataset_digest": calibration.dataset_digest,
+        "measured_at": _utc(calibration.measured_at),
+        "brier": calibration.brier,
+        "ece": calibration.ece,
+        "assessor": calibration.assessor,
+        "judge_identity": calibration.judge_identity,
+        "starter_corpus": calibration.starter_corpus,
+        "positives": calibration.positives,
+        "negatives": calibration.negatives,
+        "positives_inconclusive": calibration.positives_inconclusive,
+        "negatives_inconclusive": calibration.negatives_inconclusive,
+        "sensitivity": calibration.sensitivity,
+        "specificity": calibration.specificity,
     }
 
 

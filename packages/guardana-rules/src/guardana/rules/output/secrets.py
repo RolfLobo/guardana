@@ -1,5 +1,6 @@
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
+from typing import ClassVar
 
 from guardana.core.assessment import case_id_for, from_verdict
 from guardana.core.evaluator.base import Verdict
@@ -46,6 +47,7 @@ class OutputSecretsRule(Rule):
         required_capabilities=frozenset({Capability.CHAT}),
         impact=Impact.ACTIVE,
     )
+    deterministic: ClassVar[bool] = True
 
     def __init__(self, trials: int = 1) -> None:
         self._trials = check_trials(trials)

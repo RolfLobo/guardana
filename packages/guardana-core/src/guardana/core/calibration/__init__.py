@@ -15,9 +15,12 @@ a row:
     if not report.is_reliable:
         ...                                  # `report.caveat` says why
     print(report.brier, report.expected_calibration_error)
+    print(report.sensitivity, report.specificity)   # `report.class_caveat` if unmeasured
 
-A report belongs to one *versioned* evaluator id (`llm_judge@2025.1`), so a
-changed rubric cannot inherit an older measurement.
+A report names the evaluator it measured by its registered id (`llm_judge`) and,
+as `assessor`, the id its verdicts carried (`llm_judge@2025.1`), which includes
+the rubric version. `judge_identity` states the rest: the model, where it is
+served, and how many samples make one verdict.
 """
 
 from guardana.core.calibration.measure import calibrate

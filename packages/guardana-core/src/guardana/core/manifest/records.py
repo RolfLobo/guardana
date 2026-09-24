@@ -1,15 +1,166 @@
 """What did the checking, with what calibration, and what came of it."""
 
+import math
 from dataclasses import dataclass
 from datetime import datetime
+from enum import StrEnum
 from typing import TYPE_CHECKING
 
+from guardana.core.calibration.report import MIN_RELIABLE_SAMPLES
 from guardana.core.gate import GateOutcome
 from guardana.core.report.skipped import SkippedRule
 from guardana.core.report.stop import StopReason
 
 if TYPE_CHECKING:
     from guardana.core.trials import RuleTrials
+
+
+MIN_YOUDEN = 0.1
+"""The least sensitivity + specificity - 1 a judge may have for its error to be corrected.
+
+Below it the correction divides by a number close to zero and amplifies noise into a rate.
+"""
+
+
+class CorrectionStatus(StrEnum):
+    """Whether a rule's rate was corrected for its grader's error."""
+
+    DETERMINISTIC = "deterministic"
+    """Graded by computation alone; there is no judge error to correct."""
+
+    CORRECTED = "corrected"
+    """Graded by a judge whose per-class error was measured and applied."""
+
+    UNCORRECTED = "uncorrected"
+    """Graded by a judge whose error could not be applied; `reason` says why."""
+
+
+def _is_share(value: object) -> bool:
+    return (
+        isinstance(value, int | float)
+        and not isinstance(value, bool)
+        and math.isfinite(value)
+        and 0.0 <= value <= 1.0
+    )
+
+
+_CORRECTION_NUMBERS = ("rate", "low", "high", "sensitivity", "specificity")
+_CALIBRATION_COUNTS = (
+    "positives",
+    "negatives",
+    "positives_inconclusive",
+    "negatives_inconclusive",
+)
+
+
+@dataclass(frozen=True, slots=True)
+class JudgeCorrection:
+    """A rule's attack-success rate corrected for its judge's error, or why it was not.
+
+    Stored rather than recomputed by a reader for the reason `TrialSummary` is: a later
+    build correcting with other constants must not print a different verdict for the
+    same run.
+    """
+
+    status: CorrectionStatus
+    assessor: str | None = None
+    """The assessor id the rule's verdicts carried, which the calibration was matched on."""
+
+    reason: str | None = None
+    """Why the rate stays uncorrected; set only when it does."""
+
+    rate: float | None = None
+    low: float | None = None
+    high: float | None = None
+    sensitivity: float | None = None
+    specificity: float | None = None
+    dataset_digest: str | None = None
+    """The digest of the corpus the applied calibration was measured on."""
+
+    positives: int | None = None
+    """The graded positives the applied sensitivity was measured over."""
+
+    negatives: int | None = None
+    """The graded negatives the applied specificity was measured over."""
+
+    def __post_init__(self) -> None:
+        """Refuse a correction whose numbers contradict its status or each other.
+
+        A corrected rate missing a number, or one computed from a judge too weak to
+        correct, would print as a measured result the calibration never supported.
+        """
+        if not isinstance(self.status, CorrectionStatus):
+            raise TypeError(f"status must be a CorrectionStatus, got {self.status!r}")
+        self._check_ranges()
+        if self.status is CorrectionStatus.CORRECTED:
+            self._check_corrected()
+            return
+        stated = [name for name in ("rate", "low", "high") if getattr(self, name) is not None]
+        if self.status is CorrectionStatus.UNCORRECTED:
+            if not self.reason:
+                raise ValueError("an uncorrected rate must name why it was not corrected")
+            if stated:
+                raise ValueError(f"an uncorrected rate states no corrected {', '.join(stated)}")
+            return
+        stated += [
+            name
+            for name in (
+                "sensitivity",
+                "specificity",
+                "reason",
+                "dataset_digest",
+                "positives",
+                "negatives",
+            )
+            if getattr(self, name) is not None
+        ]
+        if stated:
+            raise ValueError(f"a deterministic grader has no {', '.join(stated)} to state")
+
+    def _check_ranges(self) -> None:
+        for name in _CORRECTION_NUMBERS:
+            value = getattr(self, name)
+            if value is not None and not _is_share(value):
+                raise ValueError(f"{name} must lie in [0, 1], got {value!r}")
+        for name in ("positives", "negatives"):
+            value = getattr(self, name)
+            if value is not None and (
+                isinstance(value, bool) or not isinstance(value, int) or value < 0
+            ):
+                raise ValueError(f"{name} must be a whole number of at least 0, got {value!r}")
+
+    def _check_corrected(self) -> None:
+        rate, low, high = self.rate, self.low, self.high
+        sensitivity, specificity = self.sensitivity, self.specificity
+        if (
+            rate is None
+            or low is None
+            or high is None
+            or sensitivity is None
+            or specificity is None
+            or not self.assessor
+            or not self.dataset_digest
+        ):
+            raise ValueError(
+                "a corrected rate needs its rate, low, high, sensitivity, specificity, "
+                "assessor and dataset_digest"
+            )
+        if not low <= rate <= high:
+            raise ValueError(
+                f"a corrected rate needs low <= rate <= high, got {low}, {rate}, {high}"
+            )
+        for name, graded in (("positives", self.positives), ("negatives", self.negatives)):
+            if graded is None or graded < MIN_RELIABLE_SAMPLES:
+                raise ValueError(
+                    f"a corrected rate needs at least {MIN_RELIABLE_SAMPLES} graded {name} "
+                    f"behind it, got {graded!r}"
+                )
+        youden = sensitivity + specificity - 1.0
+        if youden < MIN_YOUDEN:
+            raise ValueError(
+                f"sensitivity + specificity - 1 is {youden:.3f}; a judge below {MIN_YOUDEN} "
+                f"is not corrected"
+            )
 
 
 @dataclass(frozen=True, slots=True)
@@ -35,6 +186,9 @@ class TrialSummary:
     mean_success_rate: float | None
     """The mean over cases of each case's share of failed trials; None when none graded."""
 
+    correction: JudgeCorrection | None = None
+    """The rate corrected for the grader's error, or why not; None in a migrated document."""
+
     def __post_init__(self) -> None:
         """Refuse counts that contradict each other, and a bound over a rule that was not clean.
 
@@ -59,6 +213,16 @@ class TrialSummary:
             self.cases == 0 or self.cases_failed or self.cases_incomplete
         ):
             raise ValueError("a bound is stated only over a rule whose every case held")
+        if (
+            self.correction is not None
+            and self.correction.status is CorrectionStatus.CORRECTED
+            and self.bound is None
+            and not self.cases_failed
+        ):
+            raise ValueError(
+                "a corrected rate needs a stated bound or a failed case to correct; "
+                "this summary states neither"
+            )
 
     @classmethod
     def from_trials(cls, trials: "RuleTrials") -> "TrialSummary":
@@ -125,6 +289,36 @@ class CalibrationRecord:
     measured_at: datetime | None = None
     brier: float | None = None
     ece: float | None = None
+    assessor: str | None = None
+    """The assessor id the calibrated verdicts carried, versioned as the verdicts were."""
+
+    judge_identity: str | None = None
+    """Everything behind the judge's verdict that its id does not name."""
+
+    starter_corpus: bool | None = None
+    """Whether the calibration ran on the bundled starter corpus rather than the operator's."""
+
+    positives: int | None = None
+    """Graded positive examples; this and the three below are None when never recorded."""
+
+    negatives: int | None = None
+    positives_inconclusive: int | None = None
+    negatives_inconclusive: int | None = None
+    sensitivity: float | None = None
+    specificity: float | None = None
+
+    def __post_init__(self) -> None:
+        """Refuse a negative count and a rate outside [0, 1]."""
+        for name in _CALIBRATION_COUNTS:
+            value = getattr(self, name)
+            if value is not None and (
+                isinstance(value, bool) or not isinstance(value, int) or value < 0
+            ):
+                raise ValueError(f"{name} must be a whole number of at least 0, got {value!r}")
+        for name in ("sensitivity", "specificity"):
+            value = getattr(self, name)
+            if value is not None and not _is_share(value):
+                raise ValueError(f"{name} must lie in [0, 1], got {value!r}")
 
 
 @dataclass(frozen=True, slots=True)

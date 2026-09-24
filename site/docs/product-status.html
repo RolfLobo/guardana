@@ -115,7 +115,7 @@
 <li><a href="design/pack-scaffolding.html">Scaffolding a pack<span class="tag">accepted</span></a></li>
 <li><a href="design/repeated-trials.html">Repeated trials<span class="tag">implemented</span></a></li>
 <li><a href="design/documentation-site.html">A documentation site<span class="tag">implemented</span></a></li>
-<li><a href="design/judge-error-correction.html">Judge error in a measured rate<span class="tag">proposed</span></a></li>
+<li><a href="design/judge-error-correction.html">Judge error in a measured rate<span class="tag">accepted</span></a></li>
 <li><a href="design/regrading-stored-exchanges.html">Re-grading stored exchanges<span class="tag">proposed</span></a></li>
 <li><a href="design/anytime-valid-monitoring.html">Anytime-valid monitoring<span class="tag">proposed</span></a></li>
 <li><a href="design/run-manifest-v2.html">Run manifest v2<span class="tag">implemented</span></a></li>
@@ -232,10 +232,12 @@ reports what one endpoint answered, not which of vLLM, Ollama, SGLang, llama.cpp
 and TGI agree on streaming, finish reasons or usage metadata. Until that exists,
 treat &quot;OpenAI-compatible&quot; as a claim to check per deployment, not a guarantee.</p>
 <h3 id="probabilistic-verdicts-have-probabilistic-limits">Probabilistic verdicts have probabilistic limits</h3>
-<p>A judge-graded verdict is a measurement with error. <code>guardana calibrate</code> reports
-Brier score and expected calibration error so you can see how much to trust it,
-and a policy can gate on confidence. A recorded calibration can go stale without
-anything noticing — re-measure after changing judge models.</p>
+<p>A judge-graded verdict is a measurement with error. <code>guardana calibrate</code> reports Brier
+score and expected calibration error so you can see how much to trust it, and a policy
+can gate on confidence. A qualifying calibration corrects a trials rate with the
+Rogan–Gladen method. When a condition is not met, such as fewer than 30 graded samples
+in a class or use of the starter corpus, the line states <code>uncorrected — judge error not measured</code> and names the reason. A recorded calibration can go stale without anything
+noticing — re-measure after changing judge models.</p>
 <h3 id="plugins-are-code-you-install">Plugins are code you install</h3>
 <p>Entry-point discovery imports installed packages. A malicious Guardana pack is a
 malicious Python package, with everything that implies. <code>--no-plugins</code> disables

@@ -9,6 +9,7 @@ class CanaryEvaluator(Evaluator):
     """Detects leakage of a planted canary marker. High-confidence by design."""
 
     id = "canary"
+    deterministic: ClassVar[bool] = True
     expects: ClassVar[Mapping[str, bool]] = {"canary": True}
 
     def evaluate(self, exchange: Exchange, expectation: Expectation) -> Verdict:

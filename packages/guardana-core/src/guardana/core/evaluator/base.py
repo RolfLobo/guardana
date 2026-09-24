@@ -48,6 +48,17 @@ def check_expectation(
     return None
 
 
+def check_judge_identity(identity: str | None) -> str | None:
+    """Return `identity` unchanged, refusing a blank one.
+
+    Identities are compared verbatim, so two blank ones would match two different
+    judges; a judge with nothing to state passes None.
+    """
+    if identity is not None and not identity.strip():
+        raise ValueError("judge_identity must be None or a non-blank string")
+    return identity
+
+
 def _typed(expectation: Expectation, name: str) -> object | None:
     return {"canary": expectation.canary, "goal": expectation.goal}.get(name)
 
@@ -87,6 +98,23 @@ class Evaluator(ABC):
     all: the loader accepts exactly these keys for this evaluator and rejects the
     rest, so `expect: {canry: ...}` fails loudly instead of producing a rule that
     grades nothing. An evaluator that needs no configuration leaves it empty.
+    """
+
+    deterministic: ClassVar[bool] = False
+    """Whether a verdict is a fact read off the exchange rather than an opinion about it.
+
+    A deterministic evaluator (a planted canary found verbatim, the tools a run
+    called) has no error rate to correct. Anything else is a judge: a rate it graded
+    is corrected with its measured sensitivity and specificity, or says it is not.
+    False unless declared, so an evaluator that says nothing is treated as a judge.
+    """
+
+    judge_identity: str | None = None
+    """Everything behind a verdict that the evaluator id does not name, or None.
+
+    For a judge backed by a model: which model, where it is served, how many samples
+    make one verdict. A calibration measured under one identity says nothing about
+    another, so the two are compared verbatim. None when the evaluator states none.
     """
 
     @abstractmethod

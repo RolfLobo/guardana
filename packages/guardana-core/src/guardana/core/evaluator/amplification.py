@@ -25,6 +25,7 @@ class AmplificationEvaluator(Evaluator):
     """
 
     id = "amplification"
+    deterministic: ClassVar[bool] = True
     expects: ClassVar[Mapping[str, bool]] = {"max_amplification": True}
 
     def evaluate(self, exchange: Exchange, expectation: Expectation) -> Verdict:

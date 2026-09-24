@@ -131,8 +131,7 @@ def test_metrics_are_finite_even_when_every_sample_is_the_same_class() -> None:
     assert math.isfinite(report.expected_calibration_error)
 
 
-def test_the_report_names_the_versioned_evaluator_it_measured() -> None:
-    # `llm_judge@2025.1` — a calibration belongs to one rubric version, so the
-    # id is carried and a later rubric cannot inherit an older measurement.
-    report = calibrate(_FixedJudge("llm_judge@2025.1", "fail", 0.8), _mixed(40))
-    assert report.evaluator_id == "llm_judge@2025.1"
+def test_the_report_names_the_evaluator_and_the_assessor_its_verdicts_carried() -> None:
+    report = calibrate(_FixedJudge("acme_judge", "fail", 0.8), _mixed(40))
+    assert report.evaluator_id == "acme_judge"
+    assert report.assessor == "acme_judge"

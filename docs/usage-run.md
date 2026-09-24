@@ -93,16 +93,23 @@ already have.
 
 What an older version never recorded arrives as an explicit unknown rather than as a
 default — version 1 has no usage, no execution settings and **no gate verdict**;
-version 2 has no coverage fingerprint and no declared request counts; version 3 could not
+version 2 has no coverage fingerprint and no declared request counts; version 3 could
+not
 name a `trace` target, because that kind did not exist; version 6 made one attempt per
 case, so it arrives with `execution.trials: 1`, `trial: null` on every assessment and
-no `trial_summary` on any rule — the summary is not recomputed from its assessments. Recomputing any
+no `trial_summary` on any rule — the summary is not recomputed from its assessments.
+Recomputing any
 of them during migration would apply today's build to another build's run, which is
 exactly what storing them as fields exists to prevent. `inspect` says so at the
 bottom of its output, and `diff` adds a note.
 
+A schema-7 run migrates to schema 8 with the correction fields `null`; nothing is
+recomputed. Its trials line still prints `graded by <assessor>, grader error not
+corrected`, as it was written.
+
 One thing *is* recovered: the **title** of a framework reference, which version 3
-onward records beside its framework and id. It is looked up from the installed catalogue for
+onward records beside its framework and id. It is looked up from the installed catalogue
+for
 the exact `(framework, id)` pair the document already carries, so nothing is guessed
 and no reference is remapped — a `LLM07` recorded under `OWASP-LLM-2025` stays System
 Prompt Leakage. A reference from a rule pack this build does not have stays
@@ -130,15 +137,16 @@ missing.
 ## The document
 
 The saved-run schema lives at
-[`schemas/run-v7.schema.json`](../schemas/run-v7.schema.json), identified by
-`https://guardana.dev/schemas/run/v7.schema.json`. The version is in the
+[`schemas/run-v8.schema.json`](../schemas/run-v8.schema.json), identified by
+`https://guardana.dev/schemas/run/v8.schema.json`. The version is in the
 identifier, so a consumer can tell which contract it is holding before parsing
 anything; it changes whenever the change is not backwards-compatible. A test
 validates what Guardana writes against that file, so the schema cannot drift
 away from the tool.
 
 Every superseded version stays published — `run-v2` and `run-v3` are still in
-[`schemas/`](../schemas/) — because a saved run has to keep validating against the schema
+[`schemas/`](../schemas/) — because a saved run has to keep validating against the
+schema
 it was written to. Version 4 exists for one reason: it permits a `trace` target kind.
 Widening version 3's enum in place was the alternative, and it would have changed a
 contract under a name that promised it had not. Version 6 adds the `assessments`
@@ -146,13 +154,14 @@ channel and `run.rules[].origin`; a version-5 document migrates forward with the
 first empty and the second `null`, because that is what it knew. Version 7 records
 repeated trials: `run.execution.trials`, `assessments[].trial` and
 `run.rules[].trial_summary`, and renames `run.rules[].trials` to `declared_requests`,
-which is what it always counted.
+which is what it always counted. Version 8 records the `correction` block on
+`trial_summary` and the calibration fields on `run.evaluators[]`.
 
 Top level:
 
 | Key | What it is |
 |---|---|
-| `schema_version` | `7`. Stated once, for the whole document. |
+| `schema_version` | `8`. Stated once, for the whole document. |
 | `run` | the manifest — everything below |
 | `findings` / `unverified` / `waived` / `errors` / `observations` | the problem, evidence and inventory channels |
 | `assessments` | what the run *measured*, pass included — see [assessments](#assessments) |
@@ -253,7 +262,20 @@ reduced them when the run was written:
   "cases_failed": 0,
   "cases_incomplete": 0,
   "bound": 0.2209,
-  "mean_success_rate": 0.0
+  "mean_success_rate": 0.0,
+  "correction": {
+    "status": "uncorrected",
+    "assessor": "keyword",
+    "reason": "judge error not measured: no calibration recorded for keyword",
+    "rate": null,
+    "low": null,
+    "high": null,
+    "sensitivity": null,
+    "specificity": null,
+    "dataset_digest": null,
+    "positives": null,
+    "negatives": null
+  }
 }
 ```
 
@@ -264,10 +286,29 @@ reduced them when the run was written:
 | `bound` | the 95% upper bound on the share of cases where any attempt fails, over cases, set only when every attempt of every case passed |
 | `mean_success_rate` | the mean, over cases, of each case's share of failed attempts |
 
+The `correction` block records how judge error was handled:
+
+| Field | What it is |
+|---|---|
+| `status` | `deterministic`, `corrected`, or `uncorrected` |
+| `assessor` | the id carried by the rule's verdicts and used to match the calibration |
+| `reason` | why a rate stays uncorrected |
+| `rate`, `low`, `high` | corrected `ASR@K` and its 95% interval; a clean rule has a one-sided interval with `low` at `0` |
+| `sensitivity`, `specificity` | the per-class rates applied to the correction |
+| `positives`, `negatives` | the graded class counts behind those rates |
+| `dataset_digest` | the calibration corpus digest |
+
+A corrected block states all these fields. A `null` `correction` means the document was
+written before schema 8.
+
+`run.evaluators[].calibration` also gains `assessor`, `judge_identity`,
+`starter_corpus`, `positives`, `negatives`, `positives_inconclusive`,
+`negatives_inconclusive`, `sensitivity` and `specificity`.
+
 The summary is stored rather than recomputed by each reader, as the gate verdict is, so
 a later build prints the verdict this run was written with. A rule that stopped part-way
-is not in `rules`, so it has no summary to misread. `run.rules[].declared_requests` is the
-number of requests the rule declared, attempts included.
+is not in `rules`, so it has no summary to misread. `run.rules[].declared_requests` is
+the number of requests the rule declared, attempts included.
 
 ## Field names borrowed on purpose
 

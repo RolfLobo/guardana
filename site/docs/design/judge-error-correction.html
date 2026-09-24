@@ -115,7 +115,7 @@
 <li><a href="../design/pack-scaffolding.html">Scaffolding a pack<span class="tag">accepted</span></a></li>
 <li><a href="../design/repeated-trials.html">Repeated trials<span class="tag">implemented</span></a></li>
 <li><a href="../design/documentation-site.html">A documentation site<span class="tag">implemented</span></a></li>
-<li><a href="../design/judge-error-correction.html" aria-current="page">Judge error in a measured rate<span class="tag">proposed</span></a></li>
+<li><a href="../design/judge-error-correction.html" aria-current="page">Judge error in a measured rate<span class="tag">accepted</span></a></li>
 <li><a href="../design/regrading-stored-exchanges.html">Re-grading stored exchanges<span class="tag">proposed</span></a></li>
 <li><a href="../design/anytime-valid-monitoring.html">Anytime-valid monitoring<span class="tag">proposed</span></a></li>
 <li><a href="../design/run-manifest-v2.html">Run manifest v2<span class="tag">implemented</span></a></li>
@@ -132,7 +132,7 @@
 </ul>
 </nav>
 <main>
-<h1>Judge error: a rate is only as honest as the thing that graded it<span class="status proposed">proposed</span></h1><p class="lede">sensitivity and specificity from the calibration corpus, a rate corrected for the judge's measured error with both uncertainties in its interval, and an explicit outcome when that error was never measured</p><p><strong>Status:</strong> proposed · <strong>Written:</strong> 2026-09-23 · <strong><code>ROADMAP.md</code> &quot;Now&quot;, row 1</strong></p>
+<h1>Judge error: a rate is only as honest as the thing that graded it<span class="status accepted">accepted</span></h1><p class="lede">sensitivity and specificity from the calibration corpus, a rate corrected for the judge's measured error with both uncertainties in its interval, and an explicit outcome when that error was never measured</p><p><strong>Status:</strong> accepted, implemented — ships in the next release · <strong>Written:</strong> 2026-09-23 · <strong><code>ROADMAP.md</code> &quot;Now&quot;, row 1</strong></p>
 <h2 id="the-question">The question</h2>
 <p>A rate graded by a model inherits the model's mistakes. <code>llm_judge</code>, <code>guard</code>
 and the planned <code>reference_judge</code> are models. When a judge misses attacks, the
@@ -165,12 +165,11 @@ caveat says so by name.</p>
 state it. <code>llm_judge@v2</code> names a rubric, not a model. Swapping the model behind
 an unchanged rubric is exactly the change a stored calibration must not survive.</p>
 <p>Storage: calibration store schema <code>1 → 2</code>, and <code>CalibrationRecord</code> in the run
-manifest gains the six fields (manifest schema <code>7</code>, shared with
-<a href="repeated-trials.html"><code>repeated-trials.md</code></a>). A version-1 store entry still loads.
+manifest gains nine fields (manifest schema <code>8</code>). A version-1 store entry still loads.
 Its per-class error is unknown, so it cannot correct anything (see 4).</p>
 <h3 id="2-which-evaluators-need-it">2. Which evaluators need it</h3>
 <p><code>Evaluator</code> gains a class attribute, <code>deterministic: ClassVar[bool] = False</code>.
-Built-ins whose verdict is a computation set it to <code>True</code>: <code>canary</code>, <code>keyword</code>,
+Built-ins whose verdict is a computation set it to <code>True</code>: <code>canary</code>,
 <code>length</code>, <code>amplification</code>, <code>tool_call</code>, and the planned <code>exact_match</code>, <code>contains</code>,
 <code>regex</code> and <code>json_valid</code>. Equality is not an opinion. A third-party evaluator that does not
 declare the attribute is treated as a judge. This is fail-closed, and it affects
@@ -238,6 +237,32 @@ labelling workflow is later work, and PPI belongs with it.</p>
 per-class minimum this design already demands.</p>
 <p><strong>Correcting per-case verdicts.</strong> A case is one reply and one verdict. Error
 rates describe populations, not a single reply.</p>
+<h2 id="changed-while-building">Changed while building</h2>
+<ul>
+<li><code>keyword</code> is a judge because refusal-phrase matching is an error-prone proxy for
+attack success.</li>
+<li>The interval uses Wilson or exact sampling bounds because a Wald variance vanishes at
+zero failures and understates uncertainty.</li>
+<li>The manifest uses schema 8 because schema 7 already shipped with repeated trials.</li>
+<li>Judge identity covers the grader configuration because a model name alone does not
+identify everything behind a verdict.</li>
+<li>Determinism follows the recorded assessors because they identify what actually graded
+the rule.</li>
+<li><code>Rule.deterministic</code> covers rules that grade in their own code and stamp verdicts with
+their own id.</li>
+<li>Starter-corpus calibration never corrects a rate because the corpus is a
+demonstration, not deployment traffic.</li>
+<li>The per-class minimum is enforced where correction is made, so it is not enforced
+twice; <code>calibrate</code> keeps its exit codes and Brier and ECE recording.</li>
+<li>The mean per-trial rate stays uncorrected because a later suite design computes its
+own interval.</li>
+<li>Correction requires one judge per rate so the calibration matches one recorded
+assessor.</li>
+<li>A run refuses correction when its observed upper bound contradicts the calibrated
+false-alarm rate.</li>
+<li>No rate gate consumes the corrected rate yet; gates continue to use the recorded run
+verdict.</li>
+</ul>
 <h2 id="see-also">See also</h2>
 <ul>
 <li><a href="repeated-trials.html"><code>repeated-trials.md</code></a>: the clustered Var(p̂) this correction consumes</li>

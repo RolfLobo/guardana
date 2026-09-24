@@ -115,7 +115,7 @@
 <li><a href="design/pack-scaffolding.html">Scaffolding a pack<span class="tag">accepted</span></a></li>
 <li><a href="design/repeated-trials.html">Repeated trials<span class="tag">implemented</span></a></li>
 <li><a href="design/documentation-site.html">A documentation site<span class="tag">implemented</span></a></li>
-<li><a href="design/judge-error-correction.html">Judge error in a measured rate<span class="tag">proposed</span></a></li>
+<li><a href="design/judge-error-correction.html">Judge error in a measured rate<span class="tag">accepted</span></a></li>
 <li><a href="design/regrading-stored-exchanges.html">Re-grading stored exchanges<span class="tag">proposed</span></a></li>
 <li><a href="design/anytime-valid-monitoring.html">Anytime-valid monitoring<span class="tag">proposed</span></a></li>
 <li><a href="design/run-manifest-v2.html">Run manifest v2<span class="tag">implemented</span></a></li>
@@ -190,6 +190,9 @@ failure already seen is not lost.</li>
 <p>Every attempt must start from nothing. <code>TrajectoryRule</code> rebuilds its memory store per
 attempt, but a <code>ToolDouble</code> of your own that keeps state is not rebuilt: build it inside
 the attempt, or the second attempt reads what the first one left.</p>
+<p><code>Rule.deterministic</code> is a class attribute that defaults to <code>False</code>. Set it to <code>True</code>
+only for a rule that grades in its own code and stamps verdicts with its own id, as
+<code>guardana.output.secrets</code> does.</p>
 <h2 id="adding-an-evaluator">Adding an Evaluator</h2>
 <p>An <code>Evaluator</code> turns a model response (or artifact observation) into a
 <code>Verdict</code> — the &quot;did it succeed, and how sure are we&quot; judgment that's
@@ -239,6 +242,16 @@ five small one-file examples spanning cheap heuristic, exact marker match,
 reply-length lead, LLM-judge, and safety-classifier patterns. (<code>llm_judge</code> and <code>guard</code> need a
 model of their own and are wired from the profile's <code>evaluators:</code> block —
 see <a href="profiles.html#config-wired-evaluators-llm_judge-and-guard"><code>profiles.md</code></a>.)</p>
+<h3 id="declaring-grader-identity-and-determinism">Declaring grader identity and determinism</h3>
+<p><code>Evaluator.deterministic</code> is a class attribute that defaults to <code>False</code>. Set it to
+<code>True</code> only when the evaluator's verdict does not need judge-error correction, as with
+<code>canary</code>; an evaluator that does not declare it is treated as a judge.
+<code>Evaluator.judge_identity</code> defaults to <code>None</code>. Set it to a string that identifies the
+grader configuration the evaluator id does not name; matching compares it verbatim.</p>
+<pre><code class="language-python">class MyEvaluator(Evaluator):
+    deterministic = True
+    judge_identity = None
+</code></pre>
 <h2 id="adding-a-target">Adding a Target</h2>
 <p>A <code>Target</code> is a uniform interface over the thing under test
 (<code>guardana.core.target.Target</code>), so a rule never hard-codes whether it

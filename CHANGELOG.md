@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Per-class calibration.** `guardana calibrate` reports graded and
+  inconclusive positives and negatives, sensitivity and specificity, and a
+  `RATE CAVEAT:` when a class lacks enough graded samples or has too many
+  abstentions. This shows whether a recorded measurement can support rate
+  correction.
+- **Judge identity and determinism.** Calibration records the assessor id and
+  judge identity so a run can match the grader that produced its verdicts.
+  `Evaluator.deterministic` and `Rule.deterministic` identify graders that need
+  no judge-error correction.
+- **Starter corpus hard cases.** The bundled corpus has 30 positives and 30
+  negatives, including replies that challenge phrase matching. Its calibrations
+  remain demonstrations and do not correct deployment rates.
+
+### Changed
+
+- **Trials lines identify judge error.** Rules graded by `keyword` — the
+  built-in jailbreak, injection and gradual-jailbreak rules — end their trials
+  lines with `uncorrected — judge error not measured` until `keyword` is
+  calibrated on the user's own corpus. Lines graded by `canary`, `tool_call`,
+  `length` or `amplification` no longer say `grader error not corrected`:
+  `keyword` checks a refusal phrase as a proxy with measurable error, while the
+  other four compute the property they grade directly.
+- **Trials rate correction.** Qualifying calibrations add a Rogan–Gladen
+  corrected `ASR@K` or clean upper bound while keeping the raw figures. A trials
+  line ends with its deterministic assessor, a corrected clause,
+  `uncorrected — judge error not measured` with a reason, or just its assessor
+  when it states no rate.
+- **Saved calibration and run schemas.** Calibration schema 2 stores per-class
+  counts and grader identity so a run can check whether correction applies.
+  Manifest schema 8 records the correction decision and calibration fields with
+  the run.
+
 ## [0.27.0] - 2026-09-24 — a clean result states its trial count and upper bound
 
 ### Added

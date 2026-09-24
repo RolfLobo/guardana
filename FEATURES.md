@@ -100,9 +100,10 @@ Built-in evaluators are:
 - `llm_judge` for configurable semantic grading;
 - `guard` for an optional external safety classifier.
 
-`guardana calibrate` measures evaluator confidence against labelled samples. A
-third-party evaluator declares the fields it needs, and malformed configuration is
-rejected before a run starts.
+`guardana calibrate` measures evaluator confidence against labelled samples, including
+per-class sensitivity and specificity. A run can carry a corrected trials rate when its
+recorded calibration qualifies. A third-party evaluator declares the fields it needs,
+and malformed configuration is rejected before a run starts.
 
 ## Policy and repeatability
 

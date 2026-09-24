@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from guardana.core.evaluator.base import Evaluator, Expectation, Verdict
 from guardana.core.exchange import Exchange
 
@@ -18,6 +20,7 @@ class LengthEvaluator(Evaluator):
     """
 
     id = "length"
+    deterministic: ClassVar[bool] = True
 
     def evaluate(self, exchange: Exchange, expectation: Expectation) -> Verdict:
         """Fail (as a lead) when the reply runs past the unbounded-output threshold."""

@@ -10,16 +10,19 @@ runner — never a silent pass.
 
 import os
 from collections.abc import Callable, Mapping
+from urllib.parse import urlsplit
 
 from guardana.cli._endpoint import build_endpoint
 from guardana.core.evaluator.guard import GuardEvaluator
 from guardana.core.evaluator.llm_judge import JudgeCalibration, LlmJudgeEvaluator
+from guardana.core.fingerprint import digest_of
 from guardana.core.profile import Profile
 from guardana.core.profile.errors import ProfileError
 from guardana.core.registry import Registry
 from guardana.core.target import ChatMessage
 
 _DEFAULT_PROMPT_VERSION = "2025.1"
+_DEFAULT_PORTS = {"https": 443, "http": 80}
 
 
 def wire_config_evaluators(registry: Registry, profile: Profile) -> None:
@@ -34,7 +37,12 @@ def wire_config_evaluators(registry: Registry, profile: Profile) -> None:
         registry.register_evaluator(_build_llm_judge(judge_cfg))
     guard_cfg = profile.evaluator_config.get("guard")
     if guard_cfg is not None:
-        registry.register_evaluator(GuardEvaluator(_endpoint_call(guard_cfg, "guard")))
+        registry.register_evaluator(
+            GuardEvaluator(
+                _endpoint_call(guard_cfg, "guard"),
+                judge_identity=_identity(guard_cfg, "guard"),
+            )
+        )
 
 
 def _build_llm_judge(cfg: Mapping[str, object]) -> LlmJudgeEvaluator:
@@ -46,8 +54,11 @@ def _build_llm_judge(cfg: Mapping[str, object]) -> LlmJudgeEvaluator:
     # `bool` is an `int` subclass, so `min_agreement: true` would slip through — reject it.
     if not isinstance(min_agreement, int) or isinstance(min_agreement, bool):
         raise ProfileError("evaluators.llm_judge.min_agreement must be an integer")
+    identity = f"{_identity(cfg, 'llm_judge')}; samples={min_agreement}"
     try:
-        return LlmJudgeEvaluator(judge, version, min_agreement, _calibration(cfg))
+        return LlmJudgeEvaluator(
+            judge, version, min_agreement, _calibration(cfg), judge_identity=identity
+        )
     except ValueError as exc:  # unknown prompt_version or min_agreement < 1 — config typos
         raise ProfileError(f"evaluators.llm_judge: {exc}") from exc
 
@@ -98,6 +109,30 @@ def _endpoint_call(cfg: Mapping[str, object], what: str) -> Callable[[str], str]
         return target.chat([ChatMessage(role="user", content=prompt)])
 
     return call
+
+
+def _identity(cfg: Mapping[str, object], what: str) -> str:
+    """State which model at which endpoint grades, so a calibration can be matched to it.
+
+    The endpoint is digested after canonicalisation, never written out: a URL can carry
+    credentials in its userinfo or query, and two spellings of one server must not read
+    as two judges.
+    """
+    model = _require_str(cfg, "model", what)
+    parts = urlsplit(_require_str(cfg, "endpoint", what))
+    try:
+        port = parts.port
+    except ValueError as exc:
+        raise ProfileError(f"evaluators.{what}.endpoint has an unreadable port: {exc}") from exc
+    scheme = parts.scheme.lower()
+    if port is None:
+        port = _DEFAULT_PORTS.get(scheme)
+    if port is None:
+        raise ProfileError(f"evaluators.{what}.endpoint must state a port, or use http or https")
+    host = (parts.hostname or "").lower()
+    canonical = f"{scheme}://{host}:{port}{parts.path.rstrip('/')}"
+    endpoint = digest_of(canonical).split(":", 1)[-1][:12]
+    return f"model={model}; endpoint={endpoint}"
 
 
 def _require_str(cfg: Mapping[str, object], key: str, what: str) -> str:

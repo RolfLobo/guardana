@@ -30,6 +30,15 @@ def _measured() -> RecordedCalibration:
         brier=0.08,
         ece=0.03,
         samples=250,
+        assessor="acme.strict_refusal@2",
+        judge_identity="model=m; endpoint=0123456789ab; samples=3",
+        starter_corpus=True,
+        positives=120,
+        negatives=130,
+        positives_inconclusive=3,
+        negatives_inconclusive=2,
+        sensitivity=0.9,
+        specificity=0.95,
     )
 
 

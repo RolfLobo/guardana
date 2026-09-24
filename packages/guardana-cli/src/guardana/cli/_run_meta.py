@@ -16,13 +16,16 @@ from pathlib import Path
 
 import typer
 from guardana.cli.exit_codes import ExitCode
-from guardana.core import __version__
+from guardana.core import __version__, judge_error
 from guardana.core.assessment import Assessment
+from guardana.core.calibration.corpus import bundled_corpus
 from guardana.core.calibration.store import (
     CalibrationStoreError,
     RecordedCalibration,
+    corpus_digest,
     load_calibrations,
 )
+from guardana.core.evaluator.base import Evaluator
 from guardana.core.gate import GateOutcome
 from guardana.core.manifest import (
     ConfigurationRef,
@@ -41,7 +44,12 @@ from guardana.core.manifest.coverage import (
     TaxonomyCatalogRecord,
     coverage_digest,
 )
-from guardana.core.manifest.records import EvaluatorRecord, RuleRecord, TrialSummary
+from guardana.core.manifest.records import (
+    CalibrationRecord,
+    EvaluatorRecord,
+    RuleRecord,
+    TrialSummary,
+)
 from guardana.core.manifest.settings import PrivacyRecord
 from guardana.core.manifest.summary import summarize
 from guardana.core.origin import Origin
@@ -350,15 +358,21 @@ def build_manifest(  # noqa: PLR0913 — a manifest is assembled from independen
     for assessment in result.assessments:
         recorded.setdefault(assessment.rule_id, []).append(assessment)
     reported = {f.rule_id for f in (*result.findings, *result.unverified, *result.waived)}
+    calibrations = calibrations_or_exit(profile)
+    grading = _Grading(
+        evaluators=registry.evaluators(),
+        calibrations={key: value.as_record() for key, value in calibrations.items()},
+        starter_digest=corpus_digest(bundled_corpus()),
+    )
     rules = tuple(
         _rule_record(
             rule,
             registry.origin_of(rule.meta.id),
-            _trial_summary(rule, recorded.get(rule.meta.id, []), result, reported),
+            _trial_summary(rule, recorded.get(rule.meta.id, []), result, reported, grading),
         )
         for rule in ran
     )
-    evaluators = _evaluator_records(ran, calibrations_or_exit(profile))
+    evaluators = _evaluator_records(ran, calibrations)
     target = (
         identity
         if identity is not None
@@ -423,8 +437,21 @@ def _rule_record(rule: Rule, origin: Origin, trial_summary: TrialSummary | None)
     )
 
 
+@dataclass(frozen=True, slots=True)
+class _Grading:
+    """What a rule's rate is corrected with: the graders, their calibrations, the starter."""
+
+    evaluators: Mapping[str, Evaluator]
+    calibrations: Mapping[str, CalibrationRecord]
+    starter_digest: str
+
+
 def _trial_summary(
-    rule: Rule, recorded: Sequence[Assessment], result: ScanResult, reported: Set[str]
+    rule: Rule,
+    recorded: Sequence[Assessment],
+    result: ScanResult,
+    reported: Set[str],
+    grading: _Grading,
 ) -> TrialSummary | None:
     """Reduce a repeating rule's recorded trials over its cases; None for a rule that cannot.
 
@@ -432,6 +459,9 @@ def _trial_summary(
     registry's copy: a planted copy is what sent the requests. A rule that reported a
     finding never gets a bound, whatever its recorded trials say: a clean summary beside
     a finding would be the report contradicting itself in the reassuring direction.
+
+    Every summary carries its correction, decided after the bound so a suppressed bound
+    is never corrected. `None` there is what a migrated document says, never a build.
     """
     if not any(a.trial is not None for a in recorded):
         return None
@@ -444,5 +474,17 @@ def _trial_summary(
     )
     summary = TrialSummary.from_trials(trials)
     if summary.bound is not None and rule_id in reported:
-        return replace(summary, bound=None)
-    return summary
+        summary = replace(summary, bound=None)
+    graded_by = judge_error.grading_of(
+        rule_id, rule.deterministic, {a.assessor for a in recorded}, grading.evaluators
+    )
+    return replace(
+        summary,
+        correction=judge_error.correct(
+            summary,
+            graded_by,
+            grading.evaluators,
+            grading.calibrations,
+            starter_digest=grading.starter_digest,
+        ),
+    )

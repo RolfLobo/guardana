@@ -108,3 +108,28 @@ Each was noticed by the lane working next to it and left alone rather than folde
 - `.github/workflows/ci.yml` has no job for `scripts/check_claude_setup.py` and
   `scripts/check_ops_catalogue.py`; they run locally through `scripts/ci_local.sh` only. Adding
   them to the `test` job is a two-line change, deferred so the setup lands without touching CI.
+
+## Judge-error correction (found shipping `docs/design/judge-error-correction.md`)
+
+Found on 2026-09-24 by the pre-ship review of ROADMAP row 1, lane 2, and reproduced with a
+3000-run simulation of `core/judge_error.py::_apply` (one trial per case, the calibration
+itself sampled at 30 per class).
+
+- **Blocks lane 3 (the suite gate reads the corrected rate):** a failed rule's corrected
+  interval undercovers on its upper side at high rates with a judge of moderate sensitivity.
+  The upper limit fell below the true rate in 6.5% of runs at θ 0.9, 300 cases, Se 0.6,
+  Sp 0.95 (6.1% on a second seed), and in 4.1–5.5% at θ 0.8, Se 0.7, Sp 0.9 — against 2.5%
+  nominal. Clean bounds held
+  (0% upper misses, Sp 0.8 included). The symmetric delta spread is evaluated at the
+  estimated sensitivity, and a ratio with a noisy denominator is skewed; a score-type Fieller
+  interval or MOVER over the Wilson limits of Se and Sp are the candidates. Konrad chose the
+  delta method on 2026-09-24; the replacement is his call.
+- One calibration per evaluator id per file (`calibration/store.py`, keyed by the registry
+  id), so two rubric versions of `llm_judge` cannot both be recorded; a run graded by the
+  other one refuses with "calibration is for …".
+- An evaluator whose verdicts carry several ids is recorded without per-class counts
+  (`cli/calibrate.py::_record`), and a run then says "lacks per-class counts; rerun guardana
+  calibrate --record", which a rerun cannot fix.
+- `--record` into a schema-1 calibration file rewrites it as schema 2, which a 0.27 build
+  refuses (exit 3); the upgrade note is not in `docs/usage-calibrate.md` or `CHANGELOG.md`.
+

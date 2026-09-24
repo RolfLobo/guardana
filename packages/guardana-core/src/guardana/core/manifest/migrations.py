@@ -21,7 +21,7 @@ from guardana.core.manifest.load import (
     _target_kind,
     _text,
 )
-from guardana.core.manifest.serialize import SCHEMA_URL
+from guardana.core.manifest.serialize import schema_url
 from guardana.core.manifest.settings import EvidenceMode
 from guardana.core.report.skipped import SkipReason
 from guardana.core.taxonomy import resolve_recorded
@@ -80,7 +80,7 @@ def migrate_v2(document: Mapping[str, Any]) -> dict[str, Any]:
         # migrated document that still pointed at it would tell a consumer it is
         # holding a document it is not. `run migrate` writes this file to disk, so
         # the wrong identifier travels.
-        "$schema": SCHEMA_URL,
+        "$schema": schema_url(3),
         "findings": _titled(document.get("findings")),
         "unverified": _titled(document.get("unverified")),
         "waived": _titled(document.get("waived")),
@@ -108,7 +108,7 @@ def migrate_v3(document: Mapping[str, Any]) -> dict[str, Any]:
     `run migrate` writes this document to disk, and one still pointing at the v3
     contract would tell its next reader it is holding a document it is not.
     """
-    return {**document, "schema_version": 4, "$schema": SCHEMA_URL}
+    return {**document, "schema_version": 4, "$schema": schema_url(4)}
 
 
 def migrate_v4(document: Mapping[str, Any]) -> dict[str, Any]:
@@ -129,7 +129,7 @@ def migrate_v4(document: Mapping[str, Any]) -> dict[str, Any]:
     return {
         **document,
         "schema_version": 5,
-        "$schema": SCHEMA_URL,
+        "$schema": schema_url(5),
         "run": {
             **run,
             "coverage": {**(coverage if isinstance(coverage, dict) else {}), "shortfall": []},
@@ -153,7 +153,7 @@ def migrate_v5(document: Mapping[str, Any]) -> dict[str, Any]:
     return {
         **document,
         "schema_version": 6,
-        "$schema": SCHEMA_URL,
+        "$schema": schema_url(6),
         "assessments": list(document.get("assessments") or []),
         "run": {
             **run,
@@ -190,7 +190,7 @@ def migrate_v6(document: Mapping[str, Any]) -> dict[str, Any]:
     return {
         **document,
         "schema_version": 7,
-        "$schema": SCHEMA_URL,
+        "$schema": schema_url(7),
         "assessments": [
             {**_mapping(entry, "assessments[]"), "trial": None} for entry in (assessments or [])
         ],
@@ -202,6 +202,66 @@ def migrate_v6(document: Mapping[str, Any]) -> dict[str, Any]:
                 for rule in (rules if isinstance(rules, list) else [])
             ],
         },
+    }
+
+
+def migrate_v7(document: Mapping[str, Any]) -> dict[str, Any]:
+    """Rewrite a schema-7 saved run as a schema-8 one, recomputing nothing.
+
+    Every **`run.rules[].trial_summary.correction`** and the nine per-class fields of
+    every **`run.evaluators[].calibration`** arrive null, overwriting whatever the
+    document holds: no version-7 build could correct a rate, so a value found there was
+    not written by one, and a correction computed now would be this build's calibration
+    written into another build's evidence.
+    """
+    run = _mapping(document.get("run"), "run")
+    rules = run.get("rules")
+    evaluators = run.get("evaluators")
+    return {
+        **document,
+        "schema_version": 8,
+        "$schema": schema_url(8),
+        "run": {
+            **run,
+            "rules": [
+                _uncorrected_rule(_mapping(rule, "run.rules[]"))
+                for rule in (rules if isinstance(rules, list) else [])
+            ],
+            "evaluators": [
+                _unmeasured_per_class(_mapping(entry, "run.evaluators[]"))
+                for entry in (evaluators if isinstance(evaluators, list) else [])
+            ],
+        },
+    }
+
+
+_PER_CLASS_CALIBRATION = (
+    "assessor",
+    "judge_identity",
+    "starter_corpus",
+    "positives",
+    "negatives",
+    "positives_inconclusive",
+    "negatives_inconclusive",
+    "sensitivity",
+    "specificity",
+)
+
+
+def _uncorrected_rule(rule: dict[str, Any]) -> dict[str, Any]:
+    summary = rule.get("trial_summary")
+    if not isinstance(summary, dict):
+        return rule
+    return {**rule, "trial_summary": {**summary, "correction": None}}
+
+
+def _unmeasured_per_class(evaluator: dict[str, Any]) -> dict[str, Any]:
+    calibration = evaluator.get("calibration")
+    if not isinstance(calibration, dict):
+        return evaluator
+    return {
+        **evaluator,
+        "calibration": {**calibration, **dict.fromkeys(_PER_CLASS_CALIBRATION)},
     }
 
 

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from guardana.core.assessment import Assessment
 from guardana.core.evaluator.base import Evaluator, Expectation
@@ -102,6 +102,14 @@ class Rule(ABC):
     """A single security check. Authored as a plugin (this class) or as YAML."""
 
     meta: RuleMeta
+
+    deterministic: ClassVar[bool] = False
+    """Whether the verdicts this rule stamps with its own id are facts, not opinions.
+
+    Covers only a rule that grades in its own code; a verdict stamped by an
+    evaluator is judged by that evaluator's `deterministic`. False unless declared,
+    so a rule that says nothing is treated as a judge.
+    """
 
     def declared_expectations(self) -> Iterable[tuple[str, Expectation]]:
         """Return the (evaluator id, expectation) pairs this rule will grade with.

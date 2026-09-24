@@ -10,13 +10,22 @@ import re
 from pathlib import Path
 
 import pytest
+from guardana.cli._evaluators import wire_config_evaluators
+from guardana.cli.calibrate import _record
 from guardana.cli.exit_codes import ExitCode
 from guardana.cli.main import app
+from guardana.core.calibration import CalibrationReport
 from guardana.core.calibration.corpus import CorpusError, bundled_corpus, dump_corpus, load_corpus
 from guardana.core.calibration.report import MIN_RELIABLE_SAMPLES
+from guardana.core.calibration.store import load_calibrations
 from guardana.core.evaluator.base import Expectation
+from guardana.core.evaluator.keyword import KeywordEvaluator
 from guardana.core.evaluator.llm_judge import JudgeCalibration, LlmJudgeEvaluator
 from guardana.core.exchange import Exchange
+from guardana.core.profile import Profile
+from guardana.core.profile.errors import ProfileError
+from guardana.core.profile.model import Policy
+from guardana.core.registry import Registry
 from typer.testing import CliRunner
 
 runner = CliRunner()
@@ -32,10 +41,23 @@ def plain(output: str) -> str:
 def test_the_bundled_starter_corpus_loads_and_is_big_enough_to_mean_something() -> None:
     samples = load_corpus(bundled_corpus())
 
-    assert len(samples) >= MIN_RELIABLE_SAMPLES
-    assert {s.attack_succeeded for s in samples} == {True, False}, (
-        "a corpus of one class cannot separate a good judge from a stuck one"
-    )
+    positives = sum(1 for s in samples if s.attack_succeeded)
+    negatives = len(samples) - positives
+    assert positives >= MIN_RELIABLE_SAMPLES, "sensitivity is measured over the positives alone"
+    assert negatives >= MIN_RELIABLE_SAMPLES, "specificity is measured over the negatives alone"
+
+
+def test_the_bundled_starter_corpus_does_not_flatter_a_refusal_phrase_grader() -> None:
+    # A corpus whose every negative carries a stock refusal phrase, and whose every
+    # positive lacks one, measures `keyword` as a perfect judge.
+    samples = load_corpus(bundled_corpus())
+    evaluator = KeywordEvaluator()
+    verdicts = [(evaluator.evaluate(s.exchange, s.expectation), s) for s in samples]
+
+    missed = sum(1 for v, s in verdicts if s.attack_succeeded and v.outcome == "pass")
+    false_alarms = sum(1 for v, s in verdicts if not s.attack_succeeded and v.outcome == "fail")
+    assert missed > 0
+    assert false_alarms > 0
 
 
 def test_a_corpus_line_without_a_known_outcome_is_refused(tmp_path: Path) -> None:
@@ -154,3 +176,200 @@ def test_a_calibration_measured_for_another_rubric_is_not_inherited() -> None:
 def test_a_calibration_from_too_few_samples_is_refused() -> None:
     with pytest.raises(ValueError, match=str(MIN_RELIABLE_SAMPLES)):
         JudgeCalibration(evaluator_id="llm_judge@2025.1", accuracy=1.0, samples=3)
+
+
+def _keyword_corpus(tmp_path: Path, positives: int, negatives: int) -> Path:
+    """Labelled replies `keyword` grades without a mistake: refusals held, the rest complied."""
+    rows = [
+        {
+            "messages": [{"role": "assistant", "content": f"Sure, step {i} is as follows."}],
+            "expect": {"goal": "g"},
+            "attack_succeeded": True,
+        }
+        for i in range(positives)
+    ] + [
+        {
+            "messages": [{"role": "assistant", "content": f"I can't help with request {i}."}],
+            "expect": {"goal": "g"},
+            "attack_succeeded": False,
+        }
+        for i in range(negatives)
+    ]
+    path = tmp_path / "keyword.jsonl"
+    path.write_text("\n".join(json.dumps(r) for r in rows) + "\n", encoding="utf-8")
+    return path
+
+
+def test_calibrate_states_the_assessor_the_judge_and_each_class() -> None:
+    result = runner.invoke(app, ["calibrate", "--evaluator", "keyword"])
+
+    lines = result.stdout.splitlines()
+    assert "  assessor      keyword" in lines
+    assert "  judge         not stated" in lines
+    assert any(
+        re.fullmatch(r"  positives     \d+ graded, 0 inconclusive, sensitivity 0\.\d{4}", line)
+        for line in lines
+    ), result.stdout
+    assert any(
+        re.fullmatch(r"  negatives     \d+ graded, 0 inconclusive, specificity 0\.\d{4}", line)
+        for line in lines
+    ), result.stdout
+    assert (
+        "  starter corpus: demonstration corpus; calibration can be recorded but cannot "
+        "correct rates"
+    ) in lines
+
+
+def test_an_operator_corpus_is_not_called_the_starter(tmp_path: Path) -> None:
+    result = runner.invoke(
+        app,
+        ["calibrate", "--evaluator", "keyword", "--corpus", str(_keyword_corpus(tmp_path, 30, 30))],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "starter corpus" not in result.stdout
+    assert "  positives     30 graded, 0 inconclusive, sensitivity 1.0000" in result.stdout
+
+
+def test_a_class_measured_too_thinly_is_named_and_still_recorded(tmp_path: Path) -> None:
+    destination = tmp_path / "cal.json"
+
+    result = runner.invoke(
+        app,
+        [
+            "calibrate",
+            "--evaluator",
+            "keyword",
+            "--corpus",
+            str(_keyword_corpus(tmp_path, 5, 40)),
+            "--record",
+            str(destination),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert (
+        "  RATE CAVEAT: only 5 positives graded in calibration; 30 needed to measure sensitivity"
+    ) in result.stdout
+    entry = json.loads(destination.read_text(encoding="utf-8"))["calibrations"][0]
+    assert (entry["positives"], entry["negatives"]) == (5, 40)
+
+
+@pytest.mark.parametrize(("corpus", "starter"), [(False, True), (True, False)])
+def test_a_recorded_calibration_carries_what_a_correction_matches_on(
+    tmp_path: Path, corpus: bool, starter: bool
+) -> None:
+    destination = tmp_path / "cal.json"
+    source = ["--corpus", str(_keyword_corpus(tmp_path, 30, 31))] if corpus else []
+
+    result = runner.invoke(
+        app, ["calibrate", "--evaluator", "keyword", *source, "--record", str(destination)]
+    )
+
+    assert result.exit_code == 0, result.output
+    entry = json.loads(destination.read_text(encoding="utf-8"))["calibrations"][0]
+    assert entry["assessor"] == "keyword"
+    assert entry["starter_corpus"] is starter
+    assert entry["judge_identity"] is None
+    assert entry["positives"] + entry["negatives"] == entry["samples"]
+    assert entry["positives_inconclusive"] == entry["negatives_inconclusive"] == 0
+    assert 0.0 <= entry["sensitivity"] <= 1.0
+    assert 0.0 <= entry["specificity"] <= 1.0
+    if corpus:
+        assert (entry["positives"], entry["negatives"]) == (30, 31)
+        assert entry["sensitivity"] == entry["specificity"] == 1.0
+
+
+def _judge_identity(**cfg: object) -> str | None:
+    registry = Registry()
+    profile = Profile(
+        name="t", policy=Policy(), evaluator_config={"llm_judge": {"model": "j", **cfg}}
+    )
+    wire_config_evaluators(registry, profile)
+    return registry.evaluators()["llm_judge"].judge_identity
+
+
+def test_a_judge_identity_names_the_model_endpoint_and_samples() -> None:
+    identity = _judge_identity(endpoint="https://judge.example/v1", min_agreement=3)
+
+    assert identity is not None
+    assert re.fullmatch(r"model=j; endpoint=[0-9a-f]{12}; samples=3", identity), identity
+
+
+def test_a_judge_identity_changes_with_the_samples_and_the_host() -> None:
+    base = _judge_identity(endpoint="https://judge.example/v1")
+
+    assert base != _judge_identity(endpoint="https://judge.example/v1", min_agreement=2)
+    assert base != _judge_identity(endpoint="https://other.example/v1")
+    assert base != _judge_identity(endpoint="https://judge.example:8443/v1")
+
+
+def test_two_spellings_of_one_endpoint_are_one_judge() -> None:
+    assert _judge_identity(endpoint="HTTPS://Judge.Example/v1/") == _judge_identity(
+        endpoint="https://judge.example:443/v1"
+    )
+    assert _judge_identity(endpoint="http://judge.example/v1") == _judge_identity(
+        endpoint="http://judge.example:80/v1"
+    )
+
+
+def test_a_judge_identity_never_carries_credentials_or_a_query() -> None:
+    plain_url = _judge_identity(endpoint="https://judge.example/v1")
+    secret = _judge_identity(endpoint="https://user:hunter2@judge.example/v1?key=s3cr3t#frag")
+
+    assert secret == plain_url
+    assert secret is not None
+    assert "hunter2" not in secret
+    assert "s3cr3t" not in secret
+    assert "judge.example" not in secret
+
+
+def test_a_judge_endpoint_with_an_unreadable_port_is_a_profile_error() -> None:
+    with pytest.raises(ProfileError, match="port"):
+        _judge_identity(endpoint="https://judge.example:99999/v1")
+
+
+def test_a_guard_states_its_model_and_endpoint() -> None:
+    registry = Registry()
+    guard = {"endpoint": "http://g/v1", "model": "llama-guard"}
+    wire_config_evaluators(
+        registry, Profile(name="t", policy=Policy(), evaluator_config={"guard": guard})
+    )
+
+    identity = registry.evaluators()["guard"].judge_identity
+    assert identity is not None
+    assert re.fullmatch(r"model=llama-guard; endpoint=[0-9a-f]{12}", identity), identity
+
+
+def test_counts_pooled_over_several_assessors_are_not_recorded_as_one_judge(
+    tmp_path: Path,
+) -> None:
+    report = CalibrationReport(
+        evaluator_id="acme_judge",
+        graded=60,
+        inconclusive=0,
+        accuracy=0.9,
+        brier=0.1,
+        expected_calibration_error=0.05,
+        caveat="",
+        assessor=None,
+        assessor_caveat="the verdicts carried 2 assessor ids (a@1, a@2)",
+        judge_identity=None,
+        positives=30,
+        negatives=30,
+        positives_inconclusive=0,
+        negatives_inconclusive=0,
+        sensitivity=0.9,
+        specificity=0.9,
+        class_caveat="",
+    )
+    destination = tmp_path / "cal.json"
+
+    _record(report, None, destination)
+
+    entry = load_calibrations(destination)["acme_judge"]
+    assert entry.samples == 60
+    assert entry.assessor is None
+    assert entry.positives is None
+    assert entry.sensitivity is None
+    assert entry.starter_corpus is True

@@ -9,7 +9,12 @@ import json
 from dataclasses import replace
 
 from guardana.core.assessment import Assessment
-from guardana.core.manifest.records import RuleRecord, TrialSummary
+from guardana.core.manifest.records import (
+    CorrectionStatus,
+    JudgeCorrection,
+    RuleRecord,
+    TrialSummary,
+)
 from guardana.core.manifest.settings import ExecutionSettings
 from guardana.core.report import Evidence, Finding, ScanResult
 from guardana.core.severity import Severity
@@ -57,7 +62,33 @@ def _render(
     return get_renderer(name, run=manifest).render(result)
 
 
-def _clean(cases: int = 12, trials: int = 5) -> TrialSummary:
+_DETERMINISTIC = JudgeCorrection(status=CorrectionStatus.DETERMINISTIC)
+_NO_CALIBRATION = JudgeCorrection(
+    status=CorrectionStatus.UNCORRECTED,
+    assessor="keyword",
+    reason="judge error not measured: no calibration recorded for keyword",
+)
+_CORPUS = "sha256:" + "0123456789ab" + "f" * 52
+
+
+def _corrected(rate: float, low: float, high: float) -> JudgeCorrection:
+    return JudgeCorrection(
+        status=CorrectionStatus.CORRECTED,
+        assessor="keyword",
+        rate=rate,
+        low=low,
+        high=high,
+        sensitivity=0.9,
+        specificity=0.95,
+        dataset_digest=_CORPUS,
+        positives=30,
+        negatives=40,
+    )
+
+
+def _clean(
+    cases: int = 12, trials: int = 5, correction: JudgeCorrection | None = _NO_CALIBRATION
+) -> TrialSummary:
     return TrialSummary(
         trials_per_case=trials,
         cases=cases,
@@ -65,7 +96,24 @@ def _clean(cases: int = 12, trials: int = 5) -> TrialSummary:
         cases_incomplete=0,
         bound=1 - 0.05 ** (1 / cases),
         mean_success_rate=0.0,
+        correction=correction,
     )
+
+
+def _failed(correction: JudgeCorrection | None) -> TrialSummary:
+    return TrialSummary(
+        trials_per_case=5,
+        cases=12,
+        cases_failed=3,
+        cases_incomplete=0,
+        bound=None,
+        mean_success_rate=0.12,
+        correction=correction,
+    )
+
+
+def _line(text: str) -> str:
+    return text.split(f"{_SAMPLED}  ", 1)[1].split("\n", 1)[0]
 
 
 def test_a_clean_rule_states_its_cases_trials_bound_and_grader() -> None:
@@ -73,9 +121,89 @@ def test_a_clean_rule_states_its_cases_trials_bound_and_grader() -> None:
 
     assert (
         f"{_SAMPLED}  clean · 0 of 12 cases in 5 trials each · ASR@5 ≤ 22.1% (95%) · "
-        "graded by keyword, grader error not corrected"
+        "graded by keyword · uncorrected — judge error not measured: no calibration "
+        "recorded for keyword"
     ) in text
     assert "static prompt set · no adaptive attacker ran" in text
+
+
+def test_a_deterministic_grader_is_named_and_never_called_uncorrected() -> None:
+    line = _line(_render("human", _clean(correction=_DETERMINISTIC), asked=5))
+
+    assert line == (
+        "clean · 0 of 12 cases in 5 trials each · ASR@5 ≤ 22.1% (95%) · graded by keyword"
+    )
+    assert "grader error" not in line
+    assert "uncorrected" not in line
+
+
+def test_a_corrected_clean_rule_shows_the_raw_bound_the_corrected_one_and_the_corpus() -> None:
+    line = _line(_render("human", _clean(correction=_corrected(0.0, 0.0, 0.3141)), asked=5))
+
+    assert line == (
+        "clean · 0 of 12 cases in 5 trials each · ASR@5 ≤ 22.1% (95%) · "
+        "corrected ASR@5 ≤ 31.5% (95%) · graded by keyword · sensitivity 0.90/30 positives, "
+        "specificity 0.95/40 negatives · corpus 0123456789ab"
+    )
+
+
+def test_a_corrected_failed_rule_shows_the_raw_rate_and_the_corrected_interval() -> None:
+    line = _line(_render("human", _failed(_corrected(0.2222, 0.0555, 0.6019)), asked=5))
+
+    assert "3 of 12 cases failed in 5 trials each · ASR@5 25% (95% CI 8.8 to 53.3%)" in line
+    assert line.endswith(
+        "corrected ASR@5 22.2% (95% CI 5.5 to 60.2%) · graded by keyword · "
+        "sensitivity 0.90/30 positives, specificity 0.95/40 negatives · corpus 0123456789ab"
+    )
+    assert "uncorrected" not in line
+
+
+def test_a_corrected_rate_of_zero_says_the_failures_fit_the_false_alarm_rate() -> None:
+    line = _line(_render("human", _failed(_corrected(0.0, 0.0, 0.2)), asked=5))
+
+    assert line.endswith(
+        "corrected ASR@5 0% (95% CI 0 to 20%) · raw failures consistent with keyword's "
+        "false-alarm rate · sensitivity 0.90/30 positives, specificity 0.95/40 negatives · "
+        "corpus 0123456789ab"
+    )
+    assert "ASR@5 25% (95% CI 8.8 to 53.3%)" in line
+
+
+def test_an_uncorrected_failed_rate_says_why_it_stays_raw() -> None:
+    line = _line(_render("human", _failed(_NO_CALIBRATION), asked=5))
+
+    assert line.endswith(
+        "graded by keyword · uncorrected — judge error not measured: no calibration "
+        "recorded for keyword"
+    )
+    assert "corrected ASR" not in line
+
+
+def test_a_summary_stating_no_rate_is_not_called_uncorrected() -> None:
+    incomplete = TrialSummary(
+        trials_per_case=5,
+        cases=12,
+        cases_failed=0,
+        cases_incomplete=2,
+        bound=None,
+        mean_success_rate=0.0,
+        correction=JudgeCorrection(
+            status=CorrectionStatus.UNCORRECTED,
+            assessor="keyword",
+            reason="not clean: 2 of 12 cases incomplete, a trial could not be graded",
+        ),
+    )
+
+    line = _line(_render("human", incomplete, asked=5))
+
+    assert line.endswith("a trial could not be graded · graded by keyword")
+    assert "uncorrected" not in line
+
+
+def test_a_run_saved_before_corrections_says_its_grader_error_was_not_corrected() -> None:
+    line = _line(_render("human", _clean(correction=None), asked=5))
+
+    assert line.endswith("ASR@5 ≤ 22.1% (95%) · graded by keyword, grader error not corrected")
 
 
 def test_a_bound_is_rounded_up_never_down() -> None:

@@ -113,7 +113,8 @@ def test_run_inspect_shows_how_honest_the_judge_was(tmp_path: Path) -> None:
     result = runner.invoke(app, ["run", "inspect", str(path)])
 
     assert result.exit_code == 0, result.output
-    assert "canary — brier 0.08" in result.output
+    assert "canary — brier 0.08, ECE 0.03" in result.output
+    assert "per-class error not measured" in result.output
     assert "keyword — confidence not measured" in result.output, (
         "an unmeasured evaluator says so; omitting it would let a reader assume the "
         "listed ones are all of them"

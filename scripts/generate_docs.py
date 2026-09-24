@@ -28,6 +28,7 @@ sys.path.insert(0, str(_REPO / "packages" / "guardana-core" / "src"))
 sys.path.insert(0, str(_REPO / "packages" / "guardana-rules" / "src"))
 
 from guardana.core import __version__  # noqa: E402
+from guardana.core.evaluator.base import Evaluator  # noqa: E402
 from guardana.core.evaluator.guard import GuardEvaluator  # noqa: E402
 from guardana.core.evaluator.llm_judge import LlmJudgeEvaluator  # noqa: E402
 from guardana.core.pack import PACK_SCHEMA_VERSION  # noqa: E402
@@ -123,24 +124,28 @@ def _catalog(rules: list[Rule]) -> str:
 
 
 def _evaluators() -> str:
-    always = {e.id: type(e).__doc__ or "" for e in provide_evaluators()}
-    configured = {
-        LlmJudgeEvaluator.id: LlmJudgeEvaluator.__doc__ or "",
-        GuardEvaluator.id: GuardEvaluator.__doc__ or "",
+    always = {type(e).id: type(e) for e in provide_evaluators()}
+    configured: dict[str, type[Evaluator]] = {
+        LlmJudgeEvaluator.id: LlmJudgeEvaluator,
+        GuardEvaluator.id: GuardEvaluator,
     }
     lines = [
         _HEADER,
         "An evaluator turns a model's reply into a verdict with a confidence.",
         "A rule names one by id, so swapping graders never touches the rule.\n",
-        "| Evaluator | Available | What it grades on |",
-        "|---|---|---|",
+        "| Evaluator | Available | What it grades on | Error correction |",
+        "|---|---|---|---|",
     ]
-    lines += [f"| `{name}` | always | {_first_line(doc)} |" for name, doc in sorted(always.items())]
+    lines += [_evaluator_row(name, "always", kind) for name, kind in sorted(always.items())]
     lines += [
-        f"| `{name}` | when configured | {_first_line(doc)} |"
-        for name, doc in sorted(configured.items())
+        _evaluator_row(name, "when configured", kind) for name, kind in sorted(configured.items())
     ]
     return "\n".join(lines) + "\n"
+
+
+def _evaluator_row(name: str, available: str, kind: type[Evaluator]) -> str:
+    correction = "Not needed" if kind.deterministic is True else "With matching calibration"
+    return f"| `{name}` | {available} | {_first_line(kind.__doc__ or '')} | {correction} |"
 
 
 def _taxonomy(rules: list[Rule]) -> str:

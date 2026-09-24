@@ -9,7 +9,9 @@ from guardana.core.manifest.identity import (
 from guardana.core.manifest.model import MANIFEST_SCHEMA_VERSION, RunManifest
 from guardana.core.manifest.records import (
     CalibrationRecord,
+    CorrectionStatus,
     EvaluatorRecord,
+    JudgeCorrection,
     ResultSummary,
     RuleRecord,
     TrialSummary,
@@ -27,10 +29,12 @@ __all__ = [
     "MANIFEST_SCHEMA_VERSION",
     "CalibrationRecord",
     "ConfigurationRef",
+    "CorrectionStatus",
     "DeploymentRef",
     "EvaluatorRecord",
     "EvidenceMode",
     "ExecutionSettings",
+    "JudgeCorrection",
     "PrivacyRecord",
     "ResultSummary",
     "RuleRecord",

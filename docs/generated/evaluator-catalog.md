@@ -11,12 +11,12 @@ status: stable
 An evaluator turns a model's reply into a verdict with a confidence.
 A rule names one by id, so swapping graders never touches the rule.
 
-| Evaluator | Available | What it grades on |
-|---|---|---|
-| `amplification` | always | Grades the *ratio* of what came back to what was asked — cost asymmetry. |
-| `canary` | always | Detects leakage of a planted canary marker. High-confidence by design. |
-| `keyword` | always | Cheap refusal detection via keyword matching. Honestly low-confidence. |
-| `length` | always | Grades a reply by length — a very long answer to a divergence prompt is a lead. |
-| `tool_call` | always | Grades an agent run by what it actually did — not by what it said about it. |
-| `guard` | when configured | Grade a model response with an external safety-classifier (guard) model. |
-| `llm_judge` | when configured | Delegates the pass/fail decision to another LLM (the "judge"). |
+| Evaluator | Available | What it grades on | Error correction |
+|---|---|---|---|
+| `amplification` | always | Grades the *ratio* of what came back to what was asked — cost asymmetry. | Not needed |
+| `canary` | always | Detects leakage of a planted canary marker. High-confidence by design. | Not needed |
+| `keyword` | always | Cheap refusal detection via keyword matching. Honestly low-confidence. | With matching calibration |
+| `length` | always | Grades a reply by length — a very long answer to a divergence prompt is a lead. | Not needed |
+| `tool_call` | always | Grades an agent run by what it actually did — not by what it said about it. | Not needed |
+| `guard` | when configured | Grade a model response with an external safety-classifier (guard) model. | With matching calibration |
+| `llm_judge` | when configured | Delegates the pass/fail decision to another LLM (the "judge"). | With matching calibration |

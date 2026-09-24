@@ -2,12 +2,12 @@
 title: "Judge error in a measured rate"
 nav_order: 81
 summary: "sensitivity and specificity from the calibration corpus, a rate corrected for the judge's measured error with both uncertainties in its interval, and an explicit outcome when that error was never measured"
-status: proposed
+status: accepted
 ---
 
 # Judge error: a rate is only as honest as the thing that graded it
 
-**Status:** proposed · **Written:** 2026-09-23 · **`ROADMAP.md` "Now", row 1**
+**Status:** accepted, implemented — ships in the next release · **Written:** 2026-09-23 · **`ROADMAP.md` "Now", row 1**
 
 ## The question
 
@@ -49,14 +49,13 @@ state it. `llm_judge@v2` names a rubric, not a model. Swapping the model behind
 an unchanged rubric is exactly the change a stored calibration must not survive.
 
 Storage: calibration store schema `1 → 2`, and `CalibrationRecord` in the run
-manifest gains the six fields (manifest schema `7`, shared with
-[`repeated-trials.md`](repeated-trials.md)). A version-1 store entry still loads.
+manifest gains nine fields (manifest schema `8`). A version-1 store entry still loads.
 Its per-class error is unknown, so it cannot correct anything (see 4).
 
 ### 2. Which evaluators need it
 
 `Evaluator` gains a class attribute, `deterministic: ClassVar[bool] = False`.
-Built-ins whose verdict is a computation set it to `True`: `canary`, `keyword`,
+Built-ins whose verdict is a computation set it to `True`: `canary`,
 `length`, `amplification`, `tool_call`, and the planned `exact_match`, `contains`,
 `regex` and `json_valid`. Equality is not an opinion. A third-party evaluator that does not
 declare the attribute is treated as a judge. This is fail-closed, and it affects
@@ -145,6 +144,32 @@ per-class minimum this design already demands.
 
 **Correcting per-case verdicts.** A case is one reply and one verdict. Error
 rates describe populations, not a single reply.
+
+## Changed while building
+
+- `keyword` is a judge because refusal-phrase matching is an error-prone proxy for
+  attack success.
+- The interval uses Wilson or exact sampling bounds because a Wald variance vanishes at
+  zero failures and understates uncertainty.
+- The manifest uses schema 8 because schema 7 already shipped with repeated trials.
+- Judge identity covers the grader configuration because a model name alone does not
+  identify everything behind a verdict.
+- Determinism follows the recorded assessors because they identify what actually graded
+  the rule.
+- `Rule.deterministic` covers rules that grade in their own code and stamp verdicts with
+  their own id.
+- Starter-corpus calibration never corrects a rate because the corpus is a
+  demonstration, not deployment traffic.
+- The per-class minimum is enforced where correction is made, so it is not enforced
+  twice; `calibrate` keeps its exit codes and Brier and ECE recording.
+- The mean per-trial rate stays uncorrected because a later suite design computes its
+  own interval.
+- Correction requires one judge per rate so the calibration matches one recorded
+  assessor.
+- A run refuses correction when its observed upper bound contradicts the calibrated
+  false-alarm rate.
+- No rate gate consumes the corrected rate yet; gates continue to use the recorded run
+  verdict.
 
 ## See also
 

@@ -1,3 +1,4 @@
+from dataclasses import replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated
@@ -75,9 +76,9 @@ def calibrate_command(  # noqa: PLR0913, PLR0917 — one typer.Option per CLI fl
         raise typer.BadParameter(str(exc)) from exc
 
     report = calibrate(grader, samples)
-    typer.echo(_render(report, len(samples)))
+    typer.echo(_render(report, len(samples), starter=corpus is None))
     if record is not None:
-        _record(report, corpus or bundled_corpus(), record)
+        _record(report, corpus, record)
     if not report.is_reliable:
         # `INDETERMINATE`, not a policy failure: the measurement did not happen.
         # Exiting zero would let "we measured nothing" read as "we measured, and
@@ -89,7 +90,7 @@ def calibrate_command(  # noqa: PLR0913, PLR0917 — one typer.Option per CLI fl
         raise typer.Exit(code=ExitCode.POLICY_FAILED)
 
 
-def _record(report: CalibrationReport, corpus: Path, destination: Path) -> None:
+def _record(report: CalibrationReport, corpus: Path | None, destination: Path) -> None:
     """Write this measurement where a run can find it, unless it is not worth quoting.
 
     **An unreliable measurement is refused rather than recorded.** `is_reliable` is
@@ -110,29 +111,62 @@ def _record(report: CalibrationReport, corpus: Path, destination: Path) -> None:
             existing = load_calibrations(destination)
         except CalibrationStoreError as exc:
             raise typer.BadParameter(str(exc)) from exc
-    existing[report.evaluator_id] = RecordedCalibration(
+    measured = RecordedCalibration(
         evaluator=report.evaluator_id,
-        dataset_digest=corpus_digest(corpus),
+        dataset_digest=corpus_digest(corpus or bundled_corpus()),
         measured_at=datetime.now(UTC),
         brier=report.brier,
         ece=report.expected_calibration_error,
         samples=report.graded,
+        judge_identity=report.judge_identity,
+        starter_corpus=corpus is None,
     )
+    # The store keeps per-class counts only beside the one assessor they describe; counts
+    # pooled over several assessor ids would be a file it refuses to read back.
+    if report.assessor is not None:
+        measured = replace(
+            measured,
+            assessor=report.assessor,
+            positives=report.positives,
+            negatives=report.negatives,
+            positives_inconclusive=report.positives_inconclusive,
+            negatives_inconclusive=report.negatives_inconclusive,
+            sensitivity=report.sensitivity,
+            specificity=report.specificity,
+        )
+    existing[report.evaluator_id] = measured
     write_calibrations(destination, existing)
     typer.echo(f"recorded {report.evaluator_id} in {destination}")
 
 
-def _render(report: CalibrationReport, total: int) -> str:
-    lines = [
-        f"Calibration of {report.evaluator_id} over {total} labelled sample(s)",
+def _render(report: CalibrationReport, total: int, *, starter: bool) -> str:
+    lines = [f"Calibration of {report.evaluator_id} over {total} labelled sample(s)"]
+    if report.assessor is not None:
+        lines.append(f"  assessor      {report.assessor}")
+    lines += [
+        f"  judge         {report.judge_identity or 'not stated'}",
         f"  graded        {report.graded}",
         f"  inconclusive  {report.inconclusive}",
+        f"  positives     {report.positives} graded, {report.positives_inconclusive} "
+        f"inconclusive, sensitivity {_number(report.sensitivity)}",
+        f"  negatives     {report.negatives} graded, {report.negatives_inconclusive} "
+        f"inconclusive, specificity {_number(report.specificity)}",
         f"  accuracy      {_number(report.accuracy)}",
         f"  brier         {_number(report.brier)}",
         f"  ECE           {_number(report.expected_calibration_error)}",
     ]
     if report.caveat:
         lines.append(f"  NOT RELIABLE: {report.caveat}")
+    lines.extend(
+        f"  RATE CAVEAT: {caveat}"
+        for caveat in (report.class_caveat, report.assessor_caveat)
+        if caveat
+    )
+    if starter:
+        lines.append(
+            "  starter corpus: demonstration corpus; calibration can be recorded but cannot "
+            "correct rates"
+        )
     return "\n".join(lines)
 
 

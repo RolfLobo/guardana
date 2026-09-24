@@ -1,6 +1,6 @@
 from collections.abc import Callable, Iterable
 
-from guardana.core.evaluator.base import Evaluator, Expectation, Verdict
+from guardana.core.evaluator.base import Evaluator, Expectation, Verdict, check_judge_identity
 from guardana.core.exchange import Exchange
 
 # Guards lead with a verdict word: Llama Guard "unsafe\nS1", Granite Guardian
@@ -23,6 +23,8 @@ class GuardEvaluator(Evaluator):
 
     `classify` sends the content to the guard and returns its raw reply; the
     wiring builds it from a guard endpoint, so the guard is just another target.
+    `judge_identity` is what the wiring states about that guard (its model and
+    endpoint), so a calibration of one guard is never applied to another.
     """
 
     id = "guard"
@@ -34,7 +36,9 @@ class GuardEvaluator(Evaluator):
         unsafe_markers: Iterable[str] = _DEFAULT_UNSAFE,
         safe_markers: Iterable[str] = _DEFAULT_SAFE,
         confidence: float = _DEFAULT_CONFIDENCE,
+        judge_identity: str | None = None,
     ) -> None:
+        self.judge_identity = check_judge_identity(judge_identity)
         self._classify = classify
         self._unsafe = {m.casefold() for m in unsafe_markers}
         self._safe = {m.casefold() for m in safe_markers}

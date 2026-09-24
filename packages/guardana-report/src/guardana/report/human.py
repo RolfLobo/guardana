@@ -3,7 +3,7 @@ from collections.abc import Callable
 
 from guardana.core.assessment import AssessmentStatus
 from guardana.core.manifest import RunManifest
-from guardana.core.manifest.records import TrialSummary
+from guardana.core.manifest.records import CorrectionStatus, JudgeCorrection, TrialSummary
 from guardana.core.report import Finding, ScanResult
 from guardana.core.trials import CONFIDENCE, wilson_interval
 
@@ -88,11 +88,11 @@ def _trials_block(result: ScanResult, run: RunManifest | None) -> list[str]:
 def _trials_line(summary: TrialSummary, assessors: str) -> str:
     k = summary.trials_per_case
     each = f"in {k} trial{'s' if k != 1 else ''} each"
-    graded = f"graded by {assessors}, grader error not corrected"
+    grading = _grading(summary, assessors)
     if summary.bound is not None:
         return (
             f"clean · 0 of {summary.cases} cases {each} · "
-            f"ASR@{k} ≤ {_up(summary.bound)}% ({_percent(CONFIDENCE)}%) · {graded}"
+            f"ASR@{k} ≤ {_up(summary.bound)}% ({_percent(CONFIDENCE)}%) · {grading}"
         )
     parts = []
     if summary.cases_failed:
@@ -115,8 +115,63 @@ def _trials_line(summary: TrialSummary, assessors: str) -> str:
             f"no bound: the rule reported a finding its {summary.cases} recorded case(s) "
             f"do not show"
         )
-    parts.append(graded)
+    parts.append(grading)
     return " · ".join(parts)
+
+
+def _grading(summary: TrialSummary, assessors: str) -> str:
+    """Say who graded the rule and what their error does to the rate printed before it.
+
+    Read from the stored correction, never recomputed: `None` is a run saved before
+    corrections existed, which cannot say whether its grader was a judge.
+    """
+    correction = summary.correction
+    graded = f"graded by {assessors}"
+    if correction is None:
+        return f"{graded}, grader error not corrected"
+    if correction.status is CorrectionStatus.CORRECTED:
+        return _corrected(summary, correction)
+    states_rate = summary.bound is not None or summary.cases_failed > 0
+    if correction.status is CorrectionStatus.UNCORRECTED and states_rate:
+        return f"{graded} · uncorrected — {correction.reason}"
+    return graded
+
+
+def _corrected(summary: TrialSummary, correction: JudgeCorrection) -> str:
+    k = summary.trials_per_case
+    confidence = _percent(CONFIDENCE)
+    rate, low, high = correction.rate, correction.low, correction.high
+    sensitivity, specificity = correction.sensitivity, correction.specificity
+    # The stored document refuses a corrected status without these; a reader holding
+    # one without them has something no build wrote, and must not print a rate.
+    if (
+        rate is None
+        or low is None
+        or high is None
+        or sensitivity is None
+        or specificity is None
+        or correction.dataset_digest is None
+    ):
+        raise ValueError("a corrected rate is missing the numbers it was corrected with")
+    corpus = correction.dataset_digest.split(":", 1)[-1][:12]
+    calibration = (
+        f"sensitivity {sensitivity:.2f}/{correction.positives} positives, "
+        f"specificity {specificity:.2f}/{correction.negatives} negatives · corpus {corpus}"
+    )
+    if summary.bound is not None:
+        return (
+            f"corrected ASR@{k} ≤ {_up(high)}% ({confidence}%) · "
+            f"graded by {correction.assessor} · {calibration}"
+        )
+    interval = (
+        f"corrected ASR@{k} {_percent(rate)}% ({confidence}% CI {_down(low)} to {_up(high)}%)"
+    )
+    if _percent(rate) == "0":
+        return (
+            f"{interval} · raw failures consistent with {correction.assessor}'s "
+            f"false-alarm rate · {calibration}"
+        )
+    return f"{interval} · graded by {correction.assessor} · {calibration}"
 
 
 def _named(assessors: set[str]) -> str:

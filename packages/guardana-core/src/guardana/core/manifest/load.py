@@ -16,7 +16,9 @@ from guardana.core.manifest.identity import (
 from guardana.core.manifest.model import RunManifest
 from guardana.core.manifest.records import (
     CalibrationRecord,
+    CorrectionStatus,
     EvaluatorRecord,
+    JudgeCorrection,
     ResultSummary,
     RuleRecord,
     TrialSummary,
@@ -276,6 +278,10 @@ def _trial_summary(rule: Mapping[str, Any]) -> TrialSummary | None:
         if value is not None and (isinstance(value, bool) or not isinstance(value, int | float)):
             raise ManifestLoadError(f"{what}.{key} must be a number or null")
         rates[key] = None if value is None else float(value)
+    if "correction" not in block:
+        raise ManifestLoadError(
+            f"{what}.correction is missing; null says the run was saved before corrections"
+        )
     try:
         return TrialSummary(
             trials_per_case=counts["trials_per_case"],
@@ -284,9 +290,87 @@ def _trial_summary(rule: Mapping[str, Any]) -> TrialSummary | None:
             cases_incomplete=counts["cases_incomplete"],
             bound=rates["bound"],
             mean_success_rate=rates["mean_success_rate"],
+            correction=_correction(block["correction"]),
         )
     except ValueError as exc:
         raise ManifestLoadError(f"{what}: {exc}") from exc
+
+
+_CORRECTION_TEXT = ("assessor", "reason", "dataset_digest")
+_CORRECTION_NUMBERS = ("rate", "low", "high", "sensitivity", "specificity")
+
+
+def _correction(raw: object) -> JudgeCorrection | None:
+    """Read whether a rule's rate was corrected for its judge's error, refusing a guess.
+
+    Every key is required, null included: a corrected block missing its interval must not
+    read back as one that stated none.
+    """
+    what = "run.rules[].trial_summary.correction"
+    if raw is None:
+        return None
+    block = _mapping(raw, what)
+    raw_status = block.get("status")
+    try:
+        status = CorrectionStatus(raw_status if isinstance(raw_status, str) else "")
+    except ValueError as exc:
+        raise ManifestLoadError(
+            f"{what}.status {raw_status!r} is not one of {[str(s) for s in CorrectionStatus]}"
+        ) from exc
+    texts = {key: _nullable_text(block, key, what) for key in _CORRECTION_TEXT}
+    numbers = {key: _nullable_number(block, key, what) for key in _CORRECTION_NUMBERS}
+    try:
+        return JudgeCorrection(
+            status=status,
+            assessor=texts["assessor"],
+            reason=texts["reason"],
+            rate=numbers["rate"],
+            low=numbers["low"],
+            high=numbers["high"],
+            sensitivity=numbers["sensitivity"],
+            specificity=numbers["specificity"],
+            dataset_digest=texts["dataset_digest"],
+            positives=_nullable_count(block, "positives", what),
+            negatives=_nullable_count(block, "negatives", what),
+        )
+    except ValueError as exc:
+        raise ManifestLoadError(f"{what}: {exc}") from exc
+
+
+def _present(block: Mapping[str, Any], key: str, what: str) -> object:
+    if key not in block:
+        raise ManifestLoadError(f"{what}.{key} is missing; null says it is unknown")
+    return block[key]
+
+
+def _nullable_text(block: Mapping[str, Any], key: str, what: str) -> str | None:
+    value = _present(block, key, what)
+    if value is not None and not isinstance(value, str):
+        raise ManifestLoadError(f"{what}.{key} must be a string or null")
+    return value
+
+
+def _nullable_number(block: Mapping[str, Any], key: str, what: str) -> float | None:
+    value = _present(block, key, what)
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, int | float):
+        raise ManifestLoadError(f"{what}.{key} must be a number or null")
+    return float(value)
+
+
+def _nullable_count(block: Mapping[str, Any], key: str, what: str) -> int | None:
+    value = _present(block, key, what)
+    if value is not None and (isinstance(value, bool) or not isinstance(value, int)):
+        raise ManifestLoadError(f"{what}.{key} must be a whole number or null")
+    return value
+
+
+def _nullable_flag(block: Mapping[str, Any], key: str, what: str) -> bool | None:
+    value = _present(block, key, what)
+    if value is not None and not isinstance(value, bool):
+        raise ManifestLoadError(f"{what}.{key} must be true, false or null")
+    return value
 
 
 def _coverage(raw: object) -> CoverageRecord:
@@ -381,17 +465,32 @@ def _calibration(entry: object) -> CalibrationRecord | None:
 
     Absent and null are the same answer and both are honest — every run written
     before 0.18 said null for every evaluator. What must not happen is a recorded
-    measurement reading back as an unmeasured one.
+    measurement reading back as an unmeasured one, so the per-class fields a
+    correction reads are required keys, null meaning the calibration did not record them.
     """
+    what = "run.evaluators[].calibration"
     raw = entry.get("calibration") if isinstance(entry, dict) else None
-    if not isinstance(raw, dict):
+    if raw is None:
         return None
-    return CalibrationRecord(
-        dataset_digest=_optional_text(raw, "dataset_digest"),
-        measured_at=_timestamp(raw.get("measured_at"), "run.evaluators[].calibration.measured_at"),
-        brier=_optional_number(raw, "brier"),
-        ece=_optional_number(raw, "ece"),
-    )
+    block = _mapping(raw, what)
+    try:
+        return CalibrationRecord(
+            dataset_digest=_optional_text(block, "dataset_digest"),
+            measured_at=_timestamp(block.get("measured_at"), f"{what}.measured_at"),
+            brier=_optional_number(block, "brier"),
+            ece=_optional_number(block, "ece"),
+            assessor=_nullable_text(block, "assessor", what),
+            judge_identity=_nullable_text(block, "judge_identity", what),
+            starter_corpus=_nullable_flag(block, "starter_corpus", what),
+            positives=_nullable_count(block, "positives", what),
+            negatives=_nullable_count(block, "negatives", what),
+            positives_inconclusive=_nullable_count(block, "positives_inconclusive", what),
+            negatives_inconclusive=_nullable_count(block, "negatives_inconclusive", what),
+            sensitivity=_nullable_number(block, "sensitivity", what),
+            specificity=_nullable_number(block, "specificity", what),
+        )
+    except ValueError as exc:
+        raise ManifestLoadError(f"{what}: {exc}") from exc
 
 
 def _skipped(raw: object) -> tuple[SkippedRule, ...]:

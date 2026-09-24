@@ -77,6 +77,10 @@ Every attempt must start from nothing. `TrajectoryRule` rebuilds its memory stor
 attempt, but a `ToolDouble` of your own that keeps state is not rebuilt: build it inside
 the attempt, or the second attempt reads what the first one left.
 
+`Rule.deterministic` is a class attribute that defaults to `False`. Set it to `True`
+only for a rule that grades in its own code and stamps verdicts with its own id, as
+`guardana.output.secrets` does.
+
 ## Adding an Evaluator
 
 An `Evaluator` turns a model response (or artifact observation) into a
@@ -135,6 +139,20 @@ five small one-file examples spanning cheap heuristic, exact marker match,
 reply-length lead, LLM-judge, and safety-classifier patterns. (`llm_judge` and `guard` need a
 model of their own and are wired from the profile's `evaluators:` block —
 see [`profiles.md`](profiles.md#config-wired-evaluators-llm_judge-and-guard).)
+
+### Declaring grader identity and determinism
+
+`Evaluator.deterministic` is a class attribute that defaults to `False`. Set it to
+`True` only when the evaluator's verdict does not need judge-error correction, as with
+`canary`; an evaluator that does not declare it is treated as a judge.
+`Evaluator.judge_identity` defaults to `None`. Set it to a string that identifies the
+grader configuration the evaluator id does not name; matching compares it verbatim.
+
+```python
+class MyEvaluator(Evaluator):
+    deterministic = True
+    judge_identity = None
+```
 
 ## Adding a Target
 

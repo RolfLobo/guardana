@@ -92,10 +92,13 @@ treat "OpenAI-compatible" as a claim to check per deployment, not a guarantee.
 
 ### Probabilistic verdicts have probabilistic limits
 
-A judge-graded verdict is a measurement with error. `guardana calibrate` reports
-Brier score and expected calibration error so you can see how much to trust it,
-and a policy can gate on confidence. A recorded calibration can go stale without
-anything noticing — re-measure after changing judge models.
+A judge-graded verdict is a measurement with error. `guardana calibrate` reports Brier
+score and expected calibration error so you can see how much to trust it, and a policy
+can gate on confidence. A qualifying calibration corrects a trials rate with the
+Rogan–Gladen method. When a condition is not met, such as fewer than 30 graded samples
+in a class or use of the starter corpus, the line states `uncorrected — judge error not
+measured` and names the reason. A recorded calibration can go stale without anything
+noticing — re-measure after changing judge models.
 
 ### Plugins are code you install
 

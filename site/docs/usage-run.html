@@ -115,7 +115,7 @@
 <li><a href="design/pack-scaffolding.html">Scaffolding a pack<span class="tag">accepted</span></a></li>
 <li><a href="design/repeated-trials.html">Repeated trials<span class="tag">implemented</span></a></li>
 <li><a href="design/documentation-site.html">A documentation site<span class="tag">implemented</span></a></li>
-<li><a href="design/judge-error-correction.html">Judge error in a measured rate<span class="tag">proposed</span></a></li>
+<li><a href="design/judge-error-correction.html">Judge error in a measured rate<span class="tag">accepted</span></a></li>
 <li><a href="design/regrading-stored-exchanges.html">Re-grading stored exchanges<span class="tag">proposed</span></a></li>
 <li><a href="design/anytime-valid-monitoring.html">Anytime-valid monitoring<span class="tag">proposed</span></a></li>
 <li><a href="design/run-manifest-v2.html">Run manifest v2<span class="tag">implemented</span></a></li>
@@ -200,15 +200,20 @@ read them, one step at a time, so upgrading Guardana does not strand the evidenc
 already have.</p>
 <p>What an older version never recorded arrives as an explicit unknown rather than as a
 default — version 1 has no usage, no execution settings and <strong>no gate verdict</strong>;
-version 2 has no coverage fingerprint and no declared request counts; version 3 could not
+version 2 has no coverage fingerprint and no declared request counts; version 3 could
+not
 name a <code>trace</code> target, because that kind did not exist; version 6 made one attempt per
 case, so it arrives with <code>execution.trials: 1</code>, <code>trial: null</code> on every assessment and
-no <code>trial_summary</code> on any rule — the summary is not recomputed from its assessments. Recomputing any
+no <code>trial_summary</code> on any rule — the summary is not recomputed from its assessments.
+Recomputing any
 of them during migration would apply today's build to another build's run, which is
 exactly what storing them as fields exists to prevent. <code>inspect</code> says so at the
 bottom of its output, and <code>diff</code> adds a note.</p>
+<p>A schema-7 run migrates to schema 8 with the correction fields <code>null</code>; nothing is
+recomputed. Its trials line still prints <code>graded by &lt;assessor&gt;, grader error not corrected</code>, as it was written.</p>
 <p>One thing <em>is</em> recovered: the <strong>title</strong> of a framework reference, which version 3
-onward records beside its framework and id. It is looked up from the installed catalogue for
+onward records beside its framework and id. It is looked up from the installed catalogue
+for
 the exact <code>(framework, id)</code> pair the document already carries, so nothing is guessed
 and no reference is remapped — a <code>LLM07</code> recorded under <code>OWASP-LLM-2025</code> stays System
 Prompt Leakage. A reference from a rule pack this build does not have stays
@@ -229,14 +234,15 @@ validates the <em>artifact</em>, parametrised over every field a version-1 run c
 missing.</p>
 <h2 id="the-document">The document</h2>
 <p>The saved-run schema lives at
-<a href="https://github.com/guardana/guardana/blob/main/schemas/run-v7.schema.json"><code>schemas/run-v7.schema.json</code></a>, identified by
-<code>https://guardana.dev/schemas/run/v7.schema.json</code>. The version is in the
+<a href="https://github.com/guardana/guardana/blob/main/schemas/run-v8.schema.json"><code>schemas/run-v8.schema.json</code></a>, identified by
+<code>https://guardana.dev/schemas/run/v8.schema.json</code>. The version is in the
 identifier, so a consumer can tell which contract it is holding before parsing
 anything; it changes whenever the change is not backwards-compatible. A test
 validates what Guardana writes against that file, so the schema cannot drift
 away from the tool.</p>
 <p>Every superseded version stays published — <code>run-v2</code> and <code>run-v3</code> are still in
-<a href="https://github.com/guardana/guardana/tree/main/schemas"><code>schemas/</code></a> — because a saved run has to keep validating against the schema
+<a href="https://github.com/guardana/guardana/tree/main/schemas"><code>schemas/</code></a> — because a saved run has to keep validating against the
+schema
 it was written to. Version 4 exists for one reason: it permits a <code>trace</code> target kind.
 Widening version 3's enum in place was the alternative, and it would have changed a
 contract under a name that promised it had not. Version 6 adds the <code>assessments</code>
@@ -244,7 +250,8 @@ channel and <code>run.rules[].origin</code>; a version-5 document migrates forwa
 first empty and the second <code>null</code>, because that is what it knew. Version 7 records
 repeated trials: <code>run.execution.trials</code>, <code>assessments[].trial</code> and
 <code>run.rules[].trial_summary</code>, and renames <code>run.rules[].trials</code> to <code>declared_requests</code>,
-which is what it always counted.</p>
+which is what it always counted. Version 8 records the <code>correction</code> block on
+<code>trial_summary</code> and the calibration fields on <code>run.evaluators[]</code>.</p>
 <p>Top level:</p>
 <div class="table-wrap"><table>
 <thead>
@@ -256,7 +263,7 @@ which is what it always counted.</p>
 <tbody>
 <tr>
 <td><code>schema_version</code></td>
-<td><code>7</code>. Stated once, for the whole document.</td>
+<td><code>8</code>. Stated once, for the whole document.</td>
 </tr>
 <tr>
 <td><code>run</code></td>
@@ -430,7 +437,20 @@ reduced them when the run was written:</p>
   &quot;cases_failed&quot;: 0,
   &quot;cases_incomplete&quot;: 0,
   &quot;bound&quot;: 0.2209,
-  &quot;mean_success_rate&quot;: 0.0
+  &quot;mean_success_rate&quot;: 0.0,
+  &quot;correction&quot;: {
+    &quot;status&quot;: &quot;uncorrected&quot;,
+    &quot;assessor&quot;: &quot;keyword&quot;,
+    &quot;reason&quot;: &quot;judge error not measured: no calibration recorded for keyword&quot;,
+    &quot;rate&quot;: null,
+    &quot;low&quot;: null,
+    &quot;high&quot;: null,
+    &quot;sensitivity&quot;: null,
+    &quot;specificity&quot;: null,
+    &quot;dataset_digest&quot;: null,
+    &quot;positives&quot;: null,
+    &quot;negatives&quot;: null
+  }
 }
 </code></pre>
 <div class="table-wrap"><table>
@@ -459,10 +479,54 @@ reduced them when the run was written:</p>
 </tr>
 </tbody>
 </table></div>
+<p>The <code>correction</code> block records how judge error was handled:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>status</code></td>
+<td><code>deterministic</code>, <code>corrected</code>, or <code>uncorrected</code></td>
+</tr>
+<tr>
+<td><code>assessor</code></td>
+<td>the id carried by the rule's verdicts and used to match the calibration</td>
+</tr>
+<tr>
+<td><code>reason</code></td>
+<td>why a rate stays uncorrected</td>
+</tr>
+<tr>
+<td><code>rate</code>, <code>low</code>, <code>high</code></td>
+<td>corrected <code>ASR@K</code> and its 95% interval; a clean rule has a one-sided interval with <code>low</code> at <code>0</code></td>
+</tr>
+<tr>
+<td><code>sensitivity</code>, <code>specificity</code></td>
+<td>the per-class rates applied to the correction</td>
+</tr>
+<tr>
+<td><code>positives</code>, <code>negatives</code></td>
+<td>the graded class counts behind those rates</td>
+</tr>
+<tr>
+<td><code>dataset_digest</code></td>
+<td>the calibration corpus digest</td>
+</tr>
+</tbody>
+</table></div>
+<p>A corrected block states all these fields. A <code>null</code> <code>correction</code> means the document was
+written before schema 8.</p>
+<p><code>run.evaluators[].calibration</code> also gains <code>assessor</code>, <code>judge_identity</code>,
+<code>starter_corpus</code>, <code>positives</code>, <code>negatives</code>, <code>positives_inconclusive</code>,
+<code>negatives_inconclusive</code>, <code>sensitivity</code> and <code>specificity</code>.</p>
 <p>The summary is stored rather than recomputed by each reader, as the gate verdict is, so
 a later build prints the verdict this run was written with. A rule that stopped part-way
-is not in <code>rules</code>, so it has no summary to misread. <code>run.rules[].declared_requests</code> is the
-number of requests the rule declared, attempts included.</p>
+is not in <code>rules</code>, so it has no summary to misread. <code>run.rules[].declared_requests</code> is
+the number of requests the rule declared, attempts included.</p>
 <h2 id="field-names-borrowed-on-purpose">Field names borrowed on purpose</h2>
 <p><code>usage.input_tokens</code> and <code>usage.output_tokens</code> are the OpenTelemetry GenAI
 convention's <a href="https://opentelemetry.io/docs/specs/semconv/registry/attributes/gen-ai/"><code>gen_ai.usage.input_tokens</code> /
