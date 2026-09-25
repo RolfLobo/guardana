@@ -40,6 +40,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   counts and grader identity so a run can check whether correction applies.
   Manifest schema 8 records the correction decision and calibration fields with
   the run.
+- **Corrected interval coverage.** The corrected interval uses the least
+  favourable corner of the sensitivity and specificity 95% Wilson intervals
+  instead of the delta method. Simulations showed that the delta method missed
+  the upper-side target in up to 6.5% of runs and the lower-side target in up to
+  4.5%, against 2.5% per side. The corner method stayed below 1%, at the cost of
+  wider intervals.
+- **Calibration file upgrades.** Recording with `--record` into a `schema 1`
+  calibration file rewrites it as `schema 2`. A 0.27 build refuses to load a
+  `schema 2` file (exit 3). Upgrade every Guardana install that reads the file
+  together, or keep one calibration file per Guardana version.
 
 ## [0.27.0] - 2026-09-24 — a clean result states its trial count and upper bound
 

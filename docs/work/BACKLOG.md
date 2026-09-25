@@ -63,14 +63,14 @@ changes rather than fixture changes (`docs/design/declarative-fixtures.md`, Deci
 
 - The MITRE ATLAS catalogue records `version: 5.6.0`, which is the ATLAS *data format* release
   and not the *content* release its eighteen entries were transcribed from. ATLAS publishes the
-  two on separate tracks, and three content releases have landed since that format version. The
+  two on separate tracks, and content releases have landed since that format version. The
   provenance field is the first fix; mapping the agent-facing techniques the newest releases add
   is rule work for the parallel contributor lane. See `docs/design/audit-0.25-market.md`.
 
-## From the first field report (0.26.0), deferred to 0.27.0
+## From the first field report (0.26.0), still open
 
-The report is `docs/work/2026-09-21-field-report-0.26.md` while 0.26.1 is in flight. These
-two are its remaining items, held back because each adds surface a patch may not add.
+The report itself was closed with 0.26.1 (see `CHANGELOG.md`). These two are its remaining
+items, held back because each adds surface a patch may not add.
 
 - **`--adapter` exists on `probe` and on nothing else.** `plan probe`, `target inspect`,
   `monitor` and `calibrate` all open a connection and none accepts it, so a guarded endpoint
@@ -88,7 +88,7 @@ two are its remaining items, held back because each adds surface a patch may not
 Each was noticed by the lane working next to it and left alone rather than folded in.
 
 - **`calibrations:` in a profile is still resolved against the working directory**, the same
-  defect 0.26.1 fixed for `contracts:` (`_run_meta.py:252` does `Path(raw_path)`). The fix is
+  defect 0.26.1 fixed for `contracts:` (`_run_meta.py::_recorded_calibrations` does `Path(raw_path)`). The fix is
   the same helper.
 - **`calibrate` never routes through `run_against_endpoint`**, so an endpoint that answers 401
   surfaces as a traceback rather than as exit 4 with an explanation. Every other endpoint
@@ -111,25 +111,11 @@ Each was noticed by the lane working next to it and left alone rather than folde
 
 ## Judge-error correction (found shipping `docs/design/judge-error-correction.md`)
 
-Found on 2026-09-24 by the pre-ship review of ROADMAP row 1, lane 2, and reproduced with a
-3000-run simulation of `core/judge_error.py::_apply` (one trial per case, the calibration
-itself sampled at 30 per class).
+Found on 2026-09-24 by the pre-ship review of ROADMAP row 1, lane 2.
 
-- **Blocks lane 3 (the suite gate reads the corrected rate):** a failed rule's corrected
-  interval undercovers on its upper side at high rates with a judge of moderate sensitivity.
-  The upper limit fell below the true rate in 6.5% of runs at θ 0.9, 300 cases, Se 0.6,
-  Sp 0.95 (6.1% on a second seed), and in 4.1–5.5% at θ 0.8, Se 0.7, Sp 0.9 — against 2.5%
-  nominal. Clean bounds held
-  (0% upper misses, Sp 0.8 included). The symmetric delta spread is evaluated at the
-  estimated sensitivity, and a ratio with a noisy denominator is skewed; a score-type Fieller
-  interval or MOVER over the Wilson limits of Se and Sp are the candidates. Konrad chose the
-  delta method on 2026-09-24; the replacement is his call.
 - One calibration per evaluator id per file (`calibration/store.py`, keyed by the registry
   id), so two rubric versions of `llm_judge` cannot both be recorded; a run graded by the
   other one refuses with "calibration is for …".
 - An evaluator whose verdicts carry several ids is recorded without per-class counts
   (`cli/calibrate.py::_record`), and a run then says "lacks per-class counts; rerun guardana
   calibrate --record", which a rerun cannot fix.
-- `--record` into a schema-1 calibration file rewrites it as schema 2, which a 0.27 build
-  refuses (exit 3); the upgrade note is not in `docs/usage-calibrate.md` or `CHANGELOG.md`.
-

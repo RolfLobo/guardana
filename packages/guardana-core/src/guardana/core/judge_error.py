@@ -10,7 +10,7 @@ Why, and what was rejected:
 """
 
 import math
-from collections.abc import Collection, Mapping
+from collections.abc import Collection, Mapping, Sequence
 from dataclasses import dataclass
 
 from guardana.core.calibration.report import class_caveat
@@ -23,12 +23,6 @@ from guardana.core.manifest.records import (
     TrialSummary,
 )
 from guardana.core.trials import wilson_interval
-
-_Z_TWO_SIDED = 1.959963984540054
-"""The two-sided normal quantile at 95%, as the Wilson interval of a failed rule uses."""
-
-_Z_ONE_SIDED = 1.6448536269514722
-"""The one-sided normal quantile at 95%, as the bound of a clean rule is stated."""
 
 _NOT_MEASURED = "judge error not measured: "
 """Opens every reason about the calibration, so the line reads as the label it prints under."""
@@ -108,16 +102,6 @@ def correct(
 def rogan_gladen(rate: float, sensitivity: float, specificity: float) -> float:
     """Return the Rogan-Gladen estimate of the true rate behind an observed one, unclipped."""
     return (rate + specificity - 1.0) / (sensitivity + specificity - 1.0)
-
-
-def agresti_coull_variance(rate: float, count: int) -> float:
-    """Return the variance of a proportion measured over `count`, never zero.
-
-    The Wald variance is zero at 30 of 30, which would let a calibration's own sampling
-    error vanish from the interval exactly when its sample is smallest.
-    """
-    adjusted = (rate * count + _Z_TWO_SIDED**2 / 2.0) / (count + _Z_TWO_SIDED**2)
-    return adjusted * (1.0 - adjusted) / (count + _Z_TWO_SIDED**2)
 
 
 def _is_deterministic(
@@ -218,8 +202,8 @@ def _youden_refusal(youden: float) -> str | None:
     return None
 
 
-def _observed(summary: TrialSummary) -> tuple[float, float, float, float] | None:
-    """Return (rate, low, high, z) of the rate `summary` states, or None when it states none.
+def _observed(summary: TrialSummary) -> tuple[float, float, float] | None:
+    """Return (rate, low, high) of the rate `summary` states, or None when it states none.
 
     Only a failed case or a stated bound is a rate here. Correcting the raw counts of any
     other summary would state a bound the summary deliberately withheld.
@@ -227,9 +211,9 @@ def _observed(summary: TrialSummary) -> tuple[float, float, float, float] | None
     decided = summary.cases - summary.cases_incomplete
     if summary.cases_failed:
         low, high = wilson_interval(summary.cases_failed, decided)
-        return summary.cases_failed / decided, low, high, _Z_TWO_SIDED
+        return summary.cases_failed / decided, low, high
     if summary.bound is not None:
-        return 0.0, 0.0, summary.bound, _Z_ONE_SIDED
+        return 0.0, 0.0, summary.bound
     return None
 
 
@@ -243,53 +227,57 @@ def _no_rate(summary: TrialSummary) -> str:
 
 
 def _apply(
-    observed: tuple[float, float, float, float], assessor: str, measured: _Measured
+    observed: tuple[float, float, float], assessor: str, measured: _Measured
 ) -> JudgeCorrection:
     """Correct the observed interval, or refuse when the run contradicts the calibration.
 
-    The sampling half of the interval is the one the uncorrected line prints and the
-    calibration half is the delta method's, with variances that stay positive at a perfect
-    score, so the upper limit is never below the Rogan-Gladen image of the raw one. Near a
-    judge's false-alarm floor that image can still sit far below the raw bound.
+    Each end of the interval the uncorrected line prints is corrected at the least
+    favourable corner of the sensitivity and specificity 95% Wilson intervals, so the
+    calibration's own sampling error widens the result: a symmetric spread understates a
+    ratio whose denominator was measured on a few dozen samples. The upper limit is never
+    below the Rogan-Gladen image of the raw one, and near a judge's false-alarm floor that
+    image can still sit far below the raw bound.
     """
-    rate, low_seen, high_seen, z = observed
+    rate, low_seen, high_seen = observed
     sensitivity, specificity = measured.sensitivity, measured.specificity
-    # At or below the false-alarm floor the corrected bound would rest on the calibration's
-    # spread alone, which says nothing about this run's cases.
+    # At or below the false-alarm floor the correction would rest on the calibration
+    # alone, which says nothing about this run's cases.
     if high_seen <= 1.0 - specificity:
         return _uncorrected(
             assessor,
             _NOT_MEASURED + f"observed fail share ≤ {_percent_up(high_seen)}% is at or below "
             f"calibrated false-alarm rate {_percent_up(1.0 - specificity)}%",
         )
-    var_se = agresti_coull_variance(sensitivity, measured.positives)
-    var_sp = agresti_coull_variance(specificity, measured.negatives)
-    youden = sensitivity + specificity - 1.0
-
-    def spread(theta: float) -> float:
-        t = _clip(theta)
-        return z * math.sqrt(t * t * var_se + (1.0 - t) ** 2 * var_sp) / youden
-
-    centre = rogan_gladen(rate, sensitivity, specificity)
-    upper = rogan_gladen(high_seen, sensitivity, specificity)
-    high = centre + math.hypot(upper - centre, spread(upper))
-    if rate > 0.0:
-        lower = rogan_gladen(low_seen, sensitivity, specificity)
-        low = centre - math.hypot(centre - lower, spread(lower))
-    else:
-        low = 0.0
+    sensitivities = wilson_interval(round(sensitivity * measured.positives), measured.positives)
+    specificities = wilson_interval(round(specificity * measured.negatives), measured.negatives)
+    corners = [(se, sp) for se in sensitivities for sp in specificities]
     return JudgeCorrection(
         status=CorrectionStatus.CORRECTED,
         assessor=assessor,
-        rate=_clip(centre),
-        low=_clip(low),
-        high=_clip(high),
+        rate=_clip(rogan_gladen(rate, sensitivity, specificity)),
+        low=_clip(_extreme(low_seen, corners, upper=False)) if rate > 0.0 else 0.0,
+        high=_clip(_extreme(high_seen, corners, upper=True)),
         sensitivity=sensitivity,
         specificity=specificity,
         dataset_digest=measured.dataset_digest,
         positives=measured.positives,
         negatives=measured.negatives,
     )
+
+
+def _extreme(rate: float, corners: Sequence[tuple[float, float]], *, upper: bool) -> float:
+    """Correct `rate` at every corner and keep the least favourable result.
+
+    Rogan-Gladen is linear-fractional in sensitivity and specificity, so over a box its
+    extremes sit at the corners. A corner where sensitivity + specificity - 1 is not
+    positive cannot tell a success from a false alarm, and then nothing is bounded.
+    """
+    corrected = []
+    for sensitivity, specificity in corners:
+        if sensitivity + specificity - 1.0 <= 0.0:
+            return 1.0 if upper else 0.0
+        corrected.append(rogan_gladen(rate, sensitivity, specificity))
+    return max(corrected) if upper else min(corrected)
 
 
 def _uncorrected(assessor: str | None, reason: str) -> JudgeCorrection:

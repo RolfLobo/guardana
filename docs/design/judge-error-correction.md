@@ -149,8 +149,15 @@ rates describe populations, not a single reply.
 
 - `keyword` is a judge because refusal-phrase matching is an error-prone proxy for
   attack success.
-- The interval uses Wilson or exact sampling bounds because a Wald variance vanishes at
-  zero failures and understates uncertainty.
+- The interval uses Wilson or exact sampling bounds instead of a Wald variance because
+  that variance vanishes at zero failures and understates uncertainty.
+- The calibration part corrects each sampling bound at the least favourable corner of
+  the sensitivity and specificity 95% Wilson intervals instead of using the delta
+  method. In simulations of 1,500–3,000 runs per setting with 30 calibration samples per
+  class, the delta method missed the upper-side target in up to 6.5% of runs and the
+  lower-side target in up to 4.5%, against 2.5% per side. The corner method stayed below 1%
+  (`packages/guardana-core/tests/test_judge_error_coverage.py`), with intervals typically
+  20–60% wider.
 - The manifest uses schema 8 because schema 7 already shipped with repeated trials.
 - Judge identity covers the grader configuration because a model name alone does not
   identify everything behind a verdict.

@@ -28,16 +28,17 @@ Calibration of keyword over 60 labelled sample(s)
   ECE           0.3650
 ```
 
-## The two numbers, and why there are two
+## The three numbers, and why there are three
 
-**Brier** is the mean squared error of the predicted probability — one number for how
-good these predictions are overall.
+**Accuracy** is the share of graded predictions that are right. **Brier** is the mean
+squared error of the predicted probability — one number for how good these predictions
+are overall.
 
 **Expected calibration error** asks whether the judge's stated confidence matches how
 often it is right. Accuracy alone does not answer that question.
 
-`inconclusive` is counted and excluded from the scores. A judge that abstained made no
-prediction, so scoring an abstention would invent data.
+`inconclusive` is counted and excluded from all three scores. A judge that abstained
+made no prediction, so scoring an abstention would invent data.
 
 **All three are `None` when nothing was graded**, never `0.0`. A flawless score for a
 measurement that never happened is the false confidence this whole command exists to
@@ -59,6 +60,10 @@ The assessor row names the id carried by the verdicts, including the rubric vers
 when the id has one. The judge row names the judge identity: the grader configuration
 that the evaluator id does not name. An evaluator that states no identity prints
 `not stated` and is matched by id alone.
+
+`RATE CAVEAT:` also appears when the evaluator's verdicts carry more than one assessor
+id. The assessor row is omitted, and the measurement is recorded without per-class
+counts, so no run corrects a rate with it.
 
 For `llm_judge`, the identity is
 `model=<model>; endpoint=<12 hex digest of scheme, host, port and path>; samples=<min_agreement>`.
@@ -93,9 +98,9 @@ traffic, so its calibration never corrects a rate. The command prints:
 ```
 
 Across the whole 60-sample starter corpus, `keyword` measures sensitivity 24/30 and
-specificity 20/30. Twelve of the corpus's twenty newest samples are hard cases for a
-phrase-matching grader: refusals with no stock refusal phrase, and compliant or
-leaking replies that contain one.
+specificity 20/30. Twelve of its samples are hard cases for a phrase-matching grader:
+refusals with no stock refusal phrase, and compliant or leaking replies that contain
+one.
 
 **No real transcript, secret or customer prompt ever belongs in a corpus file**, the
 same rule that governs fixtures.
@@ -171,6 +176,10 @@ is recorded, but no run corrects a rate with it.
 A schema-1 calibration file still loads, but its entries never correct a rate because
 they have no per-class counts. Recording into that file rewrites it as schema 2 and
 leaves its older entries without counts.
+
+Using `--record` with a `schema 1` calibration file rewrites it as `schema 2`; a 0.27
+build refuses to load a `schema 2` file (exit 3). Keep one calibration file per
+Guardana version, or upgrade every Guardana install that reads the file together.
 
 ## Exit codes
 

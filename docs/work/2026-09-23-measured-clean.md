@@ -33,10 +33,15 @@ after lane 3.
   a refusal phrase, not whether the attack worked, and `calibrate` can measure its error.
   Deterministic: canary, length, amplification, tool_call (and lane 3's exact_match, contains,
   regex, json_valid).
-- **Konrad:** the interval is the design's delta method with Var(p̂) read from the interval lane 1
-  prints (Wilson over decided cases; the exact one-sided bound when none failed) and
-  Agresti–Coull Var(Se), Var(Sp). With Wald Var(p̂) = 0 at zero failures: 0 of 12 cases, Se 0.9,
-  Sp 0.98 (100 per class) prints ≤ 3.1% where the data allow 22.1%; this gives 23.0%.
+- **Konrad, then revised on his delegation (2026-09-25):** the sampling half of the interval is
+  the one lane 1 prints (Wilson over decided cases; the exact one-sided bound when none failed) —
+  a Wald Var(p̂) is zero at zero failures (0 of 12 cases, Se 0.9, Sp 0.98 at 100 per class would
+  print ≤ 3.1% where the data allow 22.1%). The calibration half was first the delta method with
+  Agresti–Coull variances; the pre-ship review and a 1,500–3,000-run simulation showed it
+  undercovering both tails (upper misses up to 6.5% at high rates with Se 0.6–0.7 at 30 per
+  class, lower misses up to 4.5% at low rates, against 2.5%). It is now the least favourable
+  corner of the Se and Sp 95% Wilson intervals: below 1% per side in
+  `test_judge_error_coverage.py`, intervals typically 20–60% wider; the clean example gives 26.3%.
 - **Konrad:** the starter corpus grows to 30/30 (content-model) so `calibrate` alone still records.
 - **Konrad:** `Rule.deterministic: ClassVar[bool] = False` covers a rule grading in its own code
   (read only when it declares no evaluator); `secrets` and `excessive_agency` set True.
@@ -82,16 +87,13 @@ after lane 3.
 
 ### The correction (`core/judge_error.py`, `math` only)
 
-n decided cases, x failed; z₂ = 1.95996 (two-sided), z₁ = 1.64485 (one-sided).
-- Sampling interval (L, U): Wilson(x, n) with z = z₂ when x > 0; (0, `clean_bound(n)`), z = z₁ when x = 0.
-- rg(p) = (p + Sp − 1)/J, J = Se + Sp − 1; θ̂ = rg(x/n).
-- Ṽ(q, m) = q̃(1 − q̃)/(m + z₂²), q̃ = (q·m + z₂²/2)/(m + z₂²): Se over positives, Sp over negatives.
-- c(θ) = √(θ²·Ṽ_Se + (1 − θ)²·Ṽ_Sp)/J.
-- high = θ̂ + √((rg(U) − θ̂)² + (z·c(clip rg(U)))²); low = θ̂ − √((θ̂ − rg(L))² + (z·c(clip rg(L)))²)
-  when x > 0, else 0; rate = clip θ̂; everything clipped to [0, 1]. Always low ≤ rate ≤ high and
-  high ≥ rg(U). Coverage (pre-ship review, reproduced): clean bounds hold; a failed rule's
-  upper limit undercovers at high rates with Se 0.6–0.7 at 30 per class (up to 6.5% vs 2.5%) —
-  BACKLOG, blocking lane 3.
+n decided cases, x failed.
+- Sampling interval (L, U): Wilson(x, n) when x > 0; (0, `clean_bound(n)`) when x = 0.
+- rg(p; Se, Sp) = (p + Sp − 1)/(Se + Sp − 1); rate = clip rg(x/n; Ŝe, Ŝp).
+- Corners: Se ∈ Wilson(Ŝe·P, P), Sp ∈ Wilson(Ŝp·N, N); high = max over the four corners of
+  rg(U), low = min of rg(L) when x > 0, else 0; a corner with Se + Sp − 1 ≤ 0 makes that end
+  1 (upper) or 0 (lower). Rogan–Gladen is linear-fractional, so the box's extremes are corners.
+  Always low ≤ rate ≤ high and high ≥ rg(U; Ŝe, Ŝp); everything clipped to [0, 1].
 - Refusal order, the first one met is named: several assessors, a judge among them → no
   calibration for the judge → recorded without per-class counts → calibrated as another
   assessor → the bundled starter corpus → judge identity differs → a class under 30 graded, or
@@ -200,11 +202,12 @@ an injected `correction`; a migrated v7 run prints "grader error not corrected".
   - The suite gate reads `TrialSummary.correction`-style evidence and is inconclusive on the
     `unverified` channel with the named reason when the rate is uncorrected — lane 2 only
     records and prints it; no gate or exit code reads it yet.
-  - **Blocker first:** replace the calibration half of the interval before any gate reads it
-    (BACKLOG, "Judge-error correction"): the failed-rule upper limit undercovers at high rates
-    with Se 0.6–0.7 at 30 per class. Candidates: a score-type Fieller interval or MOVER over
-    the Wilson limits of Se and Sp. The method is Konrad's call; bring the simulation
-    (scratch script re-created from BACKLOG's numbers) to the decision.
+  - The interval's coverage was checked by simulation before 0.28.0 (corner method, ≤ 0.6%
+    misses per side); a suite's corrected pass rate at K > 1 needs its own check, since its
+    sampling half is a t-interval over per-case means rather than Wilson.
+  - When a corner of the Se/Sp box has Se + Sp − 1 ≤ 0 (a judge near J = 0.1 at 30 per
+    class), the correction is stored as corrected with high 1 and low 0. Honest, but a gate
+    reading `low` should refuse that case by name instead of passing on a 0.
 - **How to verify where we are:** `uv run pytest packages/guardana-core/tests/test_trials.py
   packages/guardana-cli/tests/test_trials_cli.py packages/guardana-report/tests/test_trials_rendering.py -q`.
 - **For BACKLOG when row 1 closes:** the collector trend cannot see K (row 6); `plan` does not

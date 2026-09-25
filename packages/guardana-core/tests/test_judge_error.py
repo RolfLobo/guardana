@@ -16,7 +16,6 @@ from guardana.core.evaluator.keyword import KeywordEvaluator
 from guardana.core.exchange import Exchange
 from guardana.core.judge_error import (
     Grading,
-    agresti_coull_variance,
     correct,
     grading_of,
     rogan_gladen,
@@ -136,20 +135,14 @@ def test_rogan_gladen_inverts_the_judges_error() -> None:
     assert rogan_gladen(0.9 * 0.3 + 0.02 * 0.7, 0.9, 0.98) == pytest.approx(0.3)
 
 
-def test_a_perfect_calibration_still_carries_its_own_sampling_error() -> None:
-    # Wald gives zero at 30 of 30, and the calibration would vanish from the interval.
-    assert agresti_coull_variance(1.0, 30) > 0.001
-    assert agresti_coull_variance(0.9, 100) == pytest.approx(0.000979, abs=1e-6)
-
-
 def test_a_clean_rule_keeps_the_width_its_cases_allow() -> None:
-    # The Wald delta method prints <= 3.1% here: zero variance at zero failures.
+    # A Wald variance is zero at zero failures; a bound built on it claims more than 12 cases show.
     correction = _correct(_clean(12), _calibration())
 
     assert correction.status is CorrectionStatus.CORRECTED
     assert correction.rate == 0.0
     assert correction.low == 0.0
-    assert correction.high == pytest.approx(0.2301, abs=5e-4)
+    assert correction.high == pytest.approx(0.2627, abs=5e-4)
     assert correction.high is not None
     assert correction.high >= rogan_gladen(clean_bound(12), 0.9, 0.98)
 
@@ -157,7 +150,7 @@ def test_a_clean_rule_keeps_the_width_its_cases_allow() -> None:
 def test_a_judge_that_misses_attacks_widens_a_clean_bound() -> None:
     weak = _correct(_clean(12), replace(_calibration(), sensitivity=0.5))
 
-    assert weak.high == pytest.approx(0.4254, abs=5e-4)
+    assert weak.high == pytest.approx(0.5408, abs=5e-4)
 
 
 def test_a_perfect_calibration_at_the_minimum_still_widens_the_bound() -> None:
@@ -175,8 +168,8 @@ def test_a_failed_rule_is_corrected_with_both_uncertainties() -> None:
 
     assert correction.status is CorrectionStatus.CORRECTED
     assert correction.rate == pytest.approx(0.2353, abs=5e-4)
-    assert correction.low == pytest.approx(0.0383, abs=5e-4)
-    assert correction.high == pytest.approx(0.5708, abs=5e-4)
+    assert correction.low == 0.0
+    assert correction.high == pytest.approx(0.6352, abs=5e-4)
     assert correction.sensitivity == 0.9
     assert correction.specificity == 0.95
     assert correction.dataset_digest == _DIGEST
@@ -414,3 +407,29 @@ def test_a_class_with_nothing_graded_is_named_as_too_small() -> None:
     empty = replace(_calibration(), positives=0, sensitivity=None)
 
     assert "only 0 positives" in _reason(_correct(_clean(), empty))
+
+
+def test_an_optimistic_calibration_does_not_pull_the_upper_limit_below_the_true_rate() -> None:
+    # 164 of 300 is what a judge of sensitivity 0.6 reports at a true rate of 0.9, and its 30
+    # positives happened to measure 24: the upper limit must still reach the true rate.
+    optimistic = replace(
+        _calibration(), sensitivity=0.8, specificity=29 / 30, positives=30, negatives=30
+    )
+
+    correction = _correct(_failed(164, 300), optimistic)
+
+    assert correction.high is not None
+    assert correction.high >= 0.9
+    assert correction.high == pytest.approx(0.9599, abs=5e-4)
+    assert correction.low == pytest.approx(0.4381, abs=5e-4)
+
+
+def test_near_the_false_alarm_floor_the_bound_keeps_the_calibrations_doubt() -> None:
+    # 0 of 13 against a judge measured to false-alarm 6 times in 30: how often it really
+    # false-alarms is itself uncertain, so the bound stays close to the raw 20.6%.
+    doubtful = replace(_calibration(), sensitivity=0.9, specificity=0.8, positives=30, negatives=30)
+
+    correction = _correct(_clean(13), doubtful)
+
+    assert correction.high is not None
+    assert correction.high == pytest.approx(0.1707, abs=5e-4)
