@@ -112,7 +112,7 @@
 <li><a href="design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
 <li><a href="design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
 <li><a href="design/declarative-fixtures.html">Declarative fixtures for scenarios and agent runs<span class="tag">implemented</span></a></li>
-<li><a href="design/pack-scaffolding.html">Scaffolding a pack<span class="tag">accepted</span></a></li>
+<li><a href="design/pack-scaffolding.html">Scaffolding a pack<span class="tag">implemented</span></a></li>
 <li><a href="design/repeated-trials.html">Repeated trials<span class="tag">implemented</span></a></li>
 <li><a href="design/documentation-site.html">A documentation site<span class="tag">implemented</span></a></li>
 <li><a href="design/judge-error-correction.html">Judge error in a measured rate<span class="tag">accepted</span></a></li>
@@ -192,8 +192,7 @@ it: Guardana offers the tools, hands back the results, and never executes
 anything. That is a genuine test of the model's judgement — and it is <strong>not</strong> a
 test of <em>your</em> agent, with your framework, your prompts and your tool
 implementations.</p>
-<p>Grading a trace exported from your running agent is a different input, which
-<code>Trajectory</code> was shaped to accept. It is designed for, not built. <strong>Application-awareness milestone.</strong></p>
+<p><code>guardana analyze-trace</code> grades a recorded trace exported from a running agent.</p>
 <h3 id="monitor-is-scheduled-not-passive"><code>monitor</code> is scheduled, not passive</h3>
 <p>It re-runs checks on an interval. It does not observe production traffic, cannot
 see what your real users are doing, and is not an inline control. A passive
@@ -215,12 +214,15 @@ the run document from 0.22.0; carrying them into the collector, with the sample
 sizes and confidence bounds a trend needs to be honest, is the next horizon.</p>
 <h3 id="rag-coverage-is-a-slice-not-a-story">RAG coverage is a slice, not a story</h3>
 <p><code>scenario.indirect_injection</code> tests the shape of retrieval-time injection through
-a scripted context. There is no live retriever target, so cross-tenant retrieval,
-document poisoning and tenant-filter bypass are <strong>not</strong> tested against your actual
-vector store. <strong>Application-awareness milestone.</strong></p>
+a scripted context. There is no live retriever target.
+<code>guardana.trace.cross_tenant_retrieval</code> grades cross-tenant retrieval from a
+recorded trace, not against a live vector store. Document poisoning and
+tenant-filter bypass have no rules and are not tested. Live RAG targets remain an
+open item in <code>ROADMAP.md</code>.</p>
 <h3 id="text-only">Text only</h3>
 <p>No image, PDF, audio or document carriers. Injection through an image or a PDF an
-agent reads is a real attack class and is <strong>not covered</strong>. <strong>v1.3.</strong></p>
+agent reads is a real attack class and is <strong>not covered</strong>. <code>ROADMAP.md</code> lists
+multimodal attack carriers under &quot;Researched after the foundations.&quot;</p>
 <h3 id="openai-compatible-is-not-a-guarantee">&quot;OpenAI-compatible&quot; is not a guarantee</h3>
 <p>Providers differ in system-message handling, tool-call formats, streaming, finish
 reasons and usage metadata. A rule that needs a capability a provider does not
@@ -232,12 +234,16 @@ reports what one endpoint answered, not which of vLLM, Ollama, SGLang, llama.cpp
 and TGI agree on streaming, finish reasons or usage metadata. Until that exists,
 treat &quot;OpenAI-compatible&quot; as a claim to check per deployment, not a guarantee.</p>
 <h3 id="probabilistic-verdicts-have-probabilistic-limits">Probabilistic verdicts have probabilistic limits</h3>
-<p>A judge-graded verdict is a measurement with error. <code>guardana calibrate</code> reports Brier
-score and expected calibration error so you can see how much to trust it, and a policy
-can gate on confidence. A qualifying calibration corrects a trials rate with the
-Rogan–Gladen method. When a condition is not met, such as fewer than 30 graded samples
-in a class or use of the starter corpus, the line states <code>uncorrected — judge error not measured</code> and names the reason. A recorded calibration can go stale without anything
-noticing — re-measure after changing judge models.</p>
+<p>A judge-graded verdict is a measurement with error. <code>guardana calibrate</code> reports
+Brier score and expected calibration error so you can see how much to trust it,
+and a policy can gate on confidence. It also reports per-class <code>sensitivity</code> and
+<code>specificity</code>. A class with fewer than 30 graded samples or abstentions on at
+least half its samples gets a <code>RATE CAVEAT:</code> line. A qualifying calibration
+corrects a trials rate with the Rogan–Gladen method. When a condition is not met,
+such as fewer than 30 graded samples in a class or use of the starter corpus, the
+line states <code>uncorrected — judge error not measured</code> and names the reason. A
+recorded calibration can go stale without anything noticing — re-measure after
+changing judge models.</p>
 <h3 id="plugins-are-code-you-install">Plugins are code you install</h3>
 <p>Entry-point discovery imports installed packages. A malicious Guardana pack is a
 malicious Python package, with everything that implies. <code>--no-plugins</code> disables
@@ -248,8 +254,8 @@ locked pack (<code>guardana pack lock</code>) pins the digest of every rule a pa
 <code>scan</code> and <code>plan scan</code>; every other command that loads plugins takes <code>--plugins</code>
 directly.
 Two limits remain: <code>--plugins all</code> is still the default, and a declarative pack
-format that executes no Python is <strong>v1.0</strong>. See the
-<a href="threat-model.html">threat model</a>.</p>
+format that executes no Python has no scheduled release. See the <a href="threat-model.html">threat
+model</a>.</p>
 <h3 id="cost-is-bounded-not-predicted">Cost is bounded, not predicted</h3>
 <p><code>guardana plan</code> prices a run before it sends anything, and
 <code>--max-requests</code>/<code>--max-cost</code>/<code>--max-duration</code> are hard ceilings that stop the run

@@ -94,26 +94,23 @@ already have.
 What an older version never recorded arrives as an explicit unknown rather than as a
 default — version 1 has no usage, no execution settings and **no gate verdict**;
 version 2 has no coverage fingerprint and no declared request counts; version 3 could
-not
-name a `trace` target, because that kind did not exist; version 6 made one attempt per
-case, so it arrives with `execution.trials: 1`, `trial: null` on every assessment and
-no `trial_summary` on any rule — the summary is not recomputed from its assessments.
-Recomputing any
-of them during migration would apply today's build to another build's run, which is
-exactly what storing them as fields exists to prevent. `inspect` says so at the
-bottom of its output, and `diff` adds a note.
+not name a `trace` target, because that kind did not exist; version 6 made one attempt
+per case, so it arrives with `execution.trials: 1`, `trial: null` on every assessment
+and no `trial_summary` on any rule — the summary is not recomputed from its
+assessments. Recomputing any of them during migration would apply today's build to
+another build's run, which is exactly what storing them as fields exists to prevent.
+`inspect` says so at the bottom of its output, and `diff` adds a note.
 
 A schema-7 run migrates to schema 8 with the correction fields `null`; nothing is
-recomputed. Its trials line still prints `graded by <assessor>, grader error not
-corrected`, as it was written.
+recomputed. Its trials line still prints
+`graded by <assessor>, grader error not corrected`, as it was written.
 
 One thing *is* recovered: the **title** of a framework reference, which version 3
-onward records beside its framework and id. It is looked up from the installed catalogue
-for
-the exact `(framework, id)` pair the document already carries, so nothing is guessed
-and no reference is remapped — a `LLM07` recorded under `OWASP-LLM-2025` stays System
-Prompt Leakage. A reference from a rule pack this build does not have stays
-titleless, because nothing here knows what it was called.
+onward records beside its framework and id. It is looked up from the installed
+catalogue for the exact `(framework, id)` pair the document already carries, so
+nothing is guessed and no reference is remapped — a `LLM07` recorded under
+`OWASP-LLM-2025` stays System Prompt Leakage. A reference from a rule pack this build
+does not have stays titleless, because nothing here knows what it was called.
 
 To rewrite an old file on disk at the current schema:
 
@@ -124,35 +121,32 @@ guardana run migrate old-run.json          # in place
 
 This is a convenience, not a requirement. Nothing needs migrating to be compared.
 
-**A migration that cannot carry a field refuses, and writes nothing.** The
-default destination is the file itself, so a half-done migration would overwrite
-the only copy of the evidence. In 0.7.0 a version-1 run that never recorded its
-target kind was migrated into the literal string `"None"` — a document that fails
-this schema, written over the original, with exit `0`. Every unit test around
-migration passed, because they asserted on the objects the migration loaded and
-the objects were fine; what was published was the file. There is now a test that
-validates the *artifact*, parametrised over every field a version-1 run could be
-missing.
+**A migration that cannot carry a field refuses, and writes nothing.** The default
+destination is the file itself, so a half-done migration would overwrite the only copy
+of the evidence. In 0.7.0 a version-1 run that never recorded its target kind was
+migrated into the literal string `"None"` — a document that fails this schema, written
+over the original, with exit `0`. Every unit test around migration passed, because
+they asserted on the objects the migration loaded and the objects were fine; what was
+published was the file. There is now a test that validates the *artifact*,
+parametrised over every field a version-1 run could be missing.
 
 ## The document
 
 The saved-run schema lives at
 [`schemas/run-v8.schema.json`](../schemas/run-v8.schema.json), identified by
-`https://guardana.dev/schemas/run/v8.schema.json`. The version is in the
-identifier, so a consumer can tell which contract it is holding before parsing
-anything; it changes whenever the change is not backwards-compatible. A test
-validates what Guardana writes against that file, so the schema cannot drift
-away from the tool.
+`https://guardana.dev/schemas/run/v8.schema.json`. The version is in the identifier,
+so a consumer can tell which contract it is holding before parsing anything; it
+changes whenever the change is not backwards-compatible. A test validates what
+Guardana writes against that file, so the schema cannot drift away from the tool.
 
 Every superseded version stays published — `run-v2` and `run-v3` are still in
 [`schemas/`](../schemas/) — because a saved run has to keep validating against the
-schema
-it was written to. Version 4 exists for one reason: it permits a `trace` target kind.
-Widening version 3's enum in place was the alternative, and it would have changed a
-contract under a name that promised it had not. Version 6 adds the `assessments`
-channel and `run.rules[].origin`; a version-5 document migrates forward with the
-first empty and the second `null`, because that is what it knew. Version 7 records
-repeated trials: `run.execution.trials`, `assessments[].trial` and
+schema it was written to. Version 4 exists for one reason: it permits a `trace` target
+kind. Widening version 3's enum in place was the alternative, and it would have
+changed a contract under a name that promised it had not. Version 6 adds the
+`assessments` channel and `run.rules[].origin`; a version-5 document migrates forward
+with the first empty and the second `null`, because that is what it knew. Version 7
+records repeated trials: `run.execution.trials`, `assessments[].trial` and
 `run.rules[].trial_summary`, and renames `run.rules[].trials` to `declared_requests`,
 which is what it always counted. Version 8 records the `correction` block on
 `trial_summary` and the calibration fields on `run.evaluators[]`.
@@ -186,17 +180,16 @@ Inside `run`:
 
 Three conventions hold everywhere in it:
 
-**Timestamps are UTC, RFC 3339.** A local-time timestamp in an evidence record is
-a bug waiting for a timezone.
+**Timestamps are UTC, RFC 3339.** A local-time timestamp in an evidence record is a
+bug waiting for a timezone.
 
-**Digests name their algorithm** — `sha256:…`, never a bare hex string, so a
-digest can be migrated when the algorithm moves.
+**Digests name their algorithm** — `sha256:…`, never a bare hex string, so a digest
+can be migrated when the algorithm moves.
 
-**The target fingerprint says what it covers.** `target.fingerprint_inputs` lists
-the fields the digest was computed from. A digest of a URL and a model name
-identifies a *declared* target; it attests nothing about the weights behind it,
-and the document says so rather than leaving a reader to assume the stronger
-reading.
+**The target fingerprint says what it covers.** `target.fingerprint_inputs` lists the
+fields the digest was computed from. A digest of a URL and a model name identifies a
+*declared* target; it attests nothing about the weights behind it, and the document
+says so rather than leaving a reader to assume the stronger reading.
 
 ## Assessments
 

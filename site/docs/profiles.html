@@ -112,7 +112,7 @@
 <li><a href="design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
 <li><a href="design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
 <li><a href="design/declarative-fixtures.html">Declarative fixtures for scenarios and agent runs<span class="tag">implemented</span></a></li>
-<li><a href="design/pack-scaffolding.html">Scaffolding a pack<span class="tag">accepted</span></a></li>
+<li><a href="design/pack-scaffolding.html">Scaffolding a pack<span class="tag">implemented</span></a></li>
 <li><a href="design/repeated-trials.html">Repeated trials<span class="tag">implemented</span></a></li>
 <li><a href="design/documentation-site.html">A documentation site<span class="tag">implemented</span></a></li>
 <li><a href="design/judge-error-correction.html">Judge error in a measured rate<span class="tag">accepted</span></a></li>
@@ -180,6 +180,8 @@ contracts:                      # optional; security contracts to load, files or
 
 trials: 1                       # optional; attempts per case for rules that grade a
                                 # sampled reply — see usage-probe.md#repeated-trials
+
+calibrations: []                # optional; list of calibration file globs
 
 evaluators:                     # config-wired evaluators — see the section below
   llm_judge:
@@ -267,6 +269,12 @@ evaluators:                     # config-wired evaluators — see the section be
 <td>integer ≥ 1</td>
 <td><code>1</code></td>
 <td>How many independent attempts <code>probe</code>, <code>monitor</code> and <code>plan probe</code> make at each case of a rule that grades a sampled model reply. <code>--trials N</code> wins over it. A rule that does not repeat (a protocol check, a <code>stateful</code> scenario) makes one attempt whatever this says, and the run records that. Anything other than a whole number of at least 1 is refused at load. See <a href="usage-probe.html#repeated-trials"><code>usage-probe.md</code></a>.</td>
+</tr>
+<tr>
+<td><code>calibrations</code></td>
+<td>list of strings</td>
+<td><code>[]</code></td>
+<td>Glob patterns for calibration files written by <code>guardana calibrate --record</code>. Paths are read relative to the current working directory. A missing listed path stops the run with exit code <code>3</code> (<code>INVALID_USAGE</code>). A bare string is refused.</td>
 </tr>
 <tr>
 <td><code>evaluators</code></td>
@@ -364,10 +372,11 @@ names an unconfigured evaluator is skipped visibly in the run summary — the
 gate never quietly weakens.</p>
 <h2 id="rule-specific-configuration">Rule-specific configuration</h2>
 <p><code>rule_config</code> (a top-level key, keyed by rule id) is threaded into a rule's
-<code>RuleContext</code> at run time, letting a rule read profile-supplied
-configuration values via <code>ctx.get(key, default)</code>. None of the built-in
-rules currently read anything from it, but the mechanism is there for rules
-(built-in or custom) that need tunable parameters.</p>
+<code>RuleContext</code> at run time, letting a rule read profile-supplied configuration
+values via <code>ctx.get(key, default)</code>. Built-in readers include
+<code>guardana.supply_chain.hardcoded_secret</code>, which uses <code>entropy</code> to opt into a
+high-entropy secret scan, and the MCP server manifest rule, which reads <code>pin</code>.
+Other built-in or custom rules can use the mechanism for tunable parameters.</p>
 <h2 id="named-presets---preset">Named presets: <code>--preset</code></h2>
 <p>For the common moments you run Guardana, a built-in preset saves you from writing
 a <code>guardana.yaml</code> at all. A preset tunes only the <em>failure bar</em> — which security

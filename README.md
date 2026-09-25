@@ -69,11 +69,13 @@ $ uv run guardana scan examples/vulnerable-model
 ✖ [HIGH] guardana.supply_chain.dependency_risk — Unsafe model/deserialization loader call
     torch.load without weights_only=True  (examples/vulnerable-model/load_model.py:3)
 ✖ [CRITICAL] guardana.supply_chain.remote_code_config — Model config requests custom-code execution on load
-    '_attn_implementation_internal' names a Hub kernel repository transformers downloads and imports on load  (examples/vulnerable-model/config.json)
+    '_attn_implementation_internal' names the Hub kernel repository 'attacker/kernel-repo', which transformers downloads and imports on load — a private field, so trust_remote_code=False does not stop it (CVE-2026-4372)  (examples/vulnerable-model/config.json)
+…
 ▲ [MEDIUM] guardana.supply_chain.hallucinated_package — Import of unknown package (possible slopsquat lead)
-    import 'torchutilz' isn't a known package or a declared dependency  (examples/vulnerable-model/train.py:1)
+    import 'torchutilz' isn't a known package or a declared dependency — declare it in requirements/pyproject, or verify it exists on PyPI  (examples/vulnerable-model/train.py:1)
+…
 
-12 finding(s); 19 rule(s) run, 0 skipped.
+12 finding(s); 19 rule(s) run, 0 skipped. 5 component(s) observed.
 ```
 
 That run exits `1`, which makes it usable as a CI gate. Then point Guardana at your

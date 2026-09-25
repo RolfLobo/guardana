@@ -132,9 +132,8 @@ updates may proceed in parallel when they do not delay the ordered milestone.
 Prefer extension packs when a feature adds a large dependency, a niche corpus, or
 an experimental evaluator.
 
-One taxonomy update is open now: the MITRE ATLAS catalogue records a data-format
-version rather than the content release its entries were transcribed from, and
-three content releases have landed since.
+One taxonomy update remains open: the MITRE ATLAS catalogue records a data-format
+version rather than the content release from which its entries were transcribed.
 
 Stateful tool doubles are open in this lane too. Agent rules grade tool calls
 today; a double that keeps state would let a rule assert on what an agent left

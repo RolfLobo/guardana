@@ -314,11 +314,11 @@ guardana-collector project rename --project acme/web --to api
 ```
 
 **The project comes from the key, never from the envelope.** If the envelope named
-it, the runner would declare where it writes — and a credential that does not bound
-the write is not a boundary at all. It is also why the envelope stays at v5 and why
-nothing in the engine changed: an agent and a collector upgrade independently, and
-no fleet has to move in step with a collector. The cost is real and accepted: a
-team with ten projects needs ten keys in CI.
+it, the runner would declare where it writes — and a credential that does not
+bound the write is not a boundary at all. Adding key-scoped projects required no
+envelope change or engine change: an agent and a collector upgrade independently,
+and no fleet has to move in step with a collector. The cost is real and accepted:
+a team with ten projects needs ten keys in CI.
 
 **There is no command that deletes an organization or a project**, and the foreign
 keys are `on delete restrict`. Removing tenant data is retention, and it deserves

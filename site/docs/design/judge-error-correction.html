@@ -112,7 +112,7 @@
 <li><a href="../design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
 <li><a href="../design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
 <li><a href="../design/declarative-fixtures.html">Declarative fixtures for scenarios and agent runs<span class="tag">implemented</span></a></li>
-<li><a href="../design/pack-scaffolding.html">Scaffolding a pack<span class="tag">accepted</span></a></li>
+<li><a href="../design/pack-scaffolding.html">Scaffolding a pack<span class="tag">implemented</span></a></li>
 <li><a href="../design/repeated-trials.html">Repeated trials<span class="tag">implemented</span></a></li>
 <li><a href="../design/documentation-site.html">A documentation site<span class="tag">implemented</span></a></li>
 <li><a href="../design/judge-error-correction.html" aria-current="page">Judge error in a measured rate<span class="tag">accepted</span></a></li>
@@ -241,8 +241,15 @@ rates describe populations, not a single reply.</p>
 <ul>
 <li><code>keyword</code> is a judge because refusal-phrase matching is an error-prone proxy for
 attack success.</li>
-<li>The interval uses Wilson or exact sampling bounds because a Wald variance vanishes at
-zero failures and understates uncertainty.</li>
+<li>The interval uses Wilson or exact sampling bounds instead of a Wald variance because
+that variance vanishes at zero failures and understates uncertainty.</li>
+<li>The calibration part corrects each sampling bound at the least favourable corner of
+the sensitivity and specificity 95% Wilson intervals instead of using the delta
+method. In simulations of 1,500–3,000 runs per setting with 30 calibration samples per
+class, the delta method missed the upper-side target in up to 6.5% of runs and the
+lower-side target in up to 4.5%, against 2.5% per side. The corner method stayed below 1%
+(<code>packages/guardana-core/tests/test_judge_error_coverage.py</code>), with intervals typically
+20–60% wider.</li>
 <li>The manifest uses schema 8 because schema 7 already shipped with repeated trials.</li>
 <li>Judge identity covers the grader configuration because a model name alone does not
 identify everything behind a verdict.</li>

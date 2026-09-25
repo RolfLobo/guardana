@@ -137,7 +137,7 @@ Roll the *image* back to the matching tag at the same time. A collector older
 than its schema is exactly the situation `/readyz` and the version check exist to
 stop, and they will stop it.
 
-**Pin the image to a minor tag** (`:0.21`) rather than `latest`. You want fixes
+**Pin the image to a minor tag** (`:0.27`) rather than `latest`. You want fixes
 without a schema you did not plan for; `latest` gives you both.
 
 ## Backups, and restoring one

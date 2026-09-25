@@ -112,7 +112,7 @@
 <li><a href="design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
 <li><a href="design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
 <li><a href="design/declarative-fixtures.html">Declarative fixtures for scenarios and agent runs<span class="tag">implemented</span></a></li>
-<li><a href="design/pack-scaffolding.html">Scaffolding a pack<span class="tag">accepted</span></a></li>
+<li><a href="design/pack-scaffolding.html">Scaffolding a pack<span class="tag">implemented</span></a></li>
 <li><a href="design/repeated-trials.html">Repeated trials<span class="tag">implemented</span></a></li>
 <li><a href="design/documentation-site.html">A documentation site<span class="tag">implemented</span></a></li>
 <li><a href="design/judge-error-correction.html">Judge error in a measured rate<span class="tag">accepted</span></a></li>
@@ -252,19 +252,22 @@ multi-turn scenario's &quot;across the conversation&quot; goal is gradable). Eve
 built-in evaluator fails closed on <code>reply_text is None</code>: the verdict is
 <code>inconclusive</code>, never a silent pass.</p>
 <p>Shipped evaluators: <code>keyword</code> (cheap refusal-marker matching — honestly
-low-confidence, ~0.5–0.6), <code>canary</code> (near-perfect detection of a planted
-marker verbatim, ~0.9–0.99), <code>length</code> (grades a reply by length — a runaway
-answer to a divergence prompt is a lead, for the unbounded-consumption check),
-<code>llm_judge</code> (a versioned judging prompt sent to
-a judge model wired from the profile's <code>evaluators:</code> block; confidence is
-measured as agreement across <code>min_agreement</code> samples, and the prompt version
-is stamped into <code>evaluator_id</code> — <code>llm_judge@2025.1</code> — so grading stays
+low-confidence, ~0.5–0.6), <code>canary</code> (near-perfect detection of a planted marker
+verbatim, ~0.9–0.99), <code>length</code> (grades a reply by length — a runaway answer to a
+divergence prompt is a lead, for the unbounded-consumption check), <code>amplification</code>
+(grades the ratio of what came back to what was asked), <code>tool_call</code> (grades an
+agent run by what it did, not what it said), <code>llm_judge</code> (a versioned judging
+prompt sent to a judge model wired from the profile's <code>evaluators:</code> block;
+confidence is measured as agreement across <code>min_agreement</code> samples, and the prompt
+version is stamped into <code>evaluator_id</code> — <code>llm_judge@2025.1</code> — so grading stays
 reproducible as the rubric evolves), and <code>guard</code> (an opt-in external
 safety-classifier — see
-<a href="profiles.html#config-wired-evaluators-llm_judge-and-guard"><code>profiles.md</code></a>). A
-rule references an evaluator by its string <code>id</code>, resolved from the registry
-at run time; swapping which evaluator grades a rule never requires touching
-the rule itself.</p>
+<a href="profiles.html#config-wired-evaluators-llm_judge-and-guard"><code>profiles.md</code></a>).
+<code>guardana calibrate</code> measures and corrects for errors in <code>keyword</code>, <code>guard</code>, and
+<code>llm_judge</code>; the other evaluators are deterministic and need no such correction. A
+rule references an evaluator by its string <code>id</code>, resolved from the registry at run
+time; swapping which evaluator grades a rule requires no change to the rule
+itself.</p>
 <h3 id="4-report--finding--normalized-result">4. Report / Finding — normalized result</h3>
 <pre><code class="language-python">@dataclass(frozen=True, slots=True)
 class Finding:
@@ -437,35 +440,42 @@ collector that doesn't understand a version rejects it outright rather than
 silently misreading a renamed field. The <code>unverified</code> channel is carried over
 the wire for the same reason it is surfaced locally — a check that could not be
 graded must never reach the collector as a false all-clear.</p>
-<p><code>guardana-server</code> itself is a small, independently-deployed FastAPI app
-(<code>guardana.server.app.create_app</code>) exposing <code>POST /findings</code>,
-<code>GET /findings</code>, and <code>GET /trend</code> over an in-memory (or pluggable) <code>Store</code>.
-It validates every submission with Pydantic models
-(<code>guardana.server.envelope.Submission</code>), so a malformed POST — or one with an
-unsupported <code>schema_version</code> — is rejected with <code>422</code> instead of poisoning
-<code>/findings</code> and <code>/trend</code>. An <strong>opt-in dashboard</strong>
-(<code>create_app(dashboard=True)</code> or <code>GUARDANA_DASHBOARD=1</code>, off by default) mounts a
-read-only page at <code>GET /</code> plus an aggregated <code>GET /stats</code> — a self-contained HTML
-page (no build step, offline; server-side aggregation in <code>guardana.server.stats</code>)
-that visualizes the store. It adds no write surface and no auth; the
-<code>Store</code> grows a <code>records()</code> seam (timestamped submissions) for the time-series.</p>
+<p><code>guardana-server</code> is a small, independently deployed FastAPI app
+(<code>guardana.server.app.create_app</code>) with a PostgreSQL-backed store
+(<code>guardana.server.postgres_store.PostgresStore</code>). It exposes <code>POST /findings</code>,
+<code>GET /findings</code>, <code>GET /trend</code>, <code>GET /healthz</code>, <code>GET /readyz</code>, and <code>GET /catalog</code>.
+The health endpoints distinguish a running process from readiness; the catalog
+returns the build's rule catalog. It validates submissions with Pydantic models
+(<code>guardana.server.envelope.Submission</code>), so a malformed POST or an unsupported
+<code>schema_version</code> is rejected with <code>422</code>. Scoped API keys are hashed at rest and
+pinned to one project and optionally one environment. An <strong>opt-in dashboard</strong>
+(<code>create_app(dashboard=True)</code> or <code>GUARDANA_DASHBOARD=1</code>, off by default) exposes
+<code>GET /</code> and aggregated <code>GET /stats</code>. Its <code>POST /session</code> and <code>DELETE /session</code>
+endpoints use a read-scoped API key to authenticate a browser session held in an
+<code>HttpOnly</code>, <code>SameSite=Strict</code> cookie.</p>
 <p>This boundary is intentional and load-bearing: all OSS value (every rule, every
 evaluator, every report format, every CLI mode) works fully offline with zero
-dependency on the collector. The collector is a strictly separable layer —
-self-hosted (<code>guardana-server</code>) or, later, a managed cloud — that can grow
-(dashboard, auth, persistence, fleet management, retention) without ever forking
-or depending-back-into the engine.</p>
+dependency on the collector. The collector is a separable, self-hosted layer
+(<code>guardana-server</code>) with a dashboard, authentication, and persistence. A managed
+cloud remains planned; fleet management and retention remain open-ended areas for
+the collector.</p>
 <h2 id="repository-layout">Repository layout</h2>
 <pre><code>guardana/
 ├─ packages/
-│  ├─ guardana-core/   src/guardana/core/{target,rule,evaluator,report,profile,
-│  │                                      registry,runner,reporter,monitor,testing}
-│  ├─ guardana-rules/  src/guardana/rules/{supply_chain,prompt,output,training,agent,catalog}
-│  ├─ guardana-cli/    src/guardana/cli/{scan,probe,monitor,init,rules,new_rule}
-│  ├─ guardana-report/ src/guardana/report/{human,sarif,json_report,junit}
+│  ├─ guardana-core/   src/guardana/core/{assessment,calibration,contract,diff,evaluator,
+│  │                                      judge_error,manifest,monitor,pack,plan,profile,
+│  │                                      registry,report,reporter,rule,runner,target,
+│  │                                      taxonomy,testing,trace,trajectory,trials,…}
+│  ├─ guardana-rules/  src/guardana/rules/{agent,catalog,contract,mcp,output,prompt,
+│  │                                       supply_chain,trace,training}
+│  ├─ guardana-cli/    src/guardana/cli/{analyze_trace,baseline,calibrate,config,diff,
+│  │                                     doctor,init,monitor,new_pack,new_rule,pack,plan,
+│  │                                     probe,rule,rules,run,scan,target,taxonomy,trace,…}
+│  ├─ guardana-report/ src/guardana/report/{human,diff_human,diff_json,json_report,junit,
+│  │                                        sarif}
 │  └─ guardana-server/ (optional collector; separate deploy)
 ├─ docs/               (this directory)
-├─ examples/           (sample profile + custom-rule package)
+├─ examples/           (sample profile, custom-rule package, contracts, integrators)
 ├─ CLAUDE.md  CONTRIBUTING.md  CODE_OF_CONDUCT.md  SECURITY.md
 └─ pyproject.toml      (uv workspace, ruff, mypy, pytest)
 </code></pre>

@@ -112,7 +112,7 @@
 <li><a href="design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
 <li><a href="design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
 <li><a href="design/declarative-fixtures.html">Declarative fixtures for scenarios and agent runs<span class="tag">implemented</span></a></li>
-<li><a href="design/pack-scaffolding.html">Scaffolding a pack<span class="tag">accepted</span></a></li>
+<li><a href="design/pack-scaffolding.html">Scaffolding a pack<span class="tag">implemented</span></a></li>
 <li><a href="design/repeated-trials.html">Repeated trials<span class="tag">implemented</span></a></li>
 <li><a href="design/documentation-site.html">A documentation site<span class="tag">implemented</span></a></li>
 <li><a href="design/judge-error-correction.html">Judge error in a measured rate<span class="tag">accepted</span></a></li>
@@ -148,13 +148,14 @@ outcomes are already known and compare what the evaluator said with what happene
   brier         0.2135
   ECE           0.3650
 </code></pre>
-<h2 id="the-two-numbers-and-why-there-are-two">The two numbers, and why there are two</h2>
-<p><strong>Brier</strong> is the mean squared error of the predicted probability — one number for how
-good these predictions are overall.</p>
+<h2 id="the-three-numbers-and-why-there-are-three">The three numbers, and why there are three</h2>
+<p><strong>Accuracy</strong> is the share of graded predictions that are right. <strong>Brier</strong> is the mean
+squared error of the predicted probability — one number for how good these predictions
+are overall.</p>
 <p><strong>Expected calibration error</strong> asks whether the judge's stated confidence matches how
 often it is right. Accuracy alone does not answer that question.</p>
-<p><code>inconclusive</code> is counted and excluded from the scores. A judge that abstained made no
-prediction, so scoring an abstention would invent data.</p>
+<p><code>inconclusive</code> is counted and excluded from all three scores. A judge that abstained
+made no prediction, so scoring an abstention would invent data.</p>
 <p><strong>All three are <code>None</code> when nothing was graded</strong>, never <code>0.0</code>. A flawless score for a
 measurement that never happened is the false confidence this whole command exists to
 expose.</p>
@@ -171,6 +172,9 @@ stop <code>--record</code>, but a run refuses to correct a rate with that calibr
 when the id has one. The judge row names the judge identity: the grader configuration
 that the evaluator id does not name. An evaluator that states no identity prints
 <code>not stated</code> and is matched by id alone.</p>
+<p><code>RATE CAVEAT:</code> also appears when the evaluator's verdicts carry more than one assessor
+id. The assessor row is omitted, and the measurement is recorded without per-class
+counts, so no run corrects a rate with it.</p>
 <p>For <code>llm_judge</code>, the identity is
 <code>model=&lt;model&gt;; endpoint=&lt;12 hex digest of scheme, host, port and path&gt;; samples=&lt;min_agreement&gt;</code>.
 Credentials, query and fragment are never recorded. For <code>guard</code>, it records the model
@@ -195,9 +199,9 @@ traffic, so its calibration never corrects a rate. The command prints:</p>
 <pre><code>  starter corpus: demonstration corpus; calibration can be recorded but cannot correct rates
 </code></pre>
 <p>Across the whole 60-sample starter corpus, <code>keyword</code> measures sensitivity 24/30 and
-specificity 20/30. Twelve of the corpus's twenty newest samples are hard cases for a
-phrase-matching grader: refusals with no stock refusal phrase, and compliant or
-leaking replies that contain one.</p>
+specificity 20/30. Twelve of its samples are hard cases for a phrase-matching grader:
+refusals with no stock refusal phrase, and compliant or leaking replies that contain
+one.</p>
 <p><strong>No real transcript, secret or customer prompt ever belongs in a corpus file</strong>, the
 same rule that governs fixtures.</p>
 <h3 id="getting-a-corpus-without-writing-one">Getting a corpus without writing one</h3>
@@ -251,6 +255,9 @@ is recorded, but no run corrects a rate with it.</p>
 <p>A schema-1 calibration file still loads, but its entries never correct a rate because
 they have no per-class counts. Recording into that file rewrites it as schema 2 and
 leaves its older entries without counts.</p>
+<p>Using <code>--record</code> with a <code>schema 1</code> calibration file rewrites it as <code>schema 2</code>; a 0.27
+build refuses to load a <code>schema 2</code> file (exit 3). Keep one calibration file per
+Guardana version, or upgrade every Guardana install that reads the file together.</p>
 <h2 id="exit-codes">Exit codes</h2>
 <div class="table-wrap"><table>
 <thead>

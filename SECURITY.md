@@ -64,6 +64,13 @@ guardana scan . --plugins allowlist --allow-plugin acme-rules
 guardana scan . --plugins disabled           # nothing; YAML rules still load from disk
 ```
 
+Trust is decided by **distribution name** — what pip installed and what a lockfile
+pins — not by entry-point name or module path. A third party can name their entry
+point `builtin` and their module `guardana_rules`; neither is a claim anybody
+checked. An entry point that cannot name its origin is treated as third-party,
+because reading an unnamed origin as trusted would make the allowlist bypassable
+by anything that fails to record where it came from.
+
 `Registry.discover()` runs in every mode, including `disabled` — there is no
 "empty registry" shortcut. What changes is whether a `PluginTrust` policy lets
 a given entry point load: a refused one is never imported, and its refusal is
@@ -77,7 +84,7 @@ A restricted run says what it declined, not just what it ran. `scan`,
 `probe`, `monitor`, `analyze-trace`, and `baseline create`/`update` fold
 `registry.load_errors` into the run's own `errors` channel, so a refused
 rule pack shows up in the report you already read and fails the gate by
-default (see "Plugin trust (0.7)" below). `plan scan`, `plan probe`,
+default. `plan scan`, `plan probe`,
 `rule test`, `rules`, `taxonomy`, `calibrate`, `target inspect`,
 `trace inspect`, `pack validate`, and `pack lock` produce no run report for a
 refusal to travel in, so each prints it directly on stderr — `warning: could
@@ -181,33 +188,3 @@ verifies them on every push, so a tag is never the first time they are produced.
 
 Guardana is pre-1.0 (0.27.x). Security fixes land on the latest released
 version; there is no separate LTS branch yet.
-
-## Plugin trust (0.7)
-
-Installed plugins are code Guardana imports, and importing code is trusting it.
-Until 0.7 the only control was `--no-plugins`, which refused *everything* —
-Guardana's own rules included. A safe mode that costs all your coverage is one
-people switch off, and a control people switch off is not a control.
-
-```bash
-guardana scan .                              # all: every installed entry point
-guardana scan . --plugins builtins           # only Guardana's own distributions
-guardana scan . --plugins allowlist --allow-plugin acme-rules
-guardana scan . --plugins disabled           # nothing; YAML rules still load from disk
-```
-
-`builtins` is the setting most `--no-plugins` pipelines actually wanted: the
-reviewed rules run, nothing else is imported.
-
-Trust is decided by **distribution name** — what pip installed and what a lockfile
-pins — not by entry-point name or module path. A third party can name their entry
-point `builtin` and their module `guardana_rules`; neither is a claim anybody
-checked. An entry point that cannot name its origin is treated as third-party,
-because reading an unnamed origin as trusted would make the allowlist bypassable
-by anything that fails to record where it came from.
-
-A plugin that is refused is **recorded** in the run's `errors` channel, not
-silently dropped: a rule pack you installed and this run declined to load is
-coverage you think you have, and `errors` fails the gate by default.
-
-`--no-plugins` still works and still means "import nothing".

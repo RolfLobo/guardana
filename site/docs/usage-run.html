@@ -112,7 +112,7 @@
 <li><a href="design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
 <li><a href="design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
 <li><a href="design/declarative-fixtures.html">Declarative fixtures for scenarios and agent runs<span class="tag">implemented</span></a></li>
-<li><a href="design/pack-scaffolding.html">Scaffolding a pack<span class="tag">accepted</span></a></li>
+<li><a href="design/pack-scaffolding.html">Scaffolding a pack<span class="tag">implemented</span></a></li>
 <li><a href="design/repeated-trials.html">Repeated trials<span class="tag">implemented</span></a></li>
 <li><a href="design/documentation-site.html">A documentation site<span class="tag">implemented</span></a></li>
 <li><a href="design/judge-error-correction.html">Judge error in a measured rate<span class="tag">accepted</span></a></li>
@@ -201,54 +201,49 @@ already have.</p>
 <p>What an older version never recorded arrives as an explicit unknown rather than as a
 default — version 1 has no usage, no execution settings and <strong>no gate verdict</strong>;
 version 2 has no coverage fingerprint and no declared request counts; version 3 could
-not
-name a <code>trace</code> target, because that kind did not exist; version 6 made one attempt per
-case, so it arrives with <code>execution.trials: 1</code>, <code>trial: null</code> on every assessment and
-no <code>trial_summary</code> on any rule — the summary is not recomputed from its assessments.
-Recomputing any
-of them during migration would apply today's build to another build's run, which is
-exactly what storing them as fields exists to prevent. <code>inspect</code> says so at the
-bottom of its output, and <code>diff</code> adds a note.</p>
+not name a <code>trace</code> target, because that kind did not exist; version 6 made one attempt
+per case, so it arrives with <code>execution.trials: 1</code>, <code>trial: null</code> on every assessment
+and no <code>trial_summary</code> on any rule — the summary is not recomputed from its
+assessments. Recomputing any of them during migration would apply today's build to
+another build's run, which is exactly what storing them as fields exists to prevent.
+<code>inspect</code> says so at the bottom of its output, and <code>diff</code> adds a note.</p>
 <p>A schema-7 run migrates to schema 8 with the correction fields <code>null</code>; nothing is
-recomputed. Its trials line still prints <code>graded by &lt;assessor&gt;, grader error not corrected</code>, as it was written.</p>
+recomputed. Its trials line still prints
+<code>graded by &lt;assessor&gt;, grader error not corrected</code>, as it was written.</p>
 <p>One thing <em>is</em> recovered: the <strong>title</strong> of a framework reference, which version 3
-onward records beside its framework and id. It is looked up from the installed catalogue
-for
-the exact <code>(framework, id)</code> pair the document already carries, so nothing is guessed
-and no reference is remapped — a <code>LLM07</code> recorded under <code>OWASP-LLM-2025</code> stays System
-Prompt Leakage. A reference from a rule pack this build does not have stays
-titleless, because nothing here knows what it was called.</p>
+onward records beside its framework and id. It is looked up from the installed
+catalogue for the exact <code>(framework, id)</code> pair the document already carries, so
+nothing is guessed and no reference is remapped — a <code>LLM07</code> recorded under
+<code>OWASP-LLM-2025</code> stays System Prompt Leakage. A reference from a rule pack this build
+does not have stays titleless, because nothing here knows what it was called.</p>
 <p>To rewrite an old file on disk at the current schema:</p>
 <pre><code class="language-bash">guardana run migrate old-run.json --output new-run.json
 guardana run migrate old-run.json          # in place
 </code></pre>
 <p>This is a convenience, not a requirement. Nothing needs migrating to be compared.</p>
-<p><strong>A migration that cannot carry a field refuses, and writes nothing.</strong> The
-default destination is the file itself, so a half-done migration would overwrite
-the only copy of the evidence. In 0.7.0 a version-1 run that never recorded its
-target kind was migrated into the literal string <code>&quot;None&quot;</code> — a document that fails
-this schema, written over the original, with exit <code>0</code>. Every unit test around
-migration passed, because they asserted on the objects the migration loaded and
-the objects were fine; what was published was the file. There is now a test that
-validates the <em>artifact</em>, parametrised over every field a version-1 run could be
-missing.</p>
+<p><strong>A migration that cannot carry a field refuses, and writes nothing.</strong> The default
+destination is the file itself, so a half-done migration would overwrite the only copy
+of the evidence. In 0.7.0 a version-1 run that never recorded its target kind was
+migrated into the literal string <code>&quot;None&quot;</code> — a document that fails this schema, written
+over the original, with exit <code>0</code>. Every unit test around migration passed, because
+they asserted on the objects the migration loaded and the objects were fine; what was
+published was the file. There is now a test that validates the <em>artifact</em>,
+parametrised over every field a version-1 run could be missing.</p>
 <h2 id="the-document">The document</h2>
 <p>The saved-run schema lives at
 <a href="https://github.com/guardana/guardana/blob/main/schemas/run-v8.schema.json"><code>schemas/run-v8.schema.json</code></a>, identified by
-<code>https://guardana.dev/schemas/run/v8.schema.json</code>. The version is in the
-identifier, so a consumer can tell which contract it is holding before parsing
-anything; it changes whenever the change is not backwards-compatible. A test
-validates what Guardana writes against that file, so the schema cannot drift
-away from the tool.</p>
+<code>https://guardana.dev/schemas/run/v8.schema.json</code>. The version is in the identifier,
+so a consumer can tell which contract it is holding before parsing anything; it
+changes whenever the change is not backwards-compatible. A test validates what
+Guardana writes against that file, so the schema cannot drift away from the tool.</p>
 <p>Every superseded version stays published — <code>run-v2</code> and <code>run-v3</code> are still in
 <a href="https://github.com/guardana/guardana/tree/main/schemas"><code>schemas/</code></a> — because a saved run has to keep validating against the
-schema
-it was written to. Version 4 exists for one reason: it permits a <code>trace</code> target kind.
-Widening version 3's enum in place was the alternative, and it would have changed a
-contract under a name that promised it had not. Version 6 adds the <code>assessments</code>
-channel and <code>run.rules[].origin</code>; a version-5 document migrates forward with the
-first empty and the second <code>null</code>, because that is what it knew. Version 7 records
-repeated trials: <code>run.execution.trials</code>, <code>assessments[].trial</code> and
+schema it was written to. Version 4 exists for one reason: it permits a <code>trace</code> target
+kind. Widening version 3's enum in place was the alternative, and it would have
+changed a contract under a name that promised it had not. Version 6 adds the
+<code>assessments</code> channel and <code>run.rules[].origin</code>; a version-5 document migrates forward
+with the first empty and the second <code>null</code>, because that is what it knew. Version 7
+records repeated trials: <code>run.execution.trials</code>, <code>assessments[].trial</code> and
 <code>run.rules[].trial_summary</code>, and renames <code>run.rules[].trials</code> to <code>declared_requests</code>,
 which is what it always counted. Version 8 records the <code>correction</code> block on
 <code>trial_summary</code> and the calibration fields on <code>run.evaluators[]</code>.</p>
@@ -343,15 +338,14 @@ which is what it always counted. Version 8 records the <code>correction</code> b
 </tbody>
 </table></div>
 <p>Three conventions hold everywhere in it:</p>
-<p><strong>Timestamps are UTC, RFC 3339.</strong> A local-time timestamp in an evidence record is
-a bug waiting for a timezone.</p>
-<p><strong>Digests name their algorithm</strong> — <code>sha256:…</code>, never a bare hex string, so a
-digest can be migrated when the algorithm moves.</p>
-<p><strong>The target fingerprint says what it covers.</strong> <code>target.fingerprint_inputs</code> lists
-the fields the digest was computed from. A digest of a URL and a model name
-identifies a <em>declared</em> target; it attests nothing about the weights behind it,
-and the document says so rather than leaving a reader to assume the stronger
-reading.</p>
+<p><strong>Timestamps are UTC, RFC 3339.</strong> A local-time timestamp in an evidence record is a
+bug waiting for a timezone.</p>
+<p><strong>Digests name their algorithm</strong> — <code>sha256:…</code>, never a bare hex string, so a digest
+can be migrated when the algorithm moves.</p>
+<p><strong>The target fingerprint says what it covers.</strong> <code>target.fingerprint_inputs</code> lists the
+fields the digest was computed from. A digest of a URL and a model name identifies a
+<em>declared</em> target; it attests nothing about the weights behind it, and the document
+says so rather than leaving a reader to assume the stronger reading.</p>
 <h2 id="assessments">Assessments</h2>
 <p>The channel that is not about problems. Every other one — findings, unverified,
 errors, coverage shortfall — records something wrong; a check that ran and was

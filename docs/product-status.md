@@ -38,8 +38,7 @@ anything. That is a genuine test of the model's judgement — and it is **not** 
 test of *your* agent, with your framework, your prompts and your tool
 implementations.
 
-Grading a trace exported from your running agent is a different input, which
-`Trajectory` was shaped to accept. It is designed for, not built. **Application-awareness milestone.**
+`guardana analyze-trace` grades a recorded trace exported from a running agent.
 
 ### `monitor` is scheduled, not passive
 
@@ -68,14 +67,17 @@ sizes and confidence bounds a trend needs to be honest, is the next horizon.
 ### RAG coverage is a slice, not a story
 
 `scenario.indirect_injection` tests the shape of retrieval-time injection through
-a scripted context. There is no live retriever target, so cross-tenant retrieval,
-document poisoning and tenant-filter bypass are **not** tested against your actual
-vector store. **Application-awareness milestone.**
+a scripted context. There is no live retriever target.
+`guardana.trace.cross_tenant_retrieval` grades cross-tenant retrieval from a
+recorded trace, not against a live vector store. Document poisoning and
+tenant-filter bypass have no rules and are not tested. Live RAG targets remain an
+open item in `ROADMAP.md`.
 
 ### Text only
 
 No image, PDF, audio or document carriers. Injection through an image or a PDF an
-agent reads is a real attack class and is **not covered**. **v1.3.**
+agent reads is a real attack class and is **not covered**. `ROADMAP.md` lists
+multimodal attack carriers under "Researched after the foundations."
 
 ### "OpenAI-compatible" is not a guarantee
 
@@ -92,13 +94,16 @@ treat "OpenAI-compatible" as a claim to check per deployment, not a guarantee.
 
 ### Probabilistic verdicts have probabilistic limits
 
-A judge-graded verdict is a measurement with error. `guardana calibrate` reports Brier
-score and expected calibration error so you can see how much to trust it, and a policy
-can gate on confidence. A qualifying calibration corrects a trials rate with the
-Rogan–Gladen method. When a condition is not met, such as fewer than 30 graded samples
-in a class or use of the starter corpus, the line states `uncorrected — judge error not
-measured` and names the reason. A recorded calibration can go stale without anything
-noticing — re-measure after changing judge models.
+A judge-graded verdict is a measurement with error. `guardana calibrate` reports
+Brier score and expected calibration error so you can see how much to trust it,
+and a policy can gate on confidence. It also reports per-class `sensitivity` and
+`specificity`. A class with fewer than 30 graded samples or abstentions on at
+least half its samples gets a `RATE CAVEAT:` line. A qualifying calibration
+corrects a trials rate with the Rogan–Gladen method. When a condition is not met,
+such as fewer than 30 graded samples in a class or use of the starter corpus, the
+line states `uncorrected — judge error not measured` and names the reason. A
+recorded calibration can go stale without anything noticing — re-measure after
+changing judge models.
 
 ### Plugins are code you install
 
@@ -111,8 +116,8 @@ locked pack (`guardana pack lock`) pins the digest of every rule a pack provides
 `scan` and `plan scan`; every other command that loads plugins takes `--plugins`
 directly.
 Two limits remain: `--plugins all` is still the default, and a declarative pack
-format that executes no Python is **v1.0**. See the
-[threat model](threat-model.md).
+format that executes no Python has no scheduled release. See the [threat
+model](threat-model.md).
 
 ### Cost is bounded, not predicted
 

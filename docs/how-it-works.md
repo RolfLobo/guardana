@@ -114,11 +114,16 @@ This is the differentiator. An evaluator turns a model's reply into a **Verdict*
 id of the evaluator that judged it. Grading is swappable without touching the
 rule. Shipped evaluators:
 
-- `keyword` — cheap refusal-marker matching, honestly low confidence.
+- `keyword` — cheap refusal-marker matching, honestly low confidence;
+  `guardana calibrate` measures and corrects for its error, as it does for `guard`
+  and `llm_judge`.
 - `canary` — near-certain detection of a secret token planted in the system
   prompt; the gold standard for proving a leak.
 - `length` — grades a reply by length; a runaway answer to a divergence prompt is
   a lead (denial-of-wallet).
+- `amplification` — grades the ratio of what came back to what was asked (cost
+  asymmetry).
+- `tool_call` — grades an agent run by what it did, not what it said.
 - `llm_judge` — an LLM judge behind any endpoint you trust, with a versioned
   rubric and confidence measured as agreement across samples. Wired from config.
 - `guard` — an external safety classifier (Llama Guard style), opt-in.
@@ -192,25 +197,26 @@ the renderer prints them →
   hallucinated dependencies, insecure transport, hardcoded secrets, MCP tool
   poisoning, hidden-instruction "rules-file backdoors", and training-data
   integrity.
-- **Runtime (dynamic, endpoint and trace)** — 32 rules: direct prompt injection, DAN-style
-  jailbreak, a multi-turn gradual-jailbreak scenario, indirect (RAG) injection,
-  excessive tool-use agency, unbounded consumption (denial-of-wallet), the same
-  category measured as cost asymmetry, output-secret leakage, the canary-proven
-  system-prompt-leak check, six agentic checks — tool-result injection,
-  credential exfiltration through a tool argument, over-broad tool arguments,
-  memory poisoning across a session boundary, hidden context recited out of a tool
-  schema, and a live MCP server's tool manifest — and six that examine how a live
-  MCP server **authorizes a caller**: whether it answers without a credential,
-  whether its authorization surface is one a conforming client can use, whether it
-  accepts a token it could not have issued, whether its session id is guessable or
-  stands in for authentication, whether its scopes can express least privilege, and
-  whether it points its client at an address a client must not follow. Nine of the
-  runtime rules grade a **recorded** execution rather than a live one — a credential in a
-  tool argument, a credential crossing two trust boundaries, a token outside its audience,
-  a session standing in for an identity, a scope nobody consented to, a policy decision
-  the run went ahead against, a consequential effect nobody approved, a retrieval that
-  returned another tenant's document, and an agent that exercised more authority than a
-  handoff carried to it.
+- **Runtime (dynamic, endpoint and trace)** — 32 rules: direct prompt injection,
+  DAN-style jailbreak, a multi-turn gradual-jailbreak scenario, indirect (RAG)
+  injection, excessive tool-use agency, unbounded consumption (denial-of-wallet), the
+  same category measured as cost asymmetry, output-secret leakage, the canary-proven
+  system-prompt-leak check, six agentic checks — tool-result injection, credential
+  exfiltration through a tool argument, over-broad tool arguments, memory poisoning
+  across a session boundary, hidden context recited out of a tool schema, and a live MCP
+  server's tool manifest — and eight that examine how a live MCP server **authorizes a
+  caller**: whether it answers without a credential, whether its authorization surface
+  is one a conforming client can use, whether it accepts a token it could not have
+  issued, whether its session id is guessable or stands in for authentication, whether
+  its scopes can express least privilege, whether it points its client at an address a
+  client must not follow, whether it lets a client detect an authorization-code mix-up
+  attack, and whether a tool listing marked cacheable by any client is one only an
+  authorized caller may read. Nine of the runtime rules grade a **recorded** execution
+  rather than a live one — a credential in a tool argument, a credential crossing two
+  trust boundaries, a token outside its audience, a session standing in for an identity,
+  a scope nobody consented to, a policy decision the run went ahead against, a
+  consequential effect nobody approved, a retrieval that returned another tenant's
+  document, and an agent that exercised more authority than a handoff carried to it.
 
 You never pick the layer by hand: `scan` runs the build layer, `probe` and
 `monitor` run the runtime layer against a live system, and `analyze-trace` runs the part
@@ -303,14 +309,14 @@ the whole extensibility story in one folder.
 ## 7. Central monitoring, and why the collector is separate
 
 Everything above works **fully offline** — every rule, evaluator, report format,
-and run mode, with no required network beyond the target itself. When you want
-fleet-wide visibility, any run forwards its normalized findings to a collector
-with `--reporter server://…`, over a versioned JSON envelope (now v2, which
-carries the `unverified` channel so the collector can never render a false
-all-clear). Run the collector yourself (`guardana-server`, OSS — ingest/list/
-trend plus an opt-in monitoring dashboard, with auth and persistence on the
-roadmap), or use the planned managed cloud for a hosted version with richer
-dashboards and multi-team rollups.
+and run mode, with no required network beyond the target itself. For fleet-wide
+visibility, a run forwards its normalized findings to a collector with
+`--reporter server://…`, over a versioned JSON envelope at schema version 8. The
+envelope carries the `unverified` channel so the collector cannot render a false
+all-clear. Run `guardana-server` yourself: it provides ingest, list, trend, and an
+opt-in monitoring dashboard, with scoped API-key authentication and PostgreSQL
+persistence. A managed cloud offering with richer dashboards and multi-team
+rollups remains planned.
 
 **`guardana-core` never imports `guardana-server`, directly or transitively** —
 enforced by an import-linter contract and a test, not by good intentions. That

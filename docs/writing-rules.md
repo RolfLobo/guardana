@@ -318,9 +318,10 @@ class MyRule(Rule):
                 )
 ```
 
-`RuleContext.config` carries whatever the active profile's `rule_config`
-declares for this rule id (`ctx.get(key, default)`); none of the built-ins
-currently read it, but it's there for tunable checks.
+`RuleContext.config` carries whatever the active profile's `rule_config` declares
+for this rule id (`ctx.get(key, default)`). Built-in readers include
+`guardana.supply_chain.hardcoded_secret`, which reads `entropy`, and the MCP
+server manifest rule, which reads `pin`.
 
 **Ask the target for parsed source — never parse it yourself.** A scan runs
 every rule over the same tree, so a rule that reads and parses a file for itself

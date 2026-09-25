@@ -112,7 +112,7 @@
 <li><a href="design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
 <li><a href="design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
 <li><a href="design/declarative-fixtures.html">Declarative fixtures for scenarios and agent runs<span class="tag">implemented</span></a></li>
-<li><a href="design/pack-scaffolding.html">Scaffolding a pack<span class="tag">accepted</span></a></li>
+<li><a href="design/pack-scaffolding.html">Scaffolding a pack<span class="tag">implemented</span></a></li>
 <li><a href="design/repeated-trials.html">Repeated trials<span class="tag">implemented</span></a></li>
 <li><a href="design/documentation-site.html">A documentation site<span class="tag">implemented</span></a></li>
 <li><a href="design/judge-error-correction.html">Judge error in a measured rate<span class="tag">accepted</span></a></li>
@@ -338,7 +338,7 @@ guardana probe --mcp https://mcp.example.com/mcp \
 <p>The pin stores a digest per tool rather than the prose, so the file records <em>that</em>
 the manifest was approved and cannot be edited into agreement. Without <code>--mcp-pin</code>
 drift is reported <code>inconclusive</code>, never as a clean server.</p>
-<p>Pins written before this release are <code>schema_version 1</code> and cover <strong>descriptions
+<p>Pins written before 0.13.0 are <code>schema_version 1</code> and cover <strong>descriptions
 only</strong>. They still load and still compare, and every run that uses one carries a
 note saying which drift it cannot see — re-approve with <code>--write-mcp-pin</code> to cover
 schemas too.</p>
@@ -497,7 +497,7 @@ measure a configuration nobody deployed.</li>
 <p>The report ends with one line per repeating rule:</p>
 <pre><code class="language-text">Trials
   guardana.output.secrets  clean · 0 of 3 cases in 3 trials each · ASR@3 ≤ 63.2% (95%) · graded by guardana.output.secrets
-  guardana.prompt.injection.ignore_previous  clean · 0 of 4 cases in 3 trials each · ASR@3 ≤ 52.8% (95%) · corrected ASR@3 ≤ 55.8% (95%) · graded by keyword · sensitivity 0.90/30 positives, specificity 0.93/30 negatives · corpus c683ae93e403
+  guardana.prompt.injection.ignore_previous  clean · 0 of 4 cases in 3 trials each · ASR@3 ≤ 52.8% (95%) · corrected ASR@3 ≤ 70.2% (95%) · graded by keyword · sensitivity 0.90/30 positives, specificity 0.93/30 negatives · corpus c683ae93e403
   guardana.prompt.jailbreak.dan_style  clean · 0 of 4 cases in 3 trials each · ASR@3 ≤ 52.8% (95%) · graded by keyword · uncorrected — judge error not measured: no calibration recorded for keyword
   static prompt set · no adaptive attacker ran
 </code></pre>
@@ -514,13 +514,14 @@ calibration adds a corrected <code>ASR@K</code> clause, or a corrected upper bou
 rule. If correction is refused, the line ends with
 <code>uncorrected — judge error not measured</code> and names the missing condition. A line with no
 rate ends with just <code>graded by &lt;assessor&gt;</code>.</p>
-<p>The Rogan–Gladen method is applied to <code>ASR@K</code> over decided cases, or to the clean bound.
-The interval's sampling part is the interval already printed: Wilson over decided cases,
-or the exact one-sided bound when no case failed. Its calibration part uses the delta
-method with Agresti–Coull variances for sensitivity and specificity, which stay positive
-at 30 of 30 samples; the parts combine in quadrature. At <code>K &gt; 1</code>, applying per-reply
-error rates to a per-case rate overstates <code>ASR@K</code> in expectation and does not understate
-it in expectation.</p>
+<p>Rogan–Gladen corrects <code>ASR@K</code> over decided cases or the clean bound. Each end of the
+printed Wilson interval, or the exact one-sided bound when no case failed, is corrected
+at the least favourable corner of the sensitivity and specificity 95% Wilson intervals.
+If sensitivity plus specificity minus 1 is not positive at that corner, the end is
+unbounded: 0 for the lower end or 1 for the upper end. In simulations with 30
+calibration samples per class, per-side misses stayed below 1%. At <code>K &gt; 1</code>,
+applying per-reply error rates to a per-case rate overstates <code>ASR@K</code> in expectation and
+does not understate it in expectation.</p>
 <p>A calibration must match the rule's sole recorded assessor id and judge identity. It
 needs per-class counts from a corpus other than the bundled starter, at least 30 graded
 samples in each class, and abstentions below half of each class. The judge's sensitivity

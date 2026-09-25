@@ -2,12 +2,12 @@
 title: "Scaffolding a pack"
 nav_order: 78
 summary: "what `guardana new-pack` writes, why it writes a working pack rather than a skeleton, and the gate step that proves an author never has to copy a file out of this repository"
-status: accepted
+status: implemented
 ---
 
 # Scaffolding a pack
 
-**Status:** accepted · **Written:** 2026-09-20 · **Roadmap "Now", row 1**
+**Status:** implemented in 0.26.0 · **Written:** 2026-09-20 · **Roadmap "Now", row 1**
 
 ## The problem, measured
 

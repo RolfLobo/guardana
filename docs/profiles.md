@@ -65,6 +65,8 @@ contracts:                      # optional; security contracts to load, files or
 trials: 1                       # optional; attempts per case for rules that grade a
                                 # sampled reply — see usage-probe.md#repeated-trials
 
+calibrations: []                # optional; list of calibration file globs
+
 evaluators:                     # config-wired evaluators — see the section below
   llm_judge:
     endpoint: "http://localhost:11434"   # any OpenAI-compatible server
@@ -90,6 +92,7 @@ evaluators:                     # config-wired evaluators — see the section be
 | `trace.require` | list of dimension names | `[]` | Evidence a trace run demands: `messages`, `tools`, `retrieval`, `memory`, `identity`, `delegation`, `consent`, `policy`, `approval`, `effects`, `handoff`. A producer that does not record one makes the run **`indeterminate`, unconditionally** — no `fail_on_*` governs it, because you asked for this coverage by name. An unknown dimension raises at load. Governs traces only: a shared config carrying it does not affect `scan` or `probe`. See [`usage-trace-inspect.md`](usage-trace-inspect.md). |
 | `contracts` | list of paths | `[]` | Security contracts to load — files, or directories of `.yaml`/`.yml`. Added to anything passed via the repeatable `--contract PATH` flag. Unlike a malformed *rule* file, a contract that will not load is a hard error: it is your own threat model, and a silently absent one is a gate you think you have. See [`usage-contracts.md`](usage-contracts.md). |
 | `trials` | integer ≥ 1 | `1` | How many independent attempts `probe`, `monitor` and `plan probe` make at each case of a rule that grades a sampled model reply. `--trials N` wins over it. A rule that does not repeat (a protocol check, a `stateful` scenario) makes one attempt whatever this says, and the run records that. Anything other than a whole number of at least 1 is refused at load. See [`usage-probe.md`](usage-probe.md#repeated-trials). |
+| `calibrations` | list of strings | `[]` | Glob patterns for calibration files written by `guardana calibrate --record`. Paths are read relative to the current working directory. A missing listed path stops the run with exit code `3` (`INVALID_USAGE`). A bare string is refused. |
 | `evaluators` | mapping | `{}` | Config blocks for evaluators that need a model of their own, keyed by evaluator id — `llm_judge` and `guard` today. `probe` and `monitor` build and register them from this block at startup; see the next section. With no block, a rule naming that evaluator is skipped **visibly**, never silently passed. |
 
 `include`/`exclude` are matched with shell-style globbing (`fnmatch`) against
@@ -156,10 +159,11 @@ gate never quietly weakens.
 ## Rule-specific configuration
 
 `rule_config` (a top-level key, keyed by rule id) is threaded into a rule's
-`RuleContext` at run time, letting a rule read profile-supplied
-configuration values via `ctx.get(key, default)`. None of the built-in
-rules currently read anything from it, but the mechanism is there for rules
-(built-in or custom) that need tunable parameters.
+`RuleContext` at run time, letting a rule read profile-supplied configuration
+values via `ctx.get(key, default)`. Built-in readers include
+`guardana.supply_chain.hardcoded_secret`, which uses `entropy` to opt into a
+high-entropy secret scan, and the MCP server manifest rule, which reads `pin`.
+Other built-in or custom rules can use the mechanism for tunable parameters.
 
 ## Named presets: `--preset`
 

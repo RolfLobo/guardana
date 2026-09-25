@@ -112,7 +112,7 @@
 <li><a href="design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
 <li><a href="design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
 <li><a href="design/declarative-fixtures.html">Declarative fixtures for scenarios and agent runs<span class="tag">implemented</span></a></li>
-<li><a href="design/pack-scaffolding.html">Scaffolding a pack<span class="tag">accepted</span></a></li>
+<li><a href="design/pack-scaffolding.html">Scaffolding a pack<span class="tag">implemented</span></a></li>
 <li><a href="design/repeated-trials.html">Repeated trials<span class="tag">implemented</span></a></li>
 <li><a href="design/documentation-site.html">A documentation site<span class="tag">implemented</span></a></li>
 <li><a href="design/judge-error-correction.html">Judge error in a measured rate<span class="tag">accepted</span></a></li>
@@ -427,11 +427,11 @@ guardana-collector project list [--org acme]
 guardana-collector project rename --project acme/web --to api
 </code></pre>
 <p><strong>The project comes from the key, never from the envelope.</strong> If the envelope named
-it, the runner would declare where it writes — and a credential that does not bound
-the write is not a boundary at all. It is also why the envelope stays at v5 and why
-nothing in the engine changed: an agent and a collector upgrade independently, and
-no fleet has to move in step with a collector. The cost is real and accepted: a
-team with ten projects needs ten keys in CI.</p>
+it, the runner would declare where it writes — and a credential that does not
+bound the write is not a boundary at all. Adding key-scoped projects required no
+envelope change or engine change: an agent and a collector upgrade independently,
+and no fleet has to move in step with a collector. The cost is real and accepted:
+a team with ten projects needs ten keys in CI.</p>
 <p><strong>There is no command that deletes an organization or a project</strong>, and the foreign
 keys are <code>on delete restrict</code>. Removing tenant data is retention, and it deserves
 to be designed there rather than smuggled in here.</p>

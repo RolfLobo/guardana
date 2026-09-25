@@ -139,8 +139,8 @@ records in the saved run which distribution and version supplied every rule that
 ran. That last part is what a compromise is *detectable* by after the fact.
 
 What does not exist: `--plugins all` is still the default, so an ordinary run
-imports whatever is installed. **v1.0:** a declarative pack format that executes
-no Python at all, and subprocess isolation for those that do.
+imports whatever is installed. A declarative pack format that executes no Python
+at all, and subprocess isolation for packs that do, have no stated release.
 
 **Until then:** treat installing a Guardana pack exactly like installing any other
 Python package into your environment — because that is what it is. `SECURITY.md`

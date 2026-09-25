@@ -112,7 +112,7 @@
 <li><a href="design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
 <li><a href="design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
 <li><a href="design/declarative-fixtures.html">Declarative fixtures for scenarios and agent runs<span class="tag">implemented</span></a></li>
-<li><a href="design/pack-scaffolding.html">Scaffolding a pack<span class="tag">accepted</span></a></li>
+<li><a href="design/pack-scaffolding.html">Scaffolding a pack<span class="tag">implemented</span></a></li>
 <li><a href="design/repeated-trials.html">Repeated trials<span class="tag">implemented</span></a></li>
 <li><a href="design/documentation-site.html">A documentation site<span class="tag">implemented</span></a></li>
 <li><a href="design/judge-error-correction.html">Judge error in a measured rate<span class="tag">accepted</span></a></li>
@@ -223,11 +223,16 @@ standards taxonomy, and the capabilities it needs.</p>
 id of the evaluator that judged it. Grading is swappable without touching the
 rule. Shipped evaluators:</p>
 <ul>
-<li><code>keyword</code> — cheap refusal-marker matching, honestly low confidence.</li>
+<li><code>keyword</code> — cheap refusal-marker matching, honestly low confidence;
+<code>guardana calibrate</code> measures and corrects for its error, as it does for <code>guard</code>
+and <code>llm_judge</code>.</li>
 <li><code>canary</code> — near-certain detection of a secret token planted in the system
 prompt; the gold standard for proving a leak.</li>
 <li><code>length</code> — grades a reply by length; a runaway answer to a divergence prompt is
 a lead (denial-of-wallet).</li>
+<li><code>amplification</code> — grades the ratio of what came back to what was asked (cost
+asymmetry).</li>
+<li><code>tool_call</code> — grades an agent run by what it did, not what it said.</li>
 <li><code>llm_judge</code> — an LLM judge behind any endpoint you trust, with a versioned
 rubric and confidence measured as agreement across samples. Wired from config.</li>
 <li><code>guard</code> — an external safety classifier (Llama Guard style), opt-in.</li>
@@ -295,25 +300,26 @@ payloads, Keras/TF/model-format code execution, advisory-backed malicious &amp;
 hallucinated dependencies, insecure transport, hardcoded secrets, MCP tool
 poisoning, hidden-instruction &quot;rules-file backdoors&quot;, and training-data
 integrity.</li>
-<li><strong>Runtime (dynamic, endpoint and trace)</strong> — 32 rules: direct prompt injection, DAN-style
-jailbreak, a multi-turn gradual-jailbreak scenario, indirect (RAG) injection,
-excessive tool-use agency, unbounded consumption (denial-of-wallet), the same
-category measured as cost asymmetry, output-secret leakage, the canary-proven
-system-prompt-leak check, six agentic checks — tool-result injection,
-credential exfiltration through a tool argument, over-broad tool arguments,
-memory poisoning across a session boundary, hidden context recited out of a tool
-schema, and a live MCP server's tool manifest — and six that examine how a live
-MCP server <strong>authorizes a caller</strong>: whether it answers without a credential,
-whether its authorization surface is one a conforming client can use, whether it
-accepts a token it could not have issued, whether its session id is guessable or
-stands in for authentication, whether its scopes can express least privilege, and
-whether it points its client at an address a client must not follow. Nine of the
-runtime rules grade a <strong>recorded</strong> execution rather than a live one — a credential in a
-tool argument, a credential crossing two trust boundaries, a token outside its audience,
-a session standing in for an identity, a scope nobody consented to, a policy decision
-the run went ahead against, a consequential effect nobody approved, a retrieval that
-returned another tenant's document, and an agent that exercised more authority than a
-handoff carried to it.</li>
+<li><strong>Runtime (dynamic, endpoint and trace)</strong> — 32 rules: direct prompt injection,
+DAN-style jailbreak, a multi-turn gradual-jailbreak scenario, indirect (RAG)
+injection, excessive tool-use agency, unbounded consumption (denial-of-wallet), the
+same category measured as cost asymmetry, output-secret leakage, the canary-proven
+system-prompt-leak check, six agentic checks — tool-result injection, credential
+exfiltration through a tool argument, over-broad tool arguments, memory poisoning
+across a session boundary, hidden context recited out of a tool schema, and a live MCP
+server's tool manifest — and eight that examine how a live MCP server <strong>authorizes a
+caller</strong>: whether it answers without a credential, whether its authorization surface
+is one a conforming client can use, whether it accepts a token it could not have
+issued, whether its session id is guessable or stands in for authentication, whether
+its scopes can express least privilege, whether it points its client at an address a
+client must not follow, whether it lets a client detect an authorization-code mix-up
+attack, and whether a tool listing marked cacheable by any client is one only an
+authorized caller may read. Nine of the runtime rules grade a <strong>recorded</strong> execution
+rather than a live one — a credential in a tool argument, a credential crossing two
+trust boundaries, a token outside its audience, a session standing in for an identity,
+a scope nobody consented to, a policy decision the run went ahead against, a
+consequential effect nobody approved, a retrieval that returned another tenant's
+document, and an agent that exercised more authority than a handoff carried to it.</li>
 </ul>
 <p>You never pick the layer by hand: <code>scan</code> runs the build layer, <code>probe</code> and
 <code>monitor</code> run the runtime layer against a live system, and <code>analyze-trace</code> runs the part
@@ -414,14 +420,14 @@ the whole extensibility story in one folder.</p>
 <hr />
 <h2 id="7-central-monitoring-and-why-the-collector-is-separate">7. Central monitoring, and why the collector is separate</h2>
 <p>Everything above works <strong>fully offline</strong> — every rule, evaluator, report format,
-and run mode, with no required network beyond the target itself. When you want
-fleet-wide visibility, any run forwards its normalized findings to a collector
-with <code>--reporter server://…</code>, over a versioned JSON envelope (now v2, which
-carries the <code>unverified</code> channel so the collector can never render a false
-all-clear). Run the collector yourself (<code>guardana-server</code>, OSS — ingest/list/
-trend plus an opt-in monitoring dashboard, with auth and persistence on the
-roadmap), or use the planned managed cloud for a hosted version with richer
-dashboards and multi-team rollups.</p>
+and run mode, with no required network beyond the target itself. For fleet-wide
+visibility, a run forwards its normalized findings to a collector with
+<code>--reporter server://…</code>, over a versioned JSON envelope at schema version 8. The
+envelope carries the <code>unverified</code> channel so the collector cannot render a false
+all-clear. Run <code>guardana-server</code> yourself: it provides ingest, list, trend, and an
+opt-in monitoring dashboard, with scoped API-key authentication and PostgreSQL
+persistence. A managed cloud offering with richer dashboards and multi-team
+rollups remains planned.</p>
 <p><strong><code>guardana-core</code> never imports <code>guardana-server</code>, directly or transitively</strong> —
 enforced by an import-linter contract and a test, not by good intentions. That
 boundary is deliberate and load-bearing: the entire open-source engine is

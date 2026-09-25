@@ -35,9 +35,11 @@ Statuses in use:
 | Status | Meaning |
 |---|---|
 | `proposed` | written, not agreed |
+| `accepted` | accepted; no further implementation status applies |
 | `accepted, not yet implemented` | agreed; the code is not there yet |
 | `accepted, implemented — ships in the next release` | agreed and built; no release carries it yet |
 | `implemented in X` | shipped in that release |
+| `accepted · **Implemented in:** X` | accepted; the `**Implemented in:**` field records the shipping release |
 | `superseded by <file>` | a later document replaces it |
 
 ## A decision is not rewritten

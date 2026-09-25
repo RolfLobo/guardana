@@ -28,9 +28,11 @@ as `--target scheme://locator`. The command retains control of the target kind,
 budgets, policy, evidence, and exit behavior; the extension owns only how its
 locator becomes a target. `guardana doctor` shows which schemes were loaded.
 
-`guardana plan`, `target inspect`, `doctor`, `config explain`, `baseline`, `run
-inspect`, `run migrate`, `rules`, `taxonomy`, `rule test`, and `pack` support those
-main workflows. The [documentation map](docs/index.md) links each command guide.
+`guardana plan`, `target inspect`, `doctor`, `config explain`, `config validate`,
+`baseline`, `run inspect`, `run migrate`, `rules`, `taxonomy`, `rule test`,
+`pack`, `calibrate`, `init`, `new-rule`, `new-pack`, and `import-observations`
+support those main workflows. The [documentation map](docs/index.md) links each
+command guide.
 
 ## Evidence that does not fail open
 
@@ -107,10 +109,10 @@ and malformed configuration is rejected before a run starts.
 
 ## Policy and repeatability
 
-`guardana.yaml` selects rules, severity thresholds, evaluator settings, safety
-levels, budgets, required evidence, plugin trust, and redaction. Built-in presets
-cover CI, pre-training, and monitoring. Baselines are explicit, fingerprinted, and
-can expire; comparisons refuse changes that make the evidence incomparable.
+`guardana.yaml` selects rules, severity thresholds, evaluator settings, budgets,
+required evidence, and redaction. Built-in presets cover CI, pre-training, and
+monitoring. Baselines are explicit, fingerprinted, and can expire; comparisons
+refuse changes that make the evidence incomparable.
 
 Rules map to versioned OWASP LLM, OWASP Agentic, OWASP MCP, OWASP ML, MITRE ATLAS,
 and NIST AML references. `guardana taxonomy` resolves editions and crosswalks
@@ -128,10 +130,10 @@ without guessing from a short id.
 
 ## Extension surface
 
-Third-party packages can provide rules, evaluators, targets, and taxonomies through
-Python entry points. YAML rules cover static, scenario, and trajectory shapes, and
-every shape can declare the finding, clean, and inconclusive samples that `guardana
-rule test` runs without a network. `guardana new-pack` writes a complete pack —
+Third-party packages can provide rules, evaluators, targets, and taxonomies
+through Python entry points. YAML rules cover `prompt`, `scenario`, and `agent`
+endpoint shapes, and every shape can declare the finding, clean, and inconclusive
+samples that `guardana rule test` runs without a network. `guardana new-pack` writes a complete pack —
 manifest, entry points, one sampled rule per shape, a locator target and tests — that
 passes `pack validate` and `rule test` before it is edited. Pack manifests declare API
 compatibility and locks pin the exact installed extensions.

@@ -112,7 +112,7 @@
 <li><a href="design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
 <li><a href="design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
 <li><a href="design/declarative-fixtures.html">Declarative fixtures for scenarios and agent runs<span class="tag">implemented</span></a></li>
-<li><a href="design/pack-scaffolding.html">Scaffolding a pack<span class="tag">accepted</span></a></li>
+<li><a href="design/pack-scaffolding.html">Scaffolding a pack<span class="tag">implemented</span></a></li>
 <li><a href="design/repeated-trials.html">Repeated trials<span class="tag">implemented</span></a></li>
 <li><a href="design/documentation-site.html">A documentation site<span class="tag">implemented</span></a></li>
 <li><a href="design/judge-error-correction.html">Judge error in a measured rate<span class="tag">accepted</span></a></li>
@@ -511,9 +511,10 @@ class MyRule(Rule):
                     evidence=Evidence(summary=&quot;why this fired&quot;, detail=str(path)),
                 )
 </code></pre>
-<p><code>RuleContext.config</code> carries whatever the active profile's <code>rule_config</code>
-declares for this rule id (<code>ctx.get(key, default)</code>); none of the built-ins
-currently read it, but it's there for tunable checks.</p>
+<p><code>RuleContext.config</code> carries whatever the active profile's <code>rule_config</code> declares
+for this rule id (<code>ctx.get(key, default)</code>). Built-in readers include
+<code>guardana.supply_chain.hardcoded_secret</code>, which reads <code>entropy</code>, and the MCP
+server manifest rule, which reads <code>pin</code>.</p>
 <p><strong>Ask the target for parsed source — never parse it yourself.</strong> A scan runs
 every rule over the same tree, so a rule that reads and parses a file for itself
 multiplies the cost of the whole scan by the number of rules:</p>
