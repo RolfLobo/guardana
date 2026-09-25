@@ -19,17 +19,17 @@ guardana config explain
 ## `doctor` — what this installation is
 
 ```text
-✓ guardana-core: 0.7.0
-✓ guardana-rules: 0.7.0
-✓ guardana-cli: 0.7.0
-✓ guardana-report: 0.7.0
-✓ rules discovered: 32
-✓ evaluators discovered: 4
-✓ profile: ci parsed
-! fail_on_error: off — a check that could not run will not fail the build
+✓ guardana-core: 0.28.0
+✓ guardana-rules: 0.28.0
+✓ guardana-cli: 0.28.0
+✓ guardana-report: 0.28.0
+✓ rules discovered: 51
+✓ evaluators discovered: 5
+✓ target schemes: none (installed targets are Python-only)
+✓ profile: default parsed
 ! budgets: no ceiling set — a probe against a paid endpoint has no upper bound
 
-0 problem(s), 2 thing(s) worth knowing.
+0 problem(s), 1 thing(s) worth knowing.
 ```
 
 **It contacts nothing.** A diagnostic that costs money or shows up in somebody's

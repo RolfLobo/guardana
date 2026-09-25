@@ -2,12 +2,12 @@
 title: "Judge error in a measured rate"
 nav_order: 81
 summary: "sensitivity and specificity from the calibration corpus, a rate corrected for the judge's measured error with both uncertainties in its interval, and an explicit outcome when that error was never measured"
-status: accepted
+status: implemented
 ---
 
 # Judge error: a rate is only as honest as the thing that graded it
 
-**Status:** accepted, implemented — ships in the next release · **Written:** 2026-09-23 · **`ROADMAP.md` "Now", row 1**
+**Status:** implemented in 0.28.0 · **Written:** 2026-09-23 · **`ROADMAP.md` "Now", row 1**
 
 ## The question
 

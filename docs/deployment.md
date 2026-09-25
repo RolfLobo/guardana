@@ -137,7 +137,7 @@ Roll the *image* back to the matching tag at the same time. A collector older
 than its schema is exactly the situation `/readyz` and the version check exist to
 stop, and they will stop it.
 
-**Pin the image to a minor tag** (`:0.27`) rather than `latest`. You want fixes
+**Pin the image to a minor tag** (`:0.28`) rather than `latest`. You want fixes
 without a schema you did not plan for; `latest` gives you both.
 
 ## Backups, and restoring one
@@ -251,7 +251,7 @@ The image is the unit; Compose is a convenience:
 docker run -d --name guardana-collector \
   -e GUARDANA_DATABASE_URL="postgresql://guardana:…@db.internal:5432/guardana" \
   -p 127.0.0.1:8000:8000 \
-  ghcr.io/guardana/guardana-collector:0.27
+  ghcr.io/guardana/guardana-collector:0.28
 ```
 
 Or without a container at all — `pip install "guardana-server[serve]"`, then

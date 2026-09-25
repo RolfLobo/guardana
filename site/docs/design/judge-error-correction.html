@@ -115,7 +115,7 @@
 <li><a href="../design/pack-scaffolding.html">Scaffolding a pack<span class="tag">implemented</span></a></li>
 <li><a href="../design/repeated-trials.html">Repeated trials<span class="tag">implemented</span></a></li>
 <li><a href="../design/documentation-site.html">A documentation site<span class="tag">implemented</span></a></li>
-<li><a href="../design/judge-error-correction.html" aria-current="page">Judge error in a measured rate<span class="tag">accepted</span></a></li>
+<li><a href="../design/judge-error-correction.html" aria-current="page">Judge error in a measured rate<span class="tag">implemented</span></a></li>
 <li><a href="../design/regrading-stored-exchanges.html">Re-grading stored exchanges<span class="tag">proposed</span></a></li>
 <li><a href="../design/anytime-valid-monitoring.html">Anytime-valid monitoring<span class="tag">proposed</span></a></li>
 <li><a href="../design/run-manifest-v2.html">Run manifest v2<span class="tag">implemented</span></a></li>
@@ -132,7 +132,7 @@
 </ul>
 </nav>
 <main>
-<h1>Judge error: a rate is only as honest as the thing that graded it<span class="status accepted">accepted</span></h1><p class="lede">sensitivity and specificity from the calibration corpus, a rate corrected for the judge's measured error with both uncertainties in its interval, and an explicit outcome when that error was never measured</p><p><strong>Status:</strong> accepted, implemented — ships in the next release · <strong>Written:</strong> 2026-09-23 · <strong><code>ROADMAP.md</code> &quot;Now&quot;, row 1</strong></p>
+<h1>Judge error: a rate is only as honest as the thing that graded it<span class="status implemented">implemented</span></h1><p class="lede">sensitivity and specificity from the calibration corpus, a rate corrected for the judge's measured error with both uncertainties in its interval, and an explicit outcome when that error was never measured</p><p><strong>Status:</strong> implemented in 0.28.0 · <strong>Written:</strong> 2026-09-23 · <strong><code>ROADMAP.md</code> &quot;Now&quot;, row 1</strong></p>
 <h2 id="the-question">The question</h2>
 <p>A rate graded by a model inherits the model's mistakes. <code>llm_judge</code>, <code>guard</code>
 and the planned <code>reference_judge</code> are models. When a judge misses attacks, the
@@ -281,7 +281,7 @@ verdict.</li>
 </main>
 </div>
 <footer class="foot"><div class="bar">
-<span>Guardana 0.27.0 · Apache-2.0</span>
+<span>Guardana 0.28.0 · Apache-2.0</span>
 <a href="https://github.com/guardana/guardana/blob/main/docs/design/judge-error-correction.md">Edit this page on GitHub</a>
 <a href="../../llms.txt">llms.txt</a>
 </div></footer>
