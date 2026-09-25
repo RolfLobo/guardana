@@ -7,17 +7,7 @@ status: stable
 
 # Guardana in your test suite
 
-`guardana.testing.assert_secure` runs Guardana from inside an ordinary `pytest`
-test and fails it when the verdict is not a pass.
-
-It exists because a security check that needs its own command, its own pipeline
-stage and its own report is a check somebody runs on Tuesdays. A team already
-runs `pytest`; this puts the verification where they already are, with no new
-pipeline to own and no report to go and read.
-
-Same rules, same policy, same redaction and the same three-state gate as
-[`guardana scan`](usage-scan.md) and [`guardana probe`](usage-probe.md) — a
-verdict does not change because the runner did.
+`guardana.testing.assert_secure` runs Guardana in `pytest` when you need a security verdict in a test. It uses the same rules, policy, redaction, and gate as [`guardana scan`](usage-scan.md) and [`guardana probe`](usage-probe.md).
 
 ```bash
 pip install guardana-cli   # brings the engine, the rules and the reporters

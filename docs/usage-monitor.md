@@ -7,10 +7,7 @@ status: stable
 
 # `guardana monitor` — a long-running sampling observer
 
-Runs the same endpoint rules as `probe`, but repeatedly, on an interval,
-next to a served model — and alerts when something changes. It is
-explicitly a **sampling observer**, not an inline production sidecar: it
-polls, it doesn't intercept traffic.
+`guardana monitor` runs the same endpoint rules as `probe` on an interval next to a served model when you need to detect changes. It alerts when something changes. As a **sampling observer**, it polls outside the request path; it does not intercept traffic.
 
 ```bash
 guardana monitor (--url <base-url> --model <name> | --target <scheme://locator>) [OPTIONS]

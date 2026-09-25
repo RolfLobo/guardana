@@ -7,10 +7,7 @@ status: stable
 
 # `guardana run` — reading a saved run
 
-A run saved with `--output` is not just a list of findings. It carries a **run
-manifest**: what was examined, by which software, under which configuration and
-limits, at what cost, and how it was gated. That is what makes a run evidence
-rather than a screenshot — and what `guardana diff` compares.
+`guardana run inspect` shows a saved run when you need to review its manifest or compare it with `guardana diff`. A run saved with `--output` records its target, configuration, limits, cost, and gate.
 
 ```bash
 guardana scan . --format json --output run.json
@@ -35,12 +32,7 @@ run 0191d4c2-8f1a-7c3e-9b21-6f0a2d8e4c11
   evidence:  full
 ```
 
-`--format json` prints the manifest itself, for anything that would rather parse
-than read.
-
-`requests: 0` above is a **measurement** — a file scan sends nothing. Tokens are
-`not recorded` because there was no model to report them. The next section is
-about why those two are printed differently.
+`--format json` prints the manifest. `requests: 0` is measured; tokens are `not recorded`.
 
 ## What a run costs
 
@@ -134,7 +126,8 @@ parametrised over every field a version-1 run could be missing.
 
 The saved-run schema lives at
 [`schemas/run-v8.schema.json`](../schemas/run-v8.schema.json), identified by
-`https://guardana.dev/schemas/run/v8.schema.json`. The version is in the identifier,
+`https://guardana.dev/schemas/run/v8.schema.json`, and the site serves every schema
+at the URL its identifier names. The version is in the identifier,
 so a consumer can tell which contract it is holding before parsing anything; it
 changes whenever the change is not backwards-compatible. A test validates what
 Guardana writes against that file, so the schema cannot drift away from the tool.

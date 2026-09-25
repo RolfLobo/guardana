@@ -1,0 +1,24 @@
+/* Guardana visual system v1: fonts, colour and type tokens.
+   Published once and never edited in place; a change is v2 at a new path. SHA256SUMS lists every file. */
+@font-face{font-family:"Plex Sans";font-weight:400;font-display:swap;src:url("fonts/ibm-plex-sans-latin-400-normal.woff2") format("woff2")}
+@font-face{font-family:"Plex Sans";font-weight:500;font-display:swap;src:url("fonts/ibm-plex-sans-latin-500-normal.woff2") format("woff2")}
+@font-face{font-family:"Plex Sans";font-weight:600;font-display:swap;src:url("fonts/ibm-plex-sans-latin-600-normal.woff2") format("woff2")}
+@font-face{font-family:"Plex Sans";font-weight:700;font-display:swap;src:url("fonts/ibm-plex-sans-latin-700-normal.woff2") format("woff2")}
+@font-face{font-family:"Plex Mono";font-weight:400;font-display:swap;src:url("fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2")}
+@font-face{font-family:"Plex Mono";font-weight:500;font-display:swap;src:url("fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2")}
+
+:root{
+  color-scheme:light dark;
+  --bg:#FBFBFD; --panel:#FFFFFF; --ink:#0F1115; --muted:#566070; --faint:#8A92A0; --line:#E6E8EF;
+  --brand:#5B3DF5; --brand-ink:#4A2FE0; --brand-soft:#F0ECFF;
+  --critical:#B42318; --high:#C2410C; --medium:#A16207; --low:#2F6BB3; --ok:#30A46C;
+  --mono:"Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:"Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#090B10; --panel:#11141C; --ink:#ECEEF3; --muted:#9BA4B4; --faint:#6C7486; --line:#1F2432;
+    --brand:#9B8CFF; --brand-ink:#B9AFFF; --brand-soft:rgba(155,140,255,.13);
+    --critical:#F97066; --high:#FB923C; --medium:#FACC15; --low:#7CB4F5; --ok:#4CC38A;
+  }
+}

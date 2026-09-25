@@ -6,12 +6,13 @@
 <title>Architecture — Guardana documentation</title>
 <meta name="description" content="the five abstractions, the Registry, the core↔server boundary">
 <link rel="canonical" href="https://guardana.dev/docs/architecture">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/brand/v1/tokens.css">
 <link rel="stylesheet" href="docs.css">
 </head>
 <body>
 <header class="top"><div class="bar">
-<a class="mark" href="../">guard<span>ana</span></a>
+<a class="mark" href="../"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.8 4.5 5.6v6.1c0 4.6 3.2 8.2 7.5 9.5 4.3-1.3 7.5-4.9 7.5-9.5V5.6z" style="color:var(--brand)"/><path d="m8.6 12.1 2.4 2.4 4.5-4.8"/></svg><span class="w">guard<b>ana</b></span></a>
 <nav>
 <a href="index.html">Documentation</a>
 <a href="rules/index.html">Rules</a>
@@ -19,7 +20,7 @@
 </nav>
 </div></header>
 <div class="shell">
-<nav class="side">
+<nav class="side" aria-label="Documentation">
 <ul class="home"><li><a href="index.html">Overview</a></li></ul>
 <h2>First run</h2><ul>
 <li><a href="how-it-works.html">How Guardana works</a></li>
@@ -85,6 +86,7 @@
 <li><a href="design/audit-0.23-market.html">The 0.23 repository and market audit<span class="tag">accepted</span></a></li>
 <li><a href="design/audit-0.25-market.html">The 0.25 roadmap and market audit<span class="tag">accepted</span></a></li>
 <li><a href="design/audit-0.26-measurement.html">The 0.26 measurement audit<span class="tag">accepted</span></a></li>
+<li><a href="design/guardana-and-control.html">Guardana and Guardana Control<span class="tag">accepted</span></a></li>
 </ul>
 <h2>Maintainers</h2><ul>
 <li><a href="maintainers/github-setup.html">GitHub repository setup</a></li>
@@ -97,7 +99,7 @@
 <li><a href="design/framework-adapters.html">Framework adapters<span class="tag">implemented</span></a></li>
 <li><a href="design/assessment-channel.html">The assessment channel<span class="tag">accepted</span></a></li>
 <li><a href="design/capability-protocols.html">Capability protocols<span class="tag">accepted</span></a></li>
-<li><a href="design/production-intake.html">Production intake<span class="tag">proposed</span></a></li>
+<li><a href="design/production-intake.html">Production intake<span class="tag">superseded</span></a></li>
 <li><a href="design/audit-0.21.html">The 0.21 audit<span class="tag">accepted</span></a></li>
 <li><a href="design/audit-0.22.html">The 0.22 audit<span class="tag">accepted</span></a></li>
 <li><a href="design/security-contracts.html">Security contracts<span class="tag">implemented</span></a></li>
@@ -131,6 +133,122 @@
 <li><a href="design/panel-sessions.html">Panel sessions<span class="tag">accepted</span></a></li>
 </ul>
 </nav>
+<details class="mnav">
+<summary>Menu · <b>Architecture</b></summary>
+<nav class="inner" aria-label="Documentation">
+<ul class="home"><li><a href="index.html">Overview</a></li></ul>
+<h2>First run</h2><ul>
+<li><a href="how-it-works.html">How Guardana works</a></li>
+<li><a href="install.html">Installing</a></li>
+<li><a href="usage-testing.html">In your test suite</a></li>
+<li><a href="usage-scan.html">guardana scan</a></li>
+<li><a href="usage-probe.html">guardana probe</a></li>
+</ul>
+<h2>Run and policy</h2><ul>
+<li><a href="safe-testing.html">Safe active testing</a></li>
+<li><a href="usage-doctor.html">guardana doctor</a></li>
+<li><a href="usage-target.html">guardana target inspect</a></li>
+<li><a href="usage-plan.html">guardana plan</a></li>
+<li><a href="exit-codes.html">Exit codes</a></li>
+<li><a href="profiles.html">Profiles — guardana.yaml</a></li>
+</ul>
+<h2>Evidence and regression</h2><ul>
+<li><a href="usage-baseline.html">guardana baseline</a></li>
+<li><a href="usage-diff.html">guardana diff</a></li>
+<li><a href="usage-monitor.html">guardana monitor</a></li>
+<li><a href="usage-run.html">guardana run</a></li>
+<li><a href="usage-calibrate.html">guardana calibrate</a></li>
+<li><a href="privacy.html">Evidence and redaction</a></li>
+</ul>
+<h2>Recorded applications</h2><ul>
+<li><a href="usage-analyze-trace.html">guardana analyze-trace</a></li>
+<li><a href="usage-trace-inspect.html">guardana trace inspect</a></li>
+<li><a href="usage-contracts.html">Security contracts</a></li>
+<li><a href="usage-import-observations.html">guardana import-observations</a></li>
+<li><a href="writing-an-integrator.html">Writing an integrator<span class="tag">beta</span></a></li>
+</ul>
+<h2>Rules and extensions</h2><ul>
+<li><a href="usage-rules.html">guardana rules</a></li>
+<li><a href="usage-taxonomy.html">guardana taxonomy</a></li>
+<li><a href="writing-rules.html">Writing rules</a></li>
+<li><a href="usage-rule-test.html">guardana rule test</a></li>
+<li><a href="usage-new-pack.html">guardana new-pack</a></li>
+<li><a href="usage-pack.html">guardana pack</a></li>
+<li><a href="extending.html">Extending Guardana</a></li>
+<li><a href="model-formats.html">Reading model formats</a></li>
+</ul>
+<h2>Collector and deployment</h2><ul>
+<li><a href="integrations.html">CI and pre-commit</a></li>
+<li><a href="deployment.html">Deploying the collector<span class="tag">beta</span></a></li>
+<li><a href="usage-collector.html">The collector<span class="tag">beta</span></a></li>
+</ul>
+<h2>Architecture and security</h2><ul>
+<li><a href="product-status.html">Product status</a></li>
+<li><a href="threat-model.html">Threat model</a></li>
+<li><a href="architecture.html" aria-current="page">Architecture</a></li>
+</ul>
+<h2>Reference</h2><ul>
+<li><a href="rules/index.html">Rule explorer</a></li>
+<li><a href="generated/rule-summary.html">Rule summary</a></li>
+<li><a href="generated/rule-catalog.html">Rule catalog</a></li>
+<li><a href="generated/evaluator-catalog.html">Evaluator catalog</a></li>
+<li><a href="generated/taxonomy-coverage.html">Taxonomy coverage</a></li>
+</ul>
+<h2>Design documents</h2><ul>
+<li><a href="design/README.html">How these are written</a></li>
+</ul>
+<h2>Project direction</h2><ul>
+<li><a href="design/audit-0.23-market.html">The 0.23 repository and market audit<span class="tag">accepted</span></a></li>
+<li><a href="design/audit-0.25-market.html">The 0.25 roadmap and market audit<span class="tag">accepted</span></a></li>
+<li><a href="design/audit-0.26-measurement.html">The 0.26 measurement audit<span class="tag">accepted</span></a></li>
+<li><a href="design/guardana-and-control.html">Guardana and Guardana Control<span class="tag">accepted</span></a></li>
+</ul>
+<h2>Maintainers</h2><ul>
+<li><a href="maintainers/github-setup.html">GitHub repository setup</a></li>
+<li><a href="maintainers/ops-catalogue.html">Operations catalogue</a></li>
+<li><a href="maintainers/lessons.html">Lessons</a></li>
+</ul>
+<h2>Also here</h2><ul>
+<li><a href="design/trace-domain-model.html">The Trace domain model<span class="tag">implemented</span></a></li>
+<li><a href="design/trace-producer.html">Producing a trace<span class="tag">implemented</span></a></li>
+<li><a href="design/framework-adapters.html">Framework adapters<span class="tag">implemented</span></a></li>
+<li><a href="design/assessment-channel.html">The assessment channel<span class="tag">accepted</span></a></li>
+<li><a href="design/capability-protocols.html">Capability protocols<span class="tag">accepted</span></a></li>
+<li><a href="design/production-intake.html">Production intake<span class="tag">superseded</span></a></li>
+<li><a href="design/audit-0.21.html">The 0.21 audit<span class="tag">accepted</span></a></li>
+<li><a href="design/audit-0.22.html">The 0.22 audit<span class="tag">accepted</span></a></li>
+<li><a href="design/security-contracts.html">Security contracts<span class="tag">implemented</span></a></li>
+<li><a href="design/mcp-protocol-eras.html">MCP has two eras<span class="tag">implemented</span></a></li>
+<li><a href="design/mcp-authorization-depth.html">MCP authorization depth<span class="tag">implemented</span></a></li>
+<li><a href="design/taxonomy-editions.html">Taxonomy editions<span class="tag">implemented</span></a></li>
+<li><a href="design/extension-author-tooling.html">Extension author tooling<span class="tag">accepted</span></a></li>
+<li><a href="design/target-locators.html">Target locators<span class="tag">implemented</span></a></li>
+<li><a href="design/output-plugins.html">Output plugins<span class="tag">proposed</span></a></li>
+<li><a href="design/quality-suites.html">Quality suites<span class="tag">proposed</span></a></li>
+<li><a href="design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
+<li><a href="design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
+<li><a href="design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
+<li><a href="design/declarative-fixtures.html">Declarative fixtures for scenarios and agent runs<span class="tag">implemented</span></a></li>
+<li><a href="design/pack-scaffolding.html">Scaffolding a pack<span class="tag">implemented</span></a></li>
+<li><a href="design/repeated-trials.html">Repeated trials<span class="tag">implemented</span></a></li>
+<li><a href="design/documentation-site.html">A documentation site<span class="tag">implemented</span></a></li>
+<li><a href="design/judge-error-correction.html">Judge error in a measured rate<span class="tag">implemented</span></a></li>
+<li><a href="design/regrading-stored-exchanges.html">Re-grading stored exchanges<span class="tag">proposed</span></a></li>
+<li><a href="design/anytime-valid-monitoring.html">Anytime-valid monitoring<span class="tag">proposed</span></a></li>
+<li><a href="design/run-manifest-v2.html">Run manifest v2<span class="tag">implemented</span></a></li>
+<li><a href="design/collector-domain-model.html">Collector domain model<span class="tag">superseded</span></a></li>
+<li><a href="design/privacy-and-redaction.html">Privacy and redaction<span class="tag">implemented</span></a></li>
+<li><a href="design/exit-codes.html">Exit codes and gate semantics<span class="tag">implemented</span></a></li>
+<li><a href="design/collector-persistence.html">Collector persistence<span class="tag">implemented</span></a></li>
+<li><a href="design/collector-tenancy.html">Collector tenancy<span class="tag">implemented</span></a></li>
+<li><a href="design/ai-systems-and-deployments.html">AI systems and deployments<span class="tag">implemented</span></a></li>
+<li><a href="design/collector-runs-and-findings.html">Runs and findings<span class="tag">accepted</span></a></li>
+<li><a href="design/finding-lifecycle-and-waivers.html">Finding lifecycle and waivers<span class="tag">accepted</span></a></li>
+<li><a href="design/audit-retention-and-deletion.html">Audit, retention and deletion<span class="tag">accepted</span></a></li>
+<li><a href="design/panel-sessions.html">Panel sessions<span class="tag">accepted</span></a></li>
+</ul>
+</nav>
+</details>
 <main>
 <h1>Architecture</h1><p class="lede">the five abstractions, the Registry, the core↔server boundary</p><h2 id="packages">Packages</h2>
 <pre><code>guardana-core     Target / Rule / Evaluator / Finding / Profile,
@@ -148,7 +266,7 @@ guardana-server    OPTIONAL collector. Ingests normalized Findings from many
                    agents; list/trend view. A separate, separately-deployed
                    service.
 </code></pre>
-<p>Each is <code>src/guardana/&lt;name&gt;</code> — a PEP 420 namespace package. No package
+<figure class="dg" id="dg8e09600"><style>.dg{margin:28px 0 32px;container-type:inline-size;overflow-x:auto}.dg svg{display:block;height:auto;margin:0 auto}.dg .dg-n{display:none}.dg text{text-anchor:middle;dominant-baseline:central}.dg .n rect,.dg .n path{fill:var(--panel,#fff);stroke:var(--line,#E6E8EF);stroke-width:1.2}.dg .n .lip{fill:none}.dg .n text{fill:var(--ink,#0F1115);font:500 13px var(--sans,system-ui,sans-serif)}.dg .accent rect,.dg .accent path{fill:var(--brand-soft,#F0ECFF);stroke:var(--brand,#5B3DF5)}.dg .accent .lip{fill:none}.dg .accent text{fill:var(--brand-ink,#4A2FE0)}.dg .cmd text{font:400 12.5px var(--mono,ui-monospace,monospace)}.dg .muted rect,.dg .muted path{stroke-dasharray:4 3}.dg .muted text{fill:var(--muted,#566070)}.dg .e{fill:none;stroke:var(--faint,#8A92A0);stroke-width:1.4}.dg .e.dot{stroke-dasharray:3 4}.dg .e.main{stroke:var(--brand,#5B3DF5);stroke-width:1.8;stroke-dasharray:7 5;animation:dg-flow 1.4s linear infinite}.dg .h{fill:var(--faint,#8A92A0)}.dg .h.main{fill:var(--brand,#5B3DF5)}.dg .g rect{fill:color-mix(in srgb,var(--brand-soft,#F0ECFF) 45%,transparent);stroke:var(--line,#E6E8EF)}.dg .g text{text-anchor:start;font:500 11px var(--mono,ui-monospace,monospace);letter-spacing:.08em;text-transform:uppercase;fill:var(--muted,#566070)}.dg .l rect{fill:var(--bg,#FBFBFD)}.dg .l text{font:400 11.5px var(--mono,ui-monospace,monospace);fill:var(--muted,#566070)}@keyframes dg-flow{to{stroke-dashoffset:-24}}@media (prefers-reduced-motion:reduce){.dg .e.main{animation:none}}</style><style>@container (max-width:593.6px){#dg8e09600 .dg-w{display:none}#dg8e09600 .dg-n{display:block}}</style><svg class="dg-w" style="width:100%;max-width:742px" viewBox="0 0 742 176" width="742" height="176" role="img" aria-labelledby="dg8e09600w-t dg8e09600w-d" xmlns="http://www.w3.org/2000/svg"><title id="dg8e09600w-t">Guardana&#x27;s five packages</title><desc id="dg8e09600w-d">guardana-cli runs guardana-core, which discovers the built-in rules in guardana-rules and the rules in your own extension packages. guardana-report renders the results. guardana-server, the optional collector, receives a versioned envelope over HTTP and is never imported by the engine.</desc><defs><marker id="dg8e09600w-solid" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="h solid" d="M0 0L10 5L0 10z"/></marker><marker id="dg8e09600w-main" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="h main" d="M0 0L10 5L0 10z"/></marker></defs><path class="e main" d="M144.5 23C176.2 23 176.2 88 208 88" marker-end="url(#dg8e09600w-main)"/><path class="e solid" d="M152 79C180 79 180 88 208 88" marker-end="url(#dg8e09600w-solid)"/><path class="e dot" d="M141.5 144C174.8 144 174.8 88 208 88" marker-end="url(#dg8e09600w-solid)"/><path class="e main" d="M397 88C484.2 88 484.2 51 571.5 51" marker-end="url(#dg8e09600w-main)"/><path class="e dot" d="M397 88C478.5 88 478.5 116 560 116" marker-end="url(#dg8e09600w-solid)"/><g class="l"><rect x="405" y="93" width="147" height="18" rx="5"/><text x="478.5" y="102">versioned envelope</text></g><g class="n cmd"><rect x="11.5" y="4" width="133" height="38" rx="19"/><text x="78" y="23">guardana-cli</text></g><g class="n accent"><rect x="208" y="51" width="189" height="74" rx="10"/><text x="302.5" y="70">guardana-core</text><text x="302.5" y="88">Target · Rule · Evaluator</text><text x="302.5" y="106">Finding · Profile · Runner</text></g><g class="n cmd"><rect x="4" y="60" width="148" height="38" rx="19"/><text x="78" y="79">guardana-rules</text></g><g class="n"><rect x="14.5" y="116" width="127" height="56" rx="10"/><text x="78" y="135">Your extension</text><text x="78" y="153">packages</text></g><g class="n cmd"><rect x="571.5" y="32" width="155" height="38" rx="19"/><text x="649" y="51">guardana-report</text></g><g class="n cmd"><rect x="560" y="88" width="178" height="56" rx="28"/><text x="649" y="107">guardana-server</text><text x="649" y="125">optional collector</text></g></svg><svg class="dg-n" style="width:100%;max-width:406.4px;min-width:304.8px" viewBox="0 0 406.4 306" width="406.4" height="306" role="img" aria-labelledby="dg8e09600n-t dg8e09600n-d" xmlns="http://www.w3.org/2000/svg"><title id="dg8e09600n-t">Guardana&#x27;s five packages</title><desc id="dg8e09600n-d">guardana-cli runs guardana-core, which discovers the built-in rules in guardana-rules and the rules in your own extension packages. guardana-report renders the results. guardana-server, the optional collector, receives a versioned envelope over HTTP and is never imported by the engine.</desc><defs><marker id="dg8e09600n-solid" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="h solid" d="M0 0L10 5L0 10z"/></marker><marker id="dg8e09600n-main" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="h main" d="M0 0L10 5L0 10z"/></marker></defs><path class="e main" d="M65 51C65 83.5 203.2 83.5 203.2 116" marker-end="url(#dg8e09600n-main)"/><path class="e solid" d="M206.2 51C206.2 83.5 203.2 83.5 203.2 116" marker-end="url(#dg8e09600n-solid)"/><path class="e dot" d="M344.4 60C344.4 88 203.2 88 203.2 116" marker-end="url(#dg8e09600n-solid)"/><path class="e main" d="M203.2 190C203.2 222.5 113.8 222.5 113.8 255" marker-end="url(#dg8e09600n-main)"/><path class="e dot" d="M203.2 190C203.2 218 281 218 281 246" marker-end="url(#dg8e09600n-solid)"/><g class="l"><rect x="168.6" y="209" width="147" height="18" rx="5"/><text x="242.1" y="218">versioned envelope</text></g><g class="n cmd"><rect x="4" y="13" width="122" height="38" rx="19"/><text x="65" y="32">guardana-cli</text></g><g class="n accent"><rect x="114.7" y="116" width="177" height="74" rx="10"/><text x="203.2" y="135">guardana-core</text><text x="203.2" y="153">Target · Rule · Evaluator</text><text x="203.2" y="171">Finding · Profile · Runner</text></g><g class="n cmd"><rect x="137.7" y="13" width="137" height="38" rx="19"/><text x="206.2" y="32">guardana-rules</text></g><g class="n"><rect x="286.4" y="4" width="116" height="56" rx="10"/><text x="344.4" y="23">Your extension</text><text x="344.4" y="41">packages</text></g><g class="n cmd"><rect x="41.8" y="255" width="144" height="38" rx="19"/><text x="113.8" y="274">guardana-report</text></g><g class="n cmd"><rect x="197.5" y="246" width="167" height="56" rx="28"/><text x="281" y="265">guardana-server</text><text x="281" y="283">optional collector</text></g></svg></figure><p>Each is <code>src/guardana/&lt;name&gt;</code> — a PEP 420 namespace package. No package
 directory has a bare <code>guardana/__init__.py</code>; only the subpackages
 (<code>guardana.core</code>, <code>guardana.rules</code>, etc.) do, so five distributions can
 contribute to the same <code>guardana.*</code> namespace without conflict.</p>
@@ -483,8 +601,10 @@ the collector.</p>
 </main>
 </div>
 <footer class="foot"><div class="bar">
-<span>Guardana 0.28.0 · Apache-2.0</span>
+<span class="who">Guardana 0.28.0 · Apache-2.0 ·
+maintained by Konrad Karauda</span>
 <a href="https://github.com/guardana/guardana/blob/main/docs/architecture.md">Edit this page on GitHub</a>
+<a href="https://github.com/guardana/guardana">github.com/guardana</a>
 <a href="../llms.txt">llms.txt</a>
 </div></footer>
 </body>

@@ -7,8 +7,7 @@ status: stable
 
 # `guardana doctor` and `guardana config`
 
-The commands for "why did that scan do what it did", and the ones a support
-conversation should start with.
+`guardana doctor` helps explain a scan when you need to troubleshoot its behavior. Use these commands to check configuration too.
 
 ```bash
 guardana doctor

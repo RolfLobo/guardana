@@ -7,9 +7,7 @@ status: stable
 
 # `guardana baseline` — accepted risk with an owner and an end date
 
-A waiver is the one place Guardana deliberately does not fail on a finding. The
-only thing that makes that defensible is that it stays **temporary and visible**:
-an accepted risk that never lapses is a finding somebody deleted.
+`guardana baseline` manages waivers when you need to accept a finding temporarily and visibly.
 
 ```bash
 guardana baseline create .                  # writes guardana-baseline.yaml

@@ -1,4 +1,4 @@
-"""Rewrite the landing page's factual claims from the registry.
+"""Rewrite the landing page's factual claims from the registry, and its diagrams from the docs.
 
 `bump_version.py` keeps the page's *version* correct on every release. Everything
 beside it was hand-maintained, which is how `site/index.html` advertised 25 rules
@@ -31,6 +31,10 @@ sys.path.insert(0, str(_REPO / "packages" / "guardana-rules" / "src"))
 from guardana.core.surface import Surface  # noqa: E402
 from guardana.rules import provide_rules  # noqa: E402
 
+from sitegen.diagram import figure  # noqa: E402
+from sitegen.errors import SiteBuildError  # noqa: E402
+from sitegen.render import parser  # noqa: E402
+
 # Each claim is (pattern with the number captured, template, what it counts).
 # Kept next to each other so adding a claim to the page means adding one line
 # here — the alternative is a fourth number nobody rewrites.
@@ -56,6 +60,54 @@ sentences one element away from a number this script had just corrected. That is
 same failure the docstring opens with, one layer in: automation covering the labels
 makes the prose beside them look maintained.
 """
+
+
+_DIAGRAM = re.compile(
+    r"(?P<open><!-- diagram: (?P<path>\S+) (?P<n>[1-9][0-9]*) -->)"
+    r"(?P<body>.*?)(?P<close><!-- /diagram -->)",
+    re.DOTALL,
+)
+"""A diagram drawn from the n-th `mermaid` block of a docs page, which stays its only source."""
+
+
+def _diagram(path: str, number: int, index: int) -> str:
+    source = _REPO / path
+    if not source.is_file():
+        sys.exit(f"error: site/index.html draws a diagram from {path}, which does not exist")
+    blocks = [
+        token.content
+        for token in parser().parse(source.read_text(encoding="utf-8"))
+        if token.type == "fence" and token.info.strip() == "mermaid"
+    ]
+    if number > len(blocks):
+        sys.exit(f"error: {path} has {len(blocks)} mermaid block(s); the page asks for #{number}")
+    try:
+        return figure(blocks[number - 1], 100 + index)
+    except SiteBuildError as exc:
+        sys.exit(f"error: {path} mermaid block #{number}: {exc}")
+
+
+def _rewrite_diagrams(text: str) -> tuple[str, list[str]]:
+    matches = list(_DIAGRAM.finditer(text))
+    opened, closed = text.count("<!-- diagram:"), text.count("<!-- /diagram -->")
+    if not opened == closed == len(matches) or any("<!-- diagram:" in m["body"] for m in matches):
+        sys.exit(
+            f"error: site/index.html has {opened} diagram marker(s), {closed} closing "
+            f"marker(s) and {len(matches)} well-formed pair(s); write each as "
+            f"`<!-- diagram: docs/<page>.md <n> -->…<!-- /diagram -->`"
+        )
+    changed: list[str] = []
+    index = 0
+
+    def replace(match: re.Match[str]) -> str:
+        nonlocal index
+        drawn = f"\n{_diagram(match['path'], int(match['n']), index)}\n"
+        index += 1
+        if match["body"] != drawn:
+            changed.append(f"diagram from {match['path']} #{match['n']}")
+        return f"{match['open']}{drawn}{match['close']}"
+
+    return _DIAGRAM.sub(replace, text), changed
 
 
 def _counts() -> dict[str, int]:
@@ -112,6 +164,8 @@ def main() -> int:
 
     original = _PAGE.read_text(encoding="utf-8")
     updated, changed = _rewrite(original, _counts())
+    updated, drawn = _rewrite_diagrams(updated)
+    changed += drawn
 
     if not changed:
         print("site/index.html is current")

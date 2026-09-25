@@ -7,10 +7,7 @@ status: stable
 
 # `guardana pack validate` — can this build load your pack, and does it do what it says
 
-1.0 promises that `Rule`, `Evaluator` and `Target` will not break under you. A
-promise is only worth something if you can check whether *this* build keeps it for
-*your* package — so a pack declares what it needs and what it provides, and this
-command answers both questions.
+`guardana pack validate` checks a pack's declarations when you need to verify extension compatibility for `Rule`, `Evaluator`, and `Target`.
 
 ```bash
 guardana pack validate

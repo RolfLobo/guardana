@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guardana and Guardana Control — Guardana documentation</title>
+<meta name="description" content="two independent products under one name: Guardana measures models, RAG pipelines and agents before they ship, Guardana Control supervises agents while they run; where the line runs, what they exchange, and how the two sites divide the work">
+<link rel="canonical" href="https://guardana.dev/docs/design/guardana-and-control">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../assets/brand/v1/tokens.css">
+<link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+<header class="top"><div class="bar">
+<a class="mark" href="../../"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.8 4.5 5.6v6.1c0 4.6 3.2 8.2 7.5 9.5 4.3-1.3 7.5-4.9 7.5-9.5V5.6z" style="color:var(--brand)"/><path d="m8.6 12.1 2.4 2.4 4.5-4.8"/></svg><span class="w">guard<b>ana</b></span></a>
+<nav>
+<a href="../index.html">Documentation</a>
+<a href="../rules/index.html">Rules</a>
+<a href="https://github.com/guardana/guardana">GitHub</a>
+</nav>
+</div></header>
+<div class="shell">
+<nav class="side" aria-label="Documentation">
+<ul class="home"><li><a href="../index.html">Overview</a></li></ul>
+<h2>First run</h2><ul>
+<li><a href="../how-it-works.html">How Guardana works</a></li>
+<li><a href="../install.html">Installing</a></li>
+<li><a href="../usage-testing.html">In your test suite</a></li>
+<li><a href="../usage-scan.html">guardana scan</a></li>
+<li><a href="../usage-probe.html">guardana probe</a></li>
+</ul>
+<h2>Run and policy</h2><ul>
+<li><a href="../safe-testing.html">Safe active testing</a></li>
+<li><a href="../usage-doctor.html">guardana doctor</a></li>
+<li><a href="../usage-target.html">guardana target inspect</a></li>
+<li><a href="../usage-plan.html">guardana plan</a></li>
+<li><a href="../exit-codes.html">Exit codes</a></li>
+<li><a href="../profiles.html">Profiles — guardana.yaml</a></li>
+</ul>
+<h2>Evidence and regression</h2><ul>
+<li><a href="../usage-baseline.html">guardana baseline</a></li>
+<li><a href="../usage-diff.html">guardana diff</a></li>
+<li><a href="../usage-monitor.html">guardana monitor</a></li>
+<li><a href="../usage-run.html">guardana run</a></li>
+<li><a href="../usage-calibrate.html">guardana calibrate</a></li>
+<li><a href="../privacy.html">Evidence and redaction</a></li>
+</ul>
+<h2>Recorded applications</h2><ul>
+<li><a href="../usage-analyze-trace.html">guardana analyze-trace</a></li>
+<li><a href="../usage-trace-inspect.html">guardana trace inspect</a></li>
+<li><a href="../usage-contracts.html">Security contracts</a></li>
+<li><a href="../usage-import-observations.html">guardana import-observations</a></li>
+<li><a href="../writing-an-integrator.html">Writing an integrator<span class="tag">beta</span></a></li>
+</ul>
+<h2>Rules and extensions</h2><ul>
+<li><a href="../usage-rules.html">guardana rules</a></li>
+<li><a href="../usage-taxonomy.html">guardana taxonomy</a></li>
+<li><a href="../writing-rules.html">Writing rules</a></li>
+<li><a href="../usage-rule-test.html">guardana rule test</a></li>
+<li><a href="../usage-new-pack.html">guardana new-pack</a></li>
+<li><a href="../usage-pack.html">guardana pack</a></li>
+<li><a href="../extending.html">Extending Guardana</a></li>
+<li><a href="../model-formats.html">Reading model formats</a></li>
+</ul>
+<h2>Collector and deployment</h2><ul>
+<li><a href="../integrations.html">CI and pre-commit</a></li>
+<li><a href="../deployment.html">Deploying the collector<span class="tag">beta</span></a></li>
+<li><a href="../usage-collector.html">The collector<span class="tag">beta</span></a></li>
+</ul>
+<h2>Architecture and security</h2><ul>
+<li><a href="../product-status.html">Product status</a></li>
+<li><a href="../threat-model.html">Threat model</a></li>
+<li><a href="../architecture.html">Architecture</a></li>
+</ul>
+<h2>Reference</h2><ul>
+<li><a href="../rules/index.html">Rule explorer</a></li>
+<li><a href="../generated/rule-summary.html">Rule summary</a></li>
+<li><a href="../generated/rule-catalog.html">Rule catalog</a></li>
+<li><a href="../generated/evaluator-catalog.html">Evaluator catalog</a></li>
+<li><a href="../generated/taxonomy-coverage.html">Taxonomy coverage</a></li>
+</ul>
+<h2>Design documents</h2><ul>
+<li><a href="../design/README.html">How these are written</a></li>
+</ul>
+<h2>Project direction</h2><ul>
+<li><a href="../design/audit-0.23-market.html">The 0.23 repository and market audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-0.25-market.html">The 0.25 roadmap and market audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-0.26-measurement.html">The 0.26 measurement audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/guardana-and-control.html" aria-current="page">Guardana and Guardana Control<span class="tag">accepted</span></a></li>
+</ul>
+<h2>Maintainers</h2><ul>
+<li><a href="../maintainers/github-setup.html">GitHub repository setup</a></li>
+<li><a href="../maintainers/ops-catalogue.html">Operations catalogue</a></li>
+<li><a href="../maintainers/lessons.html">Lessons</a></li>
+</ul>
+<h2>Also here</h2><ul>
+<li><a href="../design/trace-domain-model.html">The Trace domain model<span class="tag">implemented</span></a></li>
+<li><a href="../design/trace-producer.html">Producing a trace<span class="tag">implemented</span></a></li>
+<li><a href="../design/framework-adapters.html">Framework adapters<span class="tag">implemented</span></a></li>
+<li><a href="../design/assessment-channel.html">The assessment channel<span class="tag">accepted</span></a></li>
+<li><a href="../design/capability-protocols.html">Capability protocols<span class="tag">accepted</span></a></li>
+<li><a href="../design/production-intake.html">Production intake<span class="tag">superseded</span></a></li>
+<li><a href="../design/audit-0.21.html">The 0.21 audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-0.22.html">The 0.22 audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/security-contracts.html">Security contracts<span class="tag">implemented</span></a></li>
+<li><a href="../design/mcp-protocol-eras.html">MCP has two eras<span class="tag">implemented</span></a></li>
+<li><a href="../design/mcp-authorization-depth.html">MCP authorization depth<span class="tag">implemented</span></a></li>
+<li><a href="../design/taxonomy-editions.html">Taxonomy editions<span class="tag">implemented</span></a></li>
+<li><a href="../design/extension-author-tooling.html">Extension author tooling<span class="tag">accepted</span></a></li>
+<li><a href="../design/target-locators.html">Target locators<span class="tag">implemented</span></a></li>
+<li><a href="../design/output-plugins.html">Output plugins<span class="tag">proposed</span></a></li>
+<li><a href="../design/quality-suites.html">Quality suites<span class="tag">proposed</span></a></li>
+<li><a href="../design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
+<li><a href="../design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
+<li><a href="../design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
+<li><a href="../design/declarative-fixtures.html">Declarative fixtures for scenarios and agent runs<span class="tag">implemented</span></a></li>
+<li><a href="../design/pack-scaffolding.html">Scaffolding a pack<span class="tag">implemented</span></a></li>
+<li><a href="../design/repeated-trials.html">Repeated trials<span class="tag">implemented</span></a></li>
+<li><a href="../design/documentation-site.html">A documentation site<span class="tag">implemented</span></a></li>
+<li><a href="../design/judge-error-correction.html">Judge error in a measured rate<span class="tag">implemented</span></a></li>
+<li><a href="../design/regrading-stored-exchanges.html">Re-grading stored exchanges<span class="tag">proposed</span></a></li>
+<li><a href="../design/anytime-valid-monitoring.html">Anytime-valid monitoring<span class="tag">proposed</span></a></li>
+<li><a href="../design/run-manifest-v2.html">Run manifest v2<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-domain-model.html">Collector domain model<span class="tag">superseded</span></a></li>
+<li><a href="../design/privacy-and-redaction.html">Privacy and redaction<span class="tag">implemented</span></a></li>
+<li><a href="../design/exit-codes.html">Exit codes and gate semantics<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-persistence.html">Collector persistence<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-tenancy.html">Collector tenancy<span class="tag">implemented</span></a></li>
+<li><a href="../design/ai-systems-and-deployments.html">AI systems and deployments<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-runs-and-findings.html">Runs and findings<span class="tag">accepted</span></a></li>
+<li><a href="../design/finding-lifecycle-and-waivers.html">Finding lifecycle and waivers<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-retention-and-deletion.html">Audit, retention and deletion<span class="tag">accepted</span></a></li>
+<li><a href="../design/panel-sessions.html">Panel sessions<span class="tag">accepted</span></a></li>
+</ul>
+</nav>
+<details class="mnav">
+<summary>Menu · <b>Guardana and Guardana Control</b></summary>
+<nav class="inner" aria-label="Documentation">
+<ul class="home"><li><a href="../index.html">Overview</a></li></ul>
+<h2>First run</h2><ul>
+<li><a href="../how-it-works.html">How Guardana works</a></li>
+<li><a href="../install.html">Installing</a></li>
+<li><a href="../usage-testing.html">In your test suite</a></li>
+<li><a href="../usage-scan.html">guardana scan</a></li>
+<li><a href="../usage-probe.html">guardana probe</a></li>
+</ul>
+<h2>Run and policy</h2><ul>
+<li><a href="../safe-testing.html">Safe active testing</a></li>
+<li><a href="../usage-doctor.html">guardana doctor</a></li>
+<li><a href="../usage-target.html">guardana target inspect</a></li>
+<li><a href="../usage-plan.html">guardana plan</a></li>
+<li><a href="../exit-codes.html">Exit codes</a></li>
+<li><a href="../profiles.html">Profiles — guardana.yaml</a></li>
+</ul>
+<h2>Evidence and regression</h2><ul>
+<li><a href="../usage-baseline.html">guardana baseline</a></li>
+<li><a href="../usage-diff.html">guardana diff</a></li>
+<li><a href="../usage-monitor.html">guardana monitor</a></li>
+<li><a href="../usage-run.html">guardana run</a></li>
+<li><a href="../usage-calibrate.html">guardana calibrate</a></li>
+<li><a href="../privacy.html">Evidence and redaction</a></li>
+</ul>
+<h2>Recorded applications</h2><ul>
+<li><a href="../usage-analyze-trace.html">guardana analyze-trace</a></li>
+<li><a href="../usage-trace-inspect.html">guardana trace inspect</a></li>
+<li><a href="../usage-contracts.html">Security contracts</a></li>
+<li><a href="../usage-import-observations.html">guardana import-observations</a></li>
+<li><a href="../writing-an-integrator.html">Writing an integrator<span class="tag">beta</span></a></li>
+</ul>
+<h2>Rules and extensions</h2><ul>
+<li><a href="../usage-rules.html">guardana rules</a></li>
+<li><a href="../usage-taxonomy.html">guardana taxonomy</a></li>
+<li><a href="../writing-rules.html">Writing rules</a></li>
+<li><a href="../usage-rule-test.html">guardana rule test</a></li>
+<li><a href="../usage-new-pack.html">guardana new-pack</a></li>
+<li><a href="../usage-pack.html">guardana pack</a></li>
+<li><a href="../extending.html">Extending Guardana</a></li>
+<li><a href="../model-formats.html">Reading model formats</a></li>
+</ul>
+<h2>Collector and deployment</h2><ul>
+<li><a href="../integrations.html">CI and pre-commit</a></li>
+<li><a href="../deployment.html">Deploying the collector<span class="tag">beta</span></a></li>
+<li><a href="../usage-collector.html">The collector<span class="tag">beta</span></a></li>
+</ul>
+<h2>Architecture and security</h2><ul>
+<li><a href="../product-status.html">Product status</a></li>
+<li><a href="../threat-model.html">Threat model</a></li>
+<li><a href="../architecture.html">Architecture</a></li>
+</ul>
+<h2>Reference</h2><ul>
+<li><a href="../rules/index.html">Rule explorer</a></li>
+<li><a href="../generated/rule-summary.html">Rule summary</a></li>
+<li><a href="../generated/rule-catalog.html">Rule catalog</a></li>
+<li><a href="../generated/evaluator-catalog.html">Evaluator catalog</a></li>
+<li><a href="../generated/taxonomy-coverage.html">Taxonomy coverage</a></li>
+</ul>
+<h2>Design documents</h2><ul>
+<li><a href="../design/README.html">How these are written</a></li>
+</ul>
+<h2>Project direction</h2><ul>
+<li><a href="../design/audit-0.23-market.html">The 0.23 repository and market audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-0.25-market.html">The 0.25 roadmap and market audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-0.26-measurement.html">The 0.26 measurement audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/guardana-and-control.html" aria-current="page">Guardana and Guardana Control<span class="tag">accepted</span></a></li>
+</ul>
+<h2>Maintainers</h2><ul>
+<li><a href="../maintainers/github-setup.html">GitHub repository setup</a></li>
+<li><a href="../maintainers/ops-catalogue.html">Operations catalogue</a></li>
+<li><a href="../maintainers/lessons.html">Lessons</a></li>
+</ul>
+<h2>Also here</h2><ul>
+<li><a href="../design/trace-domain-model.html">The Trace domain model<span class="tag">implemented</span></a></li>
+<li><a href="../design/trace-producer.html">Producing a trace<span class="tag">implemented</span></a></li>
+<li><a href="../design/framework-adapters.html">Framework adapters<span class="tag">implemented</span></a></li>
+<li><a href="../design/assessment-channel.html">The assessment channel<span class="tag">accepted</span></a></li>
+<li><a href="../design/capability-protocols.html">Capability protocols<span class="tag">accepted</span></a></li>
+<li><a href="../design/production-intake.html">Production intake<span class="tag">superseded</span></a></li>
+<li><a href="../design/audit-0.21.html">The 0.21 audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-0.22.html">The 0.22 audit<span class="tag">accepted</span></a></li>
+<li><a href="../design/security-contracts.html">Security contracts<span class="tag">implemented</span></a></li>
+<li><a href="../design/mcp-protocol-eras.html">MCP has two eras<span class="tag">implemented</span></a></li>
+<li><a href="../design/mcp-authorization-depth.html">MCP authorization depth<span class="tag">implemented</span></a></li>
+<li><a href="../design/taxonomy-editions.html">Taxonomy editions<span class="tag">implemented</span></a></li>
+<li><a href="../design/extension-author-tooling.html">Extension author tooling<span class="tag">accepted</span></a></li>
+<li><a href="../design/target-locators.html">Target locators<span class="tag">implemented</span></a></li>
+<li><a href="../design/output-plugins.html">Output plugins<span class="tag">proposed</span></a></li>
+<li><a href="../design/quality-suites.html">Quality suites<span class="tag">proposed</span></a></li>
+<li><a href="../design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
+<li><a href="../design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
+<li><a href="../design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
+<li><a href="../design/declarative-fixtures.html">Declarative fixtures for scenarios and agent runs<span class="tag">implemented</span></a></li>
+<li><a href="../design/pack-scaffolding.html">Scaffolding a pack<span class="tag">implemented</span></a></li>
+<li><a href="../design/repeated-trials.html">Repeated trials<span class="tag">implemented</span></a></li>
+<li><a href="../design/documentation-site.html">A documentation site<span class="tag">implemented</span></a></li>
+<li><a href="../design/judge-error-correction.html">Judge error in a measured rate<span class="tag">implemented</span></a></li>
+<li><a href="../design/regrading-stored-exchanges.html">Re-grading stored exchanges<span class="tag">proposed</span></a></li>
+<li><a href="../design/anytime-valid-monitoring.html">Anytime-valid monitoring<span class="tag">proposed</span></a></li>
+<li><a href="../design/run-manifest-v2.html">Run manifest v2<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-domain-model.html">Collector domain model<span class="tag">superseded</span></a></li>
+<li><a href="../design/privacy-and-redaction.html">Privacy and redaction<span class="tag">implemented</span></a></li>
+<li><a href="../design/exit-codes.html">Exit codes and gate semantics<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-persistence.html">Collector persistence<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-tenancy.html">Collector tenancy<span class="tag">implemented</span></a></li>
+<li><a href="../design/ai-systems-and-deployments.html">AI systems and deployments<span class="tag">implemented</span></a></li>
+<li><a href="../design/collector-runs-and-findings.html">Runs and findings<span class="tag">accepted</span></a></li>
+<li><a href="../design/finding-lifecycle-and-waivers.html">Finding lifecycle and waivers<span class="tag">accepted</span></a></li>
+<li><a href="../design/audit-retention-and-deletion.html">Audit, retention and deletion<span class="tag">accepted</span></a></li>
+<li><a href="../design/panel-sessions.html">Panel sessions<span class="tag">accepted</span></a></li>
+</ul>
+</nav>
+</details>
+<main>
+<h1>Guardana and Guardana Control: measure before it ships, supervise while it runs<span class="status accepted">accepted</span></h1><p class="lede">two independent products under one name: Guardana measures models, RAG pipelines and agents before they ship, Guardana Control supervises agents while they run; where the line runs, what they exchange, and how the two sites divide the work</p><p><strong>Status:</strong> accepted · <strong>Written:</strong> 2026-09-24 · <strong>Revised:</strong> 2026-09-25, before
+publication, to follow Guardana Control's
+<a href="https://github.com/guardana/control/blob/main/docs/adr/0024-control-and-guardana-are-independent.md">ADR-0024</a>
+and the line between supervising agents and measuring answers · <strong>Scope:</strong> the product
+line between this repository and <code>guardana/control</code>, and the sites that present them</p>
+<h2 id="the-question">The question</h2>
+<p>Guardana Control is public at
+<a href="https://github.com/guardana/control">github.com/guardana/control</a>, in alpha. Today it is
+an MCP gateway: it sits in the request path of an agent's tool calls, decides each one
+(<code>ALLOW</code>, <code>DENY</code>, <code>REQUIRE_APPROVAL</code>, <code>ALLOW_WITH_OBLIGATIONS</code>, <code>INDETERMINATE</code>), enforces
+the decision and records who acted, on whose behalf, under which policy version and with
+what effect. Its roadmap goes further: procedures an agent is held to, a supervisor that
+reads agent telemetry and reports deviations and access attempts, a graph of every run,
+stopping an agent, the quality of a run's outcome, and one view over a fleet of planes.</p>
+<p>Guardana verifies from outside any request path: it scans artifacts, probes deployed
+systems, grades recorded runs, and measures and compares answers between releases.</p>
+<p>Read side by side, the two roadmaps meet in three places: Guardana's &quot;Next&quot; lane planned
+an intake of production traffic with continuous rules and alerting, which is what
+Control's supervisor does; Control's &quot;quality of outcomes&quot; reports change after a model,
+prompt or tool change, which is what <code>guardana diff</code> answers; and both grade the same
+agent behaviour — an unapproved side effect, a credential in a tool argument. This
+document draws the line so that neither product needs the other and neither takes the
+other's ground.</p>
+<h2 id="what-each-one-answers">What each one answers</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th></th>
+<th>Guardana</th>
+<th>Guardana Control</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The question</td>
+<td>Is this model, RAG pipeline or agent safe and good enough to ship, and did it get worse?</td>
+<td>May this agent do this now, and is it doing what it should?</td>
+</tr>
+<tr>
+<td>Where it runs</td>
+<td>Outside any request path: CI, a laptop, a schedule</td>
+<td>In the request path of tool calls, and beside the agents</td>
+</tr>
+<tr>
+<td>What it reads</td>
+<td>Artifacts, the answers to requests it sends, recordings and datasets handed to it as files</td>
+<td>Live tool calls, its own evidence, the telemetry agents emit</td>
+</tr>
+<tr>
+<td>What it produces</td>
+<td>Findings, measurements and a gate verdict per run</td>
+<td>A verdict per call, enforced; reports on runs; an evidence record</td>
+</tr>
+<tr>
+<td>When it acts</td>
+<td>Before release, and between releases</td>
+<td>While agents run</td>
+</tr>
+</tbody>
+</table></div>
+<figure class="dg" id="dg1db3e30"><style>.dg{margin:28px 0 32px;container-type:inline-size;overflow-x:auto}.dg svg{display:block;height:auto;margin:0 auto}.dg .dg-n{display:none}.dg text{text-anchor:middle;dominant-baseline:central}.dg .n rect,.dg .n path{fill:var(--panel,#fff);stroke:var(--line,#E6E8EF);stroke-width:1.2}.dg .n .lip{fill:none}.dg .n text{fill:var(--ink,#0F1115);font:500 13px var(--sans,system-ui,sans-serif)}.dg .accent rect,.dg .accent path{fill:var(--brand-soft,#F0ECFF);stroke:var(--brand,#5B3DF5)}.dg .accent .lip{fill:none}.dg .accent text{fill:var(--brand-ink,#4A2FE0)}.dg .cmd text{font:400 12.5px var(--mono,ui-monospace,monospace)}.dg .muted rect,.dg .muted path{stroke-dasharray:4 3}.dg .muted text{fill:var(--muted,#566070)}.dg .e{fill:none;stroke:var(--faint,#8A92A0);stroke-width:1.4}.dg .e.dot{stroke-dasharray:3 4}.dg .e.main{stroke:var(--brand,#5B3DF5);stroke-width:1.8;stroke-dasharray:7 5;animation:dg-flow 1.4s linear infinite}.dg .h{fill:var(--faint,#8A92A0)}.dg .h.main{fill:var(--brand,#5B3DF5)}.dg .g rect{fill:color-mix(in srgb,var(--brand-soft,#F0ECFF) 45%,transparent);stroke:var(--line,#E6E8EF)}.dg .g text{text-anchor:start;font:500 11px var(--mono,ui-monospace,monospace);letter-spacing:.08em;text-transform:uppercase;fill:var(--muted,#566070)}.dg .l rect{fill:var(--bg,#FBFBFD)}.dg .l text{font:400 11.5px var(--mono,ui-monospace,monospace);fill:var(--muted,#566070)}@keyframes dg-flow{to{stroke-dashoffset:-24}}@media (prefers-reduced-motion:reduce){.dg .e.main{animation:none}}</style><style>@container (max-width:758.8px){#dg1db3e30 .dg-w{display:none}#dg1db3e30 .dg-n{display:block}}</style><svg class="dg-w" style="width:100%;max-width:948.5px" viewBox="0 0 948.5 126" width="948.5" height="126" role="img" aria-labelledby="dg1db3e30w-t dg1db3e30w-d" xmlns="http://www.w3.org/2000/svg"><title id="dg1db3e30w-t">Guardana and Guardana Control</title><desc id="dg1db3e30w-d">Guardana checks models, RAG pipelines, agents and MCP servers before release, and its verdict gates the release. While the agent runs, Guardana Control sits between the agent and its tools, decides each tool call and records evidence. Neither product needs the other.</desc><defs><marker id="dg1db3e30w-solid" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="h solid" d="M0 0L10 5L0 10z"/></marker><marker id="dg1db3e30w-main" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="h main" d="M0 0L10 5L0 10z"/></marker></defs><path class="e solid" d="M172 63C200 63 200 63 228 63" marker-end="url(#dg1db3e30w-solid)"/><path class="e main" d="M372 63C412.2 63 412.2 63 452.5 63" marker-end="url(#dg1db3e30w-main)"/><path class="e main" d="M552.5 63C580.5 63 580.5 63 608.5 63" marker-end="url(#dg1db3e30w-main)"/><path class="e main" d="M774.5 63C802.5 63 802.5 32 830.5 32" marker-end="url(#dg1db3e30w-main)"/><path class="e solid" d="M774.5 63C809.2 63 809.2 100 844 100" marker-end="url(#dg1db3e30w-solid)"/><g class="l"><rect x="380" y="54" width="64.5" height="18" rx="5"/><text x="412.2" y="63">release</text></g><g class="n"><rect x="4" y="35" width="168" height="56" rx="10"/><text x="88" y="54">Models · RAG</text><text x="88" y="72">agents · MCP servers</text></g><g class="n accent"><rect x="228" y="35" width="144" height="56" rx="10"/><text x="300" y="54">Guardana</text><text x="300" y="72">scan · probe · diff</text></g><g class="n"><rect x="452.5" y="35" width="100" height="56" rx="10"/><text x="502.5" y="54">Agent in</text><text x="502.5" y="72">production</text></g><g class="n accent"><rect x="608.5" y="35" width="166" height="56" rx="10"/><text x="691.5" y="54">Guardana Control</text><text x="691.5" y="72">decides each tool call</text></g><g class="n"><rect x="830.5" y="4" width="114" height="56" rx="10"/><text x="887.5" y="23">Tools and</text><text x="887.5" y="41">MCP servers</text></g><g class="n"><path d="M844 84C844 76 931 76 931 84V116C931 124 844 124 844 116Z"/><path class="lip" d="M844 84C844 91.2 931 91.2 931 84"/><text x="887.5" y="103">Evidence</text></g></svg><svg class="dg-n" style="width:100%;max-width:198.7px;min-width:149px" viewBox="0 0 198.7 512" width="198.7" height="512" role="img" aria-labelledby="dg1db3e30n-t dg1db3e30n-d" xmlns="http://www.w3.org/2000/svg"><title id="dg1db3e30n-t">Guardana and Guardana Control</title><desc id="dg1db3e30n-d">Guardana checks models, RAG pipelines, agents and MCP servers before release, and its verdict gates the release. While the agent runs, Guardana Control sits between the agent and its tools, decides each tool call and records evidence. Neither product needs the other.</desc><defs><marker id="dg1db3e30n-solid" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="h solid" d="M0 0L10 5L0 10z"/></marker><marker id="dg1db3e30n-main" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="h main" d="M0 0L10 5L0 10z"/></marker></defs><path class="e solid" d="M99.4 60C99.4 88 99.4 88 99.4 116" marker-end="url(#dg1db3e30n-solid)"/><path class="e main" d="M99.4 172C99.4 200 99.4 200 99.4 228" marker-end="url(#dg1db3e30n-main)"/><path class="e main" d="M99.4 284C99.4 312 99.4 312 99.4 340" marker-end="url(#dg1db3e30n-main)"/><path class="e main" d="M99.4 396C99.4 424 55.5 424 55.5 452" marker-end="url(#dg1db3e30n-main)"/><path class="e solid" d="M99.4 396C99.4 427 156.7 427 156.7 458" marker-end="url(#dg1db3e30n-solid)"/><g class="l"><rect x="67.1" y="191" width="64.5" height="18" rx="5"/><text x="99.4" y="200">release</text></g><g class="n"><rect x="20.9" y="4" width="157" height="56" rx="10"/><text x="99.4" y="23">Models · RAG</text><text x="99.4" y="41">agents · MCP servers</text></g><g class="n accent"><rect x="32.9" y="116" width="133" height="56" rx="10"/><text x="99.4" y="135">Guardana</text><text x="99.4" y="153">scan · probe · diff</text></g><g class="n"><rect x="54.9" y="228" width="89" height="56" rx="10"/><text x="99.4" y="247">Agent in</text><text x="99.4" y="265">production</text></g><g class="n accent"><rect x="21.9" y="340" width="155" height="56" rx="10"/><text x="99.4" y="359">Guardana Control</text><text x="99.4" y="377">decides each tool call</text></g><g class="n"><rect x="4" y="452" width="103" height="56" rx="10"/><text x="55.5" y="471">Tools and</text><text x="55.5" y="489">MCP servers</text></g><g class="n"><path d="M118.7 464C118.7 456 194.7 456 194.7 464V496C194.7 504 118.7 504 118.7 496Z"/><path class="lip" d="M118.7 464C118.7 471.2 194.7 471.2 194.7 464"/><text x="156.7" y="483">Evidence</text></g></svg></figure><p>Both refuse a false green in the same words: an <code>unverified</code> result is never clean, and an
+<code>INDETERMINATE</code> decision is never an allow. Both are Apache-2.0, have no telemetry, and put
+the commercial line in the same place: only hosting and curated content may be paid.</p>
+<h2 id="decisions">Decisions</h2>
+<h3 id="1-the-names-stay">1. The names stay</h3>
+<p>The verifier keeps the family name, <strong>Guardana</strong>; the inline product is <strong>Guardana
+Control</strong>. No package, command or repository is renamed. Renaming the verifier would touch
+every package, page and pinned workflow for a clarity gain the sites provide on their own.</p>
+<h3 id="2-the-line-live-agents-are-controls-measured-answers-are-guardanas">2. The line: live agents are Control's, measured answers are Guardana's</h3>
+<ul>
+<li><strong>Guardana Control owns everything that watches agents while they run</strong>: intake of live
+agent traffic and telemetry, procedure conformance, deviations, access attempts,
+unfinished runs, alerting on production runs, run graphs, the inventory of agents and
+tools, stopping an agent, and the outcome quality of live runs.</li>
+<li><strong>Guardana owns everything measured before release, under conditions it controls</strong>: the
+supply chain of models and artifacts; RAG retrieval, grounding and poisoning; answer
+quality and safety on versioned datasets, with repeated trials and calibrated judges;
+adversarial probes of models, agents and MCP servers; and the statistical comparison of
+two releases.</li>
+<li><strong>The test for a new feature is its input.</strong> Live production traffic makes it Control's.
+Requests Guardana sends, or a file somebody hands it, make it Guardana's.</li>
+</ul>
+<h3 id="3-independent-as-controls-adr-0024-states-from-its-side">3. Independent, as Control's ADR-0024 states from its side</h3>
+<ul>
+<li>Each product is complete on its own. Guardana's gate, tests and workflows install nothing
+from Control, and no Guardana roadmap row waits on a Control release.</li>
+<li>They meet only through formats each one publishes for anyone. Guardana's are its trace
+format, its saved-run and diff documents, its security contract files and its MCP pin
+file; Control's are its v1 wire contracts, its OTLP log records and its trail file.</li>
+<li>A bridge is optional and lives with the product that needs it. Control plans one in its
+<code>adapters/</code>: its evidence written in Guardana's trace format, and a Guardana contract
+turned into a signed Control policy. Guardana adds no Control-specific code to its
+engine, whose principle 1 already refuses a vendor in core; a trace is graded the same
+whoever wrote it.</li>
+<li>Golden fixtures for a bridge live with the bridge. No fixture is shared as a release
+condition of either project.</li>
+</ul>
+<h3 id="4-what-crosses-on-purpose">4. What crosses, on purpose</h3>
+<ol>
+<li><strong>Control's evidence, graded by Guardana after the fact.</strong> Guardana's trace rules
+(<code>guardana.trace.unapproved_side_effect</code>, <code>guardana.trace.credential_passthrough</code>,
+<code>guardana.trace.policy_decision_ignored</code>) and its security contracts need approvals,
+delegations, policy decisions and side effects, which agent frameworks do not record
+and Control does. Once Control's optional exporter writes Guardana's trace format — an
+item on Control's roadmap, not built — <code>guardana analyze-trace</code> grades a recorded run
+from staging, an incident or an audit sample, offline.</li>
+<li><strong>One MCP server, approved before release and held at run time.</strong> Guardana approves a
+server's manifest (<code>--write-mcp-pin</code>) and reports drift from it in CI; Control keeps
+its own fingerprints and stops a changed tool at run time. Each keeps its own format;
+translating one into the other is a bridge's job.</li>
+<li><strong>A policy seen from outside.</strong> Guardana probes an agent that happens to reach its tools
+through Control, as it would probe any endpoint, and <code>guardana diff</code> shows what changed.
+Control tests its own policies with its own scenarios; Guardana does not test Control
+policies as such.</li>
+<li><strong>A contract turned into a policy.</strong> A Guardana security contract stays the source for
+verification and a Control <code>agent-policy</code> document the source for enforcement. The
+one-way converter is Control's optional bridge, so no invariant language is shared.</li>
+</ol>
+<h3 id="5-what-overlaps-and-who-owns-it">5. What overlaps, and who owns it</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Owner</th>
+<th>The other one</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Blocking, holding for approval, obligations, pausing or stopping an agent</td>
+<td>Control</td>
+<td>never; Guardana stays out of the request path</td>
+</tr>
+<tr>
+<td>Intake of live agent traffic, traces, logs and process events</td>
+<td>Control</td>
+<td>reads exported files only, and runs no intake service</td>
+</tr>
+<tr>
+<td>Deviations from a procedure, access attempts, unfinished runs, alerts on production agents</td>
+<td>Control</td>
+<td>—</td>
+</tr>
+<tr>
+<td>The graph of a run, the inventory of agents and tools</td>
+<td>Control</td>
+<td>records which AI system and deployment a run verified, and keeps no agent inventory</td>
+</tr>
+<tr>
+<td>The outcome of live runs: finished, skipped or degraded; accepted or rejected by people; cost per outcome</td>
+<td>Control</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Answer quality and safety on a versioned dataset: suites, trials, judge calibration</td>
+<td>Guardana</td>
+<td>grows no datasets, assessors or judge calibration</td>
+</tr>
+<tr>
+<td>Whether a release got worse, under equal samples and trials (<code>guardana diff</code>)</td>
+<td>Guardana</td>
+<td>reports how live runs changed, which is observation, not a controlled comparison</td>
+</tr>
+<tr>
+<td>The attack library, adaptive attackers, probes of models, agents and MCP servers</td>
+<td>Guardana</td>
+<td>generates no attacks</td>
+</tr>
+<tr>
+<td>Model and artifact supply chain, RAG retrieval and grounding</td>
+<td>Guardana</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Scheduled synthetic re-verification (<code>guardana monitor</code>)</td>
+<td>Guardana</td>
+<td>does not probe</td>
+</tr>
+<tr>
+<td>Grading a recorded run for a release gate or an audit</td>
+<td>Guardana</td>
+<td>produces the recording</td>
+</tr>
+<tr>
+<td>Verification results over time (the collector)</td>
+<td>Guardana</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Decisions and evidence over time (the control plane)</td>
+<td>Control</td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<p>Where both need the same judgement at different times — a credential in a tool argument,
+an unapproved side effect — each implements it for its own moment and neither imports the
+other's. Guardana's trace rules never gain a streaming mode, and Control's detectors never
+become a release gate over a dataset.</p>
+<h3 id="6-two-sites-one-visual-system-each-repository-owns-its-own">6. Two sites, one visual system, each repository owns its own</h3>
+<ul>
+<li><code>guardana.dev</code> is built and deployed from this repository: the family page, Guardana's
+pages and <code>guardana.dev/docs/</code>.</li>
+<li><code>control.guardana.dev</code> is to be built and deployed from <code>guardana/control</code>, from its
+own <code>docs/</code> under its own checks; the host does not answer yet.</li>
+<li>The visual system — tokens, fonts, the mark — has one source, this repository,
+published at <code>guardana.dev/assets/brand/v1/</code> with a <code>SHA256SUMS</code> file, and never edited
+in place. Control's site is to vendor a pinned copy and check it against that digest;
+neither the site nor the check exists yet. Neither site loads anything from a third
+party.</li>
+<li>Each product page says what it is not, naming the other.</li>
+</ul>
+<h3 id="7-how-guardanadev-presents-control">7. How guardana.dev presents Control</h3>
+<p>The repository is public, so the landing page names Guardana Control, links its
+repository and states its status as its README states it: alpha, not to be deployed as a
+security boundary. Control's own site is marked as coming soon, and <code>guardana.dev</code> links
+no <code>control.guardana.dev</code> URL until that host answers; a link that fails is refused by
+this repository's documentation rules. On that day the links move to the subdomain and
+<code>llms.txt</code> points at <code>control.guardana.dev/llms.txt</code>.</p>
+<h3 id="8-the-roadmap-follows">8. The roadmap follows</h3>
+<p>Guardana's &quot;Next&quot; lane planned an OTLP intake with a queue, workers and continuous rules
+over recorded traffic. Under decision 2 that is Control's supervisor, so the lane keeps
+what does not watch production: continuous rules over synthetic runs with anytime-valid
+alerting, grading an exported sample offline, and outputs for Guardana's own results.
+<a href="production-intake.html"><code>production-intake.md</code></a> is superseded by this document.</p>
+<h2 id="rejected">Rejected</h2>
+<p><strong>One site built from both repositories.</strong> A build that checks out the other repository
+couples the release of one product to the state of the other, and a broken page in one
+blocks a deploy of both.</p>
+<p><strong><code>guardana.dev/control</code> served by a second Worker.</strong> One domain concentrates search
+signals, but a subdomain gives each repository an independent deployment with nothing to
+coordinate.</p>
+<p><strong>Renaming the verifier to Guardana Verify.</strong> See decision 1.</p>
+<p><strong>Live intake in Guardana.</strong> It would put Guardana beside the request path, rebuild
+Control's supervisor, and bring the queue, backpressure and workers of a system Guardana
+is not.</p>
+<p><strong>Shared schemas and fixtures as a release condition.</strong> It couples two release trains in
+two languages, and a change in one project could fail the other's gate.</p>
+<p><strong>A single source for invariants.</strong> A contract and a policy describe what an agent may do
+for different moments; a one-way converter gives teams one place to write it without
+making either project read the other's language.</p>
+<h2 id="open">Open</h2>
+<ul>
+<li><strong>Whether the collector and the control plane ever share a store</strong> for teams that run
+both. Until decided, neither grows a view of the other's data.</li>
+</ul>
+<h2 id="see-also">See also</h2>
+<ul>
+<li><a href="../threat-model.html"><code>../threat-model.md</code></a> — why Guardana is not an inline control</li>
+<li><a href="trace-domain-model.html"><code>trace-domain-model.md</code></a> — the trace a bridge from Control's evidence targets</li>
+<li><a href="security-contracts.html"><code>security-contracts.md</code></a> — the assertions Control's evidence makes checkable</li>
+<li><a href="anytime-valid-monitoring.html"><code>anytime-valid-monitoring.md</code></a> — the alerting rule the &quot;Next&quot; lane keeps</li>
+<li><a href="production-intake.html"><code>production-intake.md</code></a> — the intake design this document supersedes</li>
+</ul>
+
+</main>
+</div>
+<footer class="foot"><div class="bar">
+<span class="who">Guardana 0.28.0 · Apache-2.0 ·
+maintained by Konrad Karauda</span>
+<a href="https://github.com/guardana/guardana/blob/main/docs/design/guardana-and-control.md">Edit this page on GitHub</a>
+<a href="https://github.com/guardana/guardana">github.com/guardana</a>
+<a href="../../llms.txt">llms.txt</a>
+</div></footer>
+</body>
+</html>

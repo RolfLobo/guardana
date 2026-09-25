@@ -10,6 +10,9 @@ which Cloudflare reads for the security headers — applies to both.
 | `docs/` | the documentation site: every page of `docs/`, plus a page per rule and per filter | **generated** by `scripts/build_site.py` — never edit it, the whole tree is deleted and rewritten |
 | `llms.txt` | the [llms.txt](https://llmstxt.org) documentation map, so a model asking what this project is gets the docs rather than this page's markup | **generated** by `scripts/generate_llms_txt.py` from `docs/index.md` — never edit it |
 | `og.png` | the 1200×630 card a link preview shows in Slack, X and LinkedIn | rendered from `scripts/og_card.html`, deliberately and by hand (see below) |
+| `schemas/` | every JSON Schema in `schemas/`, served at the URL its `$id` names (`/schemas/run/v8.schema.json`) | **generated** by `scripts/build_site.py`, byte for byte — never edit it |
+| `assets/brand/v1/` | the visual system both sites share: `tokens.css` (fonts, colours, type), the IBM Plex files with their licence, `mark.svg`, `icon.svg` and `SHA256SUMS` | hand-written once and then frozen (see below) |
+| `favicon.svg` | the browser icon; the same drawing as `assets/brand/v1/icon.svg` | hand-written |
 
 Preview locally:
 
@@ -80,9 +83,10 @@ being true of the website too, not only the engine. Worth a check at
 Two mechanisms, because the page has two kinds of claim that go stale in
 different ways.
 
-**Version markers** — the `vX.Y.Z` in the header and the `guardana/guardana@vX.Y`
-Action pin — are rewritten by `scripts/bump_version.py` on every release, and the
-bump **refuses to run** if either marker has gone missing. Written as placeholders
+**Version markers** — the `vX.Y.Z` in the header, the `softwareVersion` in the
+structured data and the `guardana/guardana@vX.Y` Action pin — are rewritten by
+`scripts/bump_version.py` on every release, and the bump **refuses to run** if any
+of them has gone missing. Written as placeholders
 on purpose: a literal number in a sentence *explaining* how numbers stay current is
 one more number to forget, and this one sat eight releases behind while the marker
 it described was rewritten every time.
@@ -173,7 +177,39 @@ Two consequences worth stating, because both are choices:
   need `script-src 'self'` under `/docs/*`. The design document says that is the
   only reason worth taking it, and that `connect-src 'none'` stays either way —
   which `test_documentation_site.py` now pins.
-- **`/docs/*` loads no font from Google, unlike the landing page.** One request on
-  one page is a trade; the same request on a hundred and ninety pages is a security
-  project's documentation telling a third party who is reading it. The documentation
-  uses system fonts and carries the identity in its palette and layout instead.
+- **No page loads anything from another host.** IBM Plex is served from
+  `assets/brand/v1/fonts/`, and the policy in `_headers` names no third party;
+  `test_documentation_site.py` pins both for the landing page and the docs.
+
+## Diagrams
+
+A diagram is a `mermaid` fenced block in a docs page. GitHub renders the block as it
+is; `scripts/sitegen/diagram.py` draws the same graph as static SVG in the site's
+fonts and colours, light and dark, with no script. A left-to-right diagram also gets
+a top-to-bottom drawing that replaces it when its column is too narrow.
+
+The renderer reads a subset of Mermaid flowcharts, listed in its docstring:
+`flowchart LR|TD`, `accTitle:` and `accDescr:` (required, they are the text
+alternative), nodes with `[ ]`, `([ ])` and `[( )]`, edges `-->`, `-.->` and `==>`
+with an optional `|label|`, one-rank `subgraph`s, and the classes `accent`, `cmd`
+and `muted`. Anything else fails `build_site.py` with the line it could not read.
+
+The landing page takes its diagrams from the same blocks: `sync_site.py` fills each
+`<!-- diagram: docs/<page>.md <n> --> … <!-- /diagram -->` pair with the n-th block
+of that page, and `--check` fails when the drawing is stale. Edit the markdown, never
+the SVG in `index.html`.
+
+## The visual system, shared with Guardana Control
+
+`assets/brand/v1/` is the one source of the fonts, colours and mark of the
+Guardana sites. The landing page and every docs page link `tokens.css` before their
+own styles, which hold only what is theirs.
+
+**v1 is frozen.** A site built from another repository — Guardana Control's, once it
+has one — is meant to vendor a copy of this directory and check it against
+`SHA256SUMS`, so an edit in place would restyle a site this repository does not
+deploy.
+`test_documentation_site.py` checks that `SHA256SUMS` lists every file beside it and
+pins the digest of `SHA256SUMS` itself. A change is a new directory, `v2/`, with its
+own `SHA256SUMS` (`shasum -a 256` over every other file, paths relative to the
+directory, sorted), and the pages move to it in the same change.

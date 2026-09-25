@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Rebuilt guardana.dev.** A new landing page and documentation shell work from 360 px wide without sideways scroll. Documentation navigation folds into a menu under 980 px, and a dark scheme is available. IBM Plex is served locally; the Content-Security-Policy in `site/_headers` names no third-party host. The site runs no JavaScript, and CSS motion stops under `prefers-reduced-motion`. This addresses sideways scrolling on phones, documentation starting far below its navigation, and Google Fonts loading despite the no phone-home promise.
+- **Static diagrams.** `mermaid` blocks render as static SVG in the site's fonts and colours, in light and dark, without a script. GitHub still renders the same blocks. `scripts/sitegen/diagram.py` supports a subset of flowchart syntax and fails the build on anything else. `scripts/sync_site.py` takes the landing page diagrams from those blocks, so the diagrams stay in sync. They cover how Guardana checks an AI system (`docs/how-it-works.md`), the five packages (`docs/architecture.md`), and Guardana beside Guardana Control (`docs/design/guardana-and-control.md`).
+- **Schema URLs.** Every JSON Schema in `schemas/` is served at its `$id` URL, including `https://guardana.dev/schemas/run/v8.schema.json`, so validators can dereference a saved run's `$schema`. `llms.txt` lists the newest schema of each document.
+- **Structured data.** The landing page includes JSON-LD `SoftwareApplication` and `FAQPage` data to describe the software and its questions.
+- **Versioned visual system.** `/assets/brand/v1/` contains frozen tokens, fonts, a mark and a `SHA256SUMS` file. Changes are published as `v2` instead of editing `v1`, so existing references stay stable.
+- **Guardana Control status.** guardana.dev identifies Control as a separate, independent alpha project and links `https://github.com/guardana/control`. Control's website is not live, so the site links none of it.
+
+### Changed
+
+- **Project boundary.** Guardana measures models, RAG pipelines and answers before release; Guardana Control supervises agents while they run. The independent projects meet only through published formats. `ROADMAP.md` "Next" now describes continuous re-verification instead of live intake of production traffic. `docs/design/guardana-and-control.md` supersedes `docs/design/production-intake.md` to reflect that boundary.
+- **Shorter introductions.** `README.md`, `docs/how-it-works.md`, `docs/install.md` and the introductions of `docs/usage-*.md` are shorter. The README opens with a one-sentence definition of Guardana so readers can identify its purpose quickly.
+
+### Fixed
+
+- **Schema titles.** The `diff-v2` and `run-v6` titles now name their own versions instead of the previous versions.
+- **Landing page version.** Structured data no longer stays at 0.26.1: `scripts/bump_version.py` rewrites it on every release so it matches the released version.
+
 ## [0.28.0] - 2026-09-25 — qualifying calibration corrects judge-graded trials rates
 
 ### Added

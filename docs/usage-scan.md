@@ -7,10 +7,7 @@ status: stable
 
 # `guardana scan` — static, offline, CI-friendly
 
-Scans a directory as an **artifact target**: model files, dependency
-manifests, and source. No network access, no live model required. This is
-the fast, deterministic front door — the one that's safe to run on every
-commit.
+`guardana scan` checks a directory of model files, dependency manifests, and source when you need an offline check on a commit. It uses no network or live model.
 
 ```bash
 guardana scan [PATH] [OPTIONS]

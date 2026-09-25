@@ -17,6 +17,8 @@ from dataclasses import dataclass
 from markdown_it import MarkdownIt
 from markdown_it.token import Token
 
+from sitegen import diagram
+
 _PUNCTUATION = re.compile(r"[^\w\- ]", re.UNICODE)
 
 
@@ -140,7 +142,11 @@ def render(markdown: str, resolve: Callable[[str], str]) -> Rendered:
     md = parser()
     tokens = md.parse(markdown)
     headings = _headings(tokens)
+    drawn = 0
     for index, token in enumerate(tokens):
+        if token.type == "fence" and token.info.strip() == "mermaid":
+            token.type, token.content = "html_block", diagram.figure(token.content, drawn)
+            drawn += 1
         if token.type == "heading_open" and index in headings:
             token.attrSet("id", headings[index])
         for child in _inline_children(token):

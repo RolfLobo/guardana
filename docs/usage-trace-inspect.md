@@ -7,12 +7,7 @@ status: stable
 
 # `guardana trace inspect` — what a recorded execution can answer
 
-Grading a trace tells you whether invariants held. This tells you which questions
-the file can answer *at all* — before a run, before a policy, before a pipeline
-discovers it the hard way.
-
-It opens one file and no socket. It writes no run document, reaches no network,
-and exits `0` unless the file cannot be read.
+`guardana trace inspect` shows which evidence a trace records when you need to check coverage before analysis. It reads one file without network access, writes no run document, and exits `0` unless it cannot read the file.
 
 ```bash
 guardana trace inspect run.jsonl

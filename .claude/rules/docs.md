@@ -25,6 +25,9 @@ Procedure: the `docs` skill. Why: `docs/maintainers/lessons.md` § Documentation
   in flight and is not built.
 - **Design documents** are named for their topic, never a date, open with a `**Status:**` line,
   and are superseded rather than rewritten (`docs/design/README.md`).
+- **A diagram is a `mermaid` block** in the subset `scripts/sitegen/diagram.py` draws, with
+  `accTitle:` and `accDescr:`; the site and the landing page render it, GitHub shows it as
+  is. Never hand-edit the SVG `sync_site.py` writes into `site/index.html`.
 - **Generated trees are never edited by hand**: `docs/generated/`, `site/docs/`,
   `site/llms.txt`. Regenerate; `--check` is the gate.
 - **A push to `main` deploys `site/`** through Cloudflare before CI runs; the pre-push hook

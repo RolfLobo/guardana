@@ -7,12 +7,7 @@ status: stable
 
 # `guardana rule test` — a rule's own samples, run as a command
 
-A rule that cannot fire is caught by a positive sample. A rule that fires on
-everything is caught by a negative one. **A rule that cannot say "I could not tell"
-is caught by nothing** — and it is the one that will eventually report clean about
-something it never examined.
-
-That third sample is what this command exists for.
+`guardana rule test` checks positive, negative, and inconclusive samples when you need to verify a rule's classifications.
 
 ```bash
 guardana rule test 'acme.*'
@@ -22,11 +17,7 @@ guardana rule test 'acme.*'
 5 rule(s); 15 fixture(s) passed, 0 failed, 0 could not run. 0 rule(s) not fully sampled.
 ```
 
-Sends nothing anywhere — every fixture is a scripted double — so it is safe to run
-on every save. The same fact bounds what a fixture proves: it checks how a rule
-classifies the reply or the run it is handed. A scripted model answers the same
-whatever it is sent, so a fixture says nothing about whether the rule's prompts or
-tool results carry an attack.
+Scripted fixtures send nothing over the network. They test classification, but cannot show whether prompts or tool results carry an attack.
 
 ## Declaring fixtures in a YAML rule
 

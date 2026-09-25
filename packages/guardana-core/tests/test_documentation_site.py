@@ -10,12 +10,15 @@ Every check here reads `site/docs/` — what a visitor is actually served — ra
 than the markdown it came from.
 """
 
+import hashlib
+import json
 import re
 import subprocess
 import sys
 from pathlib import Path
 
 import pytest
+from guardana.core.manifest.serialize import SCHEMA_URL
 
 _HREF = re.compile(r'(?:href|src)="([^"]+)"')
 _ID = re.compile(r'id="([^"]+)"')
@@ -208,7 +211,10 @@ def test_a_representative_page_carries_its_own_title_and_navigation(page: str) -
     assert "<title>" in html
     assert "— Guardana documentation</title>" in html
     assert '<meta name="description"' in html
-    assert '<nav class="side">' in html
+    assert '<nav class="side"' in html
+    # A narrow screen gets the same navigation folded away, so content is the first thing
+    # it shows rather than a screen of links.
+    assert '<details class="mnav">' in html
     assert '<link rel="canonical" href="https://guardana.dev/docs/' in html
 
 
@@ -239,8 +245,95 @@ def test_the_sitemap_lists_urls_the_host_answers_rather_than_redirects() -> None
     assert not missing, missing[:5]
 
 
+def test_the_schema_a_saved_run_names_is_served_at_that_url() -> None:
+    """A run's `$schema` is a URL a validator dereferences, so the site serves that file."""
+    served = _repo() / "site" / SCHEMA_URL.removeprefix("https://guardana.dev/")
+
+    assert served.is_file(), f"{SCHEMA_URL} is not in site/ — run scripts/build_site.py"
+    assert json.loads(served.read_text(encoding="utf-8"))["$id"] == SCHEMA_URL
+
+
+def test_a_published_schema_can_be_read_from_another_origin() -> None:
+    """Browser-based validators fetch a `$id` cross-origin; a schema holds nothing private."""
+    headers = (_repo() / "site" / "_headers").read_text(encoding="utf-8")
+    block = headers.split("/schemas/*", 1)
+
+    assert len(block) == 2, "site/_headers has no /schemas/* block"
+    assert "Access-Control-Allow-Origin: *" in block[1].split("\n/", 1)[0]
+
+
 def test_robots_points_at_the_sitemap() -> None:
     """A sitemap nothing announces is a file only somebody who guessed the name will find."""
     robots = (_repo() / "site" / "robots.txt").read_text(encoding="utf-8")
 
     assert "Sitemap: https://guardana.dev/sitemap.xml" in robots
+
+
+def test_the_landing_page_loads_nothing_from_another_host() -> None:
+    """Fonts, styles and icons come from the site itself, and the policy says so.
+
+    The page promises that the only traffic is to the target a user points Guardana
+    at; a font from a third party would tell that party who is reading the promise.
+    """
+    page = (_repo() / "site" / "index.html").read_text(encoding="utf-8")
+    headers = (_repo() / "site" / "_headers").read_text(encoding="utf-8")
+    loads = re.findall(
+        r'<link[^>]*rel="(?:stylesheet|preconnect|preload|icon|dns-prefetch)"[^>]*href="([^"]+)"',
+        page,
+    )
+
+    assert loads, "the landing page links no asset — update this test with the page"
+    assert not [href for href in loads if href.startswith(("http://", "https://", "//"))]
+    assert "https://" not in headers.split("Content-Security-Policy:", 1)[1].splitlines()[0]
+
+
+def test_every_local_link_on_the_landing_page_resolves() -> None:
+    """The landing page is hand-written, so its site paths get the check the docs tree gets."""
+    site = _repo() / "site"
+    page = (site / "index.html").read_text(encoding="utf-8")
+    missing = []
+    for raw in _HREF.findall(page):
+        if not raw.startswith("/") or raw.startswith("//"):
+            continue
+        path = raw.split("#", 1)[0].split("?", 1)[0].lstrip("/")
+        candidates = (
+            [site / path / "index.html"]
+            if not path or path.endswith("/")
+            else [
+                site / path,
+                site / f"{path}.html",
+            ]
+        )
+        if not any(candidate.is_file() for candidate in candidates):
+            missing.append(raw)
+
+    assert not missing, f"landing page links that site/ does not serve: {missing}"
+
+
+_BRAND_V1 = "site/assets/brand/v1"
+_BRAND_V1_DIGEST = "6d177eb80cb233c8fce3b613f11788f548ca0cbfc7bd573e2fada5debcb64e4c"
+"""SHA-256 of `SHA256SUMS`: the digest a vendored copy of v1 is pinned to."""
+
+
+def test_the_brand_files_match_the_digest_file_that_lists_them() -> None:
+    root = _repo() / _BRAND_V1
+    listed = {}
+    for line in (root / "SHA256SUMS").read_text(encoding="utf-8").splitlines():
+        digest, name = line.split("  ", 1)
+        listed[name] = digest
+    on_disk = {
+        path.relative_to(root).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+        for path in root.rglob("*")
+        if path.is_file() and path.name != "SHA256SUMS"
+    }
+
+    assert on_disk == listed, "SHA256SUMS does not describe the files beside it"
+
+
+def test_the_published_brand_version_is_never_edited_in_place() -> None:
+    """Another site vendors v1 by digest, so a change is a v2 at a new path, never an edit."""
+    digest = hashlib.sha256((_repo() / _BRAND_V1 / "SHA256SUMS").read_bytes()).hexdigest()
+
+    assert digest == _BRAND_V1_DIGEST, (
+        f"{_BRAND_V1} changed; publish the change as site/assets/brand/v2/ instead"
+    )

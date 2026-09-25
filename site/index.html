@@ -3,18 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Guardana — customizable security gates for AI systems</title>
-<meta name="description" content="Open-source AI security verification for model artifacts, live endpoints, MCP servers, and recorded agent traces. Reproducible evidence for CI release checks.">
+<title>Guardana | Open-source AI security verification</title>
+<meta name="description" content="Scan AI artifacts offline, probe live systems, and compare security runs with Guardana.">
 <link rel="canonical" href="https://guardana.dev/">
-<meta property="og:title" content="Guardana — customizable security gates for AI systems">
-<meta property="og:description" content="Open-source AI security verification for model artifacts, live endpoints, MCP servers, and recorded agent traces. 51 checks, reproducible evidence, and rules for your business logic. Apache-2.0.">
+<meta property="og:title" content="Guardana | Open-source AI security verification">
+<meta property="og:description" content="Scan AI artifacts offline, probe live systems, and compare security runs with Guardana.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Guardana">
 <meta property="og:url" content="https://guardana.dev/">
 <meta property="og:locale" content="en_GB">
-<!-- Absolute, because a share crawler resolves nothing against the page it fetched.
-     The image states no rule count on purpose: a number baked into a PNG is a claim
-     no test can read, and that is how three other numbers here went stale. -->
 <meta property="og:image" content="https://guardana.dev/og.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
@@ -22,288 +19,345 @@
 <meta property="og:image:alt" content="Guardana — security gates for the AI you run yourself. scan · probe · monitor · diff. Open source, Apache-2.0, offline, no account, no telemetry.">
 <!-- X ignores og:image sizing without this; every other field falls back to og:*. -->
 <meta name="twitter:card" content="summary_large_image">
-<!-- A model asking what this project is gets the documentation map rather than
-     this page's markup: https://llmstxt.org. Generated from docs/index.md. -->
-<link rel="alternate" type="text/markdown" href="/llms.txt" title="llms.txt">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+<meta name="theme-color" content="#5B3DF5">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="alternate" type="text/plain" href="/llms.txt" title="llms.txt">
+<link rel="preload" href="/assets/brand/v1/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/brand/v1/fonts/ibm-plex-sans-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/assets/brand/v1/tokens.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Guardana", "applicationCategory": "SecurityApplication", "operatingSystem": "Linux, macOS, Windows", "description": "Guardana is an open-source AI security verification tool for security and platform engineers that checks model and code artifacts, live AI systems, and recorded runs, with scans that run fully offline.", "url": "https://guardana.dev/", "softwareVersion": "0.28.0", "license": "https://www.apache.org/licenses/LICENSE-2.0", "codeRepository": "https://github.com/guardana/guardana", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Konrad Karauda"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Guardana Control", "applicationCategory": "SecurityApplication", "operatingSystem": "Linux, macOS", "description": "Decide, enforce and record the tool calls your AI agents make.", "url": "https://github.com/guardana/control", "codeRepository": "https://github.com/guardana/control", "license": "https://www.apache.org/licenses/LICENSE-2.0", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Konrad Karauda"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Does a scan need internet access?", "acceptedAnswer": {"@type": "Answer", "text": "No. Artifact scans run fully offline."}}, {"@type": "Question", "name": "What does a probe contact?", "acceptedAnswer": {"@type": "Answer", "text": "The target you point it at. Guardana sends no telemetry."}}, {"@type": "Question", "name": "Can it check a recorded agent run?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Runtime rules can grade recorded runs when the needed evidence is present."}}, {"@type": "Question", "name": "Can I estimate probe cost first?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. guardana plan probe prices requests without sending one."}}, {"@type": "Question", "name": "Do I need the collector?", "acceptedAnswer": {"@type": "Answer", "text": "No. It is optional and self-hosted."}}, {"@type": "Question", "name": "How does Guardana relate to Guardana Control?", "acceptedAnswer": {"@type": "Answer", "text": "They are independent projects. Guardana scans and probes outside the request path, and grades runs in its own trace format. Guardana Control is an alpha MCP tool-call gate that enforces verdicts and records evidence. Neither needs the other."}}]}</script>
 <style>
+:root{
+  --bg-2:#F4F5F9; --brand-2:#0EA5E9;
+  --term:#0B0D12; --term-2:#141824; --term-line:#232838; --term-ink:#E6E9EF; --term-dim:#8B93A5;
+  --term-crit:#E5484D; --term-high:#F76B15;
+  --maxw:1160px; --r:14px;
+  --shadow:0 1px 2px rgba(15,17,21,.04),0 8px 28px -12px rgba(15,17,21,.14);
+}
+@media (prefers-color-scheme:dark){
   :root{
-    --paper:#F6F7F9; --panel:#FFFFFF; --ink:#14161A; --muted:#5B6472;
-    --rule:#E2E6EC; --brand:#5B3DF5; --brand-soft:#EEEBFE;
-    --critical:#A81E12; --high:#C2410C; --medium:#B07213; --info:#3B6FB0;
-    --term:#12141A; --term-ink:#E6E9EF; --term-dim:#8892A4;
-    --maxw:1080px;
+    --bg-2:#0E1118;
+    --term:#07090D; --term-2:#0F131C; --term-line:#1E2330;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 12px 32px -12px rgba(0,0,0,.6);
   }
-  *{box-sizing:border-box}
-  html{-webkit-text-size-adjust:100%}
-  body{
-    margin:0; background:var(--paper); color:var(--ink);
-    font-family:"IBM Plex Sans",system-ui,sans-serif; font-size:17px; line-height:1.6;
-    -webkit-font-smoothing:antialiased;
-  }
-  a{color:inherit}
-  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 24px}
-  .disp{font-family:"IBM Plex Sans Condensed","IBM Plex Sans",sans-serif; font-weight:700; letter-spacing:-.015em; line-height:1.02}
-  .mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overflow-x:hidden}
+a{color:var(--brand);text-underline-offset:.18em;text-decoration-thickness:1px}
+a:hover{color:var(--brand-ink)}
+:focus-visible{outline:2px solid var(--brand);outline-offset:3px;border-radius:6px}
+code{font-family:var(--mono);font-size:.88em}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 22px}
+.skip{position:absolute;left:-999px;top:8px}
+.skip:focus{left:16px;z-index:50;background:var(--panel);padding:8px 12px;border-radius:8px}
 
-  /* eyebrow labels carry real data (surface + rule counts), not decoration */
-  .eyebrow{
-    font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.14em;
-    text-transform:uppercase; color:var(--muted); margin:0 0 14px;
-  }
+/* header */
+.top{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:saturate(1.4) blur(12px);-webkit-backdrop-filter:saturate(1.4) blur(12px);border-bottom:1px solid transparent;transition:border-color .3s}
+.top .bar{display:flex;align-items:center;gap:14px;height:64px}
+.mark{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px;letter-spacing:-.02em;color:var(--ink);text-decoration:none}
+.mark svg{width:24px;height:24px;color:var(--brand)}
+.mark b{color:var(--brand);font-weight:inherit}
+.vlink{text-decoration:none}
+.ver{display:inline-block;font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+.vlink:hover .ver{border-color:var(--brand);color:var(--brand)}
+.mono{font-family:var(--mono)}
+.top nav{margin-left:auto;display:flex;gap:2px;font-size:15px}
+.top nav a{color:var(--muted);text-decoration:none;padding:9px 12px;border-radius:9px}
+.top nav a:hover{color:var(--ink);background:var(--bg-2)}
+.top nav a.gh{color:var(--ink);border:1px solid var(--line);margin-left:6px;display:flex;align-items:center;gap:7px}
+.top nav a.gh svg{width:17px;height:17px}
 
-  /* ---- header ---- */
-  .top{border-bottom:1px solid var(--rule); background:rgba(246,247,249,.9); backdrop-filter:blur(8px); position:sticky; top:0; z-index:10}
-  .top .wrap{display:flex; align-items:center; gap:16px; height:62px}
-  .brand{display:flex; align-items:center; gap:9px; font-family:"IBM Plex Sans Condensed",sans-serif; font-weight:700; font-size:20px; letter-spacing:-.01em; text-decoration:none}
-  .brand svg{width:19px;height:19px;flex:none}
-  .ver{font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--brand); background:var(--brand-soft); padding:3px 8px; border-radius:999px}
-  .top nav{margin-left:auto; display:flex; gap:22px; font-size:15px}
-  .top nav a{color:var(--muted); text-decoration:none}
-  .top nav a:hover{color:var(--ink)}
+/* hero */
+.hero{position:relative;padding:92px 0 64px;isolation:isolate;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:-20% -10% 0;z-index:-2;
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:44px 44px;
+  -webkit-mask-image:radial-gradient(ellipse 70% 60% at 50% 30%,#000 30%,transparent 75%);mask-image:radial-gradient(ellipse 70% 60% at 50% 30%,#000 30%,transparent 75%);
+  animation:drift 26s linear infinite;opacity:.8}
+.hero::after{content:"";position:absolute;left:50%;top:-180px;width:min(900px,120vw);height:520px;transform:translateX(-50%);z-index:-1;
+  background:radial-gradient(closest-side,color-mix(in srgb,var(--brand) 26%,transparent),transparent 70%);filter:blur(10px);animation:breathe 9s ease-in-out infinite alternate}
+@keyframes drift{to{background-position:44px 44px,44px 44px}}
+@keyframes breathe{from{opacity:.55;transform:translateX(-50%) scale(.96)}to{opacity:1;transform:translateX(-50%) scale(1.04)}}
+.hero-inner{text-align:center;max-width:860px;margin:0 auto}
+.pill{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;color:var(--muted);border:1px solid var(--line);background:color-mix(in srgb,var(--panel) 80%,transparent);border-radius:999px;padding:6px 14px;margin:0 0 26px;animation:rise .7s both}
+.pill i{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 4px color-mix(in srgb,var(--ok) 22%,transparent)}
+h1{font-size:clamp(38px,6.6vw,68px);line-height:1.04;letter-spacing:-.035em;margin:0 0 22px;font-weight:700;animation:rise .7s .08s both}
+h1 .grad{background:linear-gradient(100deg,var(--brand) 10%,var(--brand-2) 90%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.def{font-size:clamp(17px,2.1vw,20px);color:var(--muted);max-width:720px;margin:0 auto 34px;animation:rise .7s .16s both}
+.install{display:flex;align-items:center;gap:12px;max-width:560px;margin:0 auto 18px;background:var(--term);color:var(--term-ink);border:1px solid var(--term-line);border-radius:12px;padding:14px 18px;text-align:left;box-shadow:var(--shadow);animation:rise .7s .24s both}
+.install .sig{color:var(--brand-2);font-family:var(--mono);flex:none}
+.install code{font-size:15px;white-space:nowrap;overflow-x:auto;display:block;min-width:0;flex:1;scrollbar-width:none}
+.alt{font-size:14px;color:var(--faint);margin:0 0 30px;animation:rise .7s .3s both}
+.alt code{color:var(--muted)}
+.ctas{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:0 0 30px;animation:rise .7s .36s both}
+.btn{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:15.5px;padding:12px 20px;border-radius:11px;text-decoration:none;min-height:46px;transition:transform .2s,box-shadow .2s,background .2s}
+.btn.pri{background:var(--brand);color:#fff;box-shadow:0 6px 20px -8px color-mix(in srgb,var(--brand) 70%,transparent)}
+.btn.pri:hover{transform:translateY(-1px);background:var(--brand-ink);color:#fff}
+.btn.sec{border:1px solid var(--line);color:var(--ink);background:var(--panel)}
+.btn.sec:hover{border-color:color-mix(in srgb,var(--brand) 50%,var(--line));transform:translateY(-1px)}
+.btn svg{width:16px;height:16px}
+.facts{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 22px;list-style:none;padding:0;margin:0;font-size:14px;color:var(--muted);animation:rise .7s .42s both}
+.facts li{display:flex;align-items:center;gap:7px}
+.facts svg{width:15px;height:15px;color:var(--ok)}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 
-  /* ---- hero ---- */
-  .hero{padding:78px 0 68px}
-  .hero-grid{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.05fr); gap:52px; align-items:start}
-  h1{margin:0 0 20px; font-size:clamp(2.5rem,5.4vw,4.1rem)}
-  .lede{font-size:1.12rem; color:var(--muted); margin:0 0 28px; max-width:46ch}
-  .lede strong{color:var(--ink); font-weight:600}
+/* terminal */
+.demo{margin:56px auto 0;max-width:880px;animation:rise .9s .5s both}
+.term{background:var(--term);border:1px solid var(--term-line);border-radius:var(--r);box-shadow:0 30px 80px -30px color-mix(in srgb,var(--brand) 45%,transparent),var(--shadow);overflow:hidden;text-align:left}
+.term-bar{display:flex;align-items:center;gap:7px;padding:12px 16px;background:var(--term-2);border-bottom:1px solid var(--term-line);color:var(--term-dim);font:13px var(--mono)}
+.term-bar i{width:11px;height:11px;border-radius:50%;background:#2A3040}
+.term-bar span{margin-left:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.term-body{padding:18px 20px 20px;font:13.5px/1.7 var(--mono);color:var(--term-ink);overflow-x:auto}
+.term-body p{margin:0;white-space:pre}
+.ln{opacity:0;animation:type .35s ease-out forwards;animation-delay:calc(var(--i) * 170ms + 900ms)}
+@keyframes type{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
+.prompt{color:var(--brand-2)}
+.c-crit{color:var(--term-crit);font-weight:500}.c-high{color:var(--term-high);font-weight:500}.c-dim{color:var(--term-dim)}
+.cursor{display:inline-block;width:8px;height:15px;background:var(--term-ink);vertical-align:-2px;margin-left:4px;animation:blink 1.1s steps(2,start) infinite}
+@keyframes blink{to{visibility:hidden}}
 
-  .cmd{
-    display:flex; align-items:center; gap:12px; background:var(--panel);
-    border:1px solid var(--rule); border-radius:9px; padding:13px 15px;
-    font-family:"IBM Plex Mono",monospace; font-size:14.5px; overflow-x:auto;
-  }
-  .cmd .sig{color:var(--brand); user-select:none}
-  .cmd code{white-space:nowrap}
-  .alt{font-size:14px; color:var(--muted); margin:11px 0 0}
-  .alt code{font-family:"IBM Plex Mono",monospace; background:var(--panel); border:1px solid var(--rule); padding:2px 6px; border-radius:5px; font-size:13px}
+/* sections */
+section.s{padding:104px 0}
+section.alt-bg{background:var(--bg-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.eyebrow{font:500 12.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--brand);margin:0 0 14px}
+h2{font-size:clamp(30px,4.2vw,44px);line-height:1.08;letter-spacing:-.03em;margin:0 0 18px;font-weight:700;max-width:760px}
+.lede{font-size:18.5px;color:var(--muted);max-width:720px;margin:0 0 48px}
+h3{font-size:18px;letter-spacing:-.01em;margin:0 0 8px;font-weight:600}
 
-  .cta{display:flex; gap:12px; margin-top:26px; flex-wrap:wrap}
-  .btn{
-    display:inline-block; text-decoration:none; font-weight:600; font-size:15px;
-    padding:11px 19px; border-radius:8px; border:1px solid transparent;
-  }
-  .btn-1{background:var(--ink); color:var(--paper)}
-  .btn-1:hover{background:#2A2E36}
-  .btn-2{background:transparent; color:var(--ink); border-color:var(--rule)}
-  .btn-2:hover{border-color:var(--muted)}
-  /* Product Hunt, drawn here rather than fetched. Their official badge is an
-     <img> from api.producthunt.com, and `img-src 'self' data:` would block it —
-     relaxing the policy to render one badge would spend a claim visitors can
-     check on a link that works perfectly well without it. */
-  .btn-ph{background:transparent; color:var(--ink); border-color:#DA552F;
-    display:inline-flex; align-items:center; gap:9px}
-  .btn-ph:hover{background:#DA552F; color:#fff}
-  .btn-ph svg{width:18px; height:18px; flex:none}
-  .btn:focus-visible,.top nav a:focus-visible,.brand:focus-visible,.foot a:focus-visible{outline:2px solid var(--brand); outline-offset:3px}
+.verbs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--line)}
+.verb{padding:28px 26px 30px 0;border-right:1px solid var(--line);position:relative}
+.verb+.verb{padding-left:26px}
+.verb:last-child{border-right:0}
+.verb .n{font:500 12.5px var(--mono);color:var(--faint);margin:0 0 30px;display:flex;align-items:center;gap:10px}
+.verb .n svg{width:20px;height:20px;color:var(--brand)}
+.verb p{color:var(--muted);font-size:15.5px;margin:0 0 16px}
+.verb code{display:inline-block;font-size:13px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:4px 9px;color:var(--ink);max-width:100%;overflow-x:auto;white-space:nowrap;vertical-align:bottom}
+.verb::before{content:"";position:absolute;left:0;top:-1px;height:2px;width:0;background:linear-gradient(90deg,var(--brand),var(--brand-2));transition:width .5s ease}
+.verb+.verb::before{left:0}
+.verb:hover::before{width:100%}
 
-  /* ---- terminal: the one dark artifact, the proof ---- */
-  .term{
-    background:var(--term); color:var(--term-ink); border-radius:11px; overflow:hidden;
-    box-shadow:0 18px 42px -18px rgba(18,20,26,.45); font-family:"IBM Plex Mono",monospace; font-size:13.2px; line-height:1.72;
-  }
-  .term-bar{display:flex; align-items:center; gap:7px; padding:11px 14px; border-bottom:1px solid #23262F}
-  .dot{width:9px;height:9px;border-radius:50%;background:#333844}
-  .term-bar span{margin-left:6px; color:var(--term-dim); font-size:11.5px; letter-spacing:.05em}
-  .term-body{padding:15px 16px 18px; overflow-x:auto}
-  .term-body p{margin:0; white-space:pre; animation:rise .42s ease-out both}
-  .term-body p:nth-child(1){animation-delay:.05s} .term-body p:nth-child(2){animation-delay:.16s}
-  .term-body p:nth-child(3){animation-delay:.27s} .term-body p:nth-child(4){animation-delay:.38s}
-  .term-body p:nth-child(5){animation-delay:.49s} .term-body p:nth-child(6){animation-delay:.60s}
-  .term-body p:nth-child(7){animation-delay:.71s} .term-body p:nth-child(8){animation-delay:.82s}
-  @keyframes rise{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
-  .c-crit{color:#FF6B5E} .c-high{color:#FF9E64} .c-med{color:#E8C468}
-  .c-dim{color:var(--term-dim)} .c-ok{color:#7BD88F}
-  .prompt{color:#7C6BFF}
+.surfaces{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:26px 26px 22px;box-shadow:var(--shadow);transition:transform .25s,border-color .25s,box-shadow .25s;min-width:0}
+.card:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--brand) 38%,var(--line))}
+.card .label{font:500 12.5px var(--mono);color:var(--muted);margin:0 0 16px}
+.card .label b{color:var(--brand);font-weight:600}
+.card ul{list-style:none;margin:0;padding:0;font-size:15px}
+.card li{padding:9px 0;border-top:1px dashed var(--line);color:var(--muted);overflow-wrap:anywhere}
+.card li b{font:500 13.5px var(--mono);color:var(--ink)}
+.more{display:inline-flex;align-items:center;margin-top:22px;font-weight:600;font-size:15px;text-decoration:none;gap:6px}
+.more svg{width:16px;height:16px;flex:none}
+.more:hover{gap:10px}
+.more,.more:hover{transition:gap .2s}
 
-  /* ---- sections ---- */
-  section{padding:64px 0; border-top:1px solid var(--rule)}
-  h2{font-size:clamp(1.7rem,3vw,2.3rem); margin:0 0 14px}
-  .sec-lede{color:var(--muted); max-width:62ch; margin:0 0 34px}
+.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:44px;align-items:start}
+.grid4{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px 20px 18px;transition:border-color .25s,transform .25s}
+.tile:hover{border-color:color-mix(in srgb,var(--brand) 38%,var(--line));transform:translateY(-2px)}
+.tile p{margin:0;color:var(--muted);font-size:15px}
+.cmd{display:flex;gap:10px;align-items:center;background:var(--term);color:var(--term-ink);border-radius:11px;padding:12px 16px;margin:0 0 18px;border:1px solid var(--term-line)}
+.cmd .sig{color:var(--brand-2);font-family:var(--mono)}
+.cmd code{white-space:nowrap;overflow-x:auto;min-width:0;display:block;scrollbar-width:none}
+pre.yml{margin:0;background:var(--term);color:var(--term-ink);border:1px solid var(--term-line);border-radius:var(--r);padding:20px 22px;overflow-x:auto;font:13.2px/1.65 var(--mono);box-shadow:var(--shadow)}
+pre.yml .k{color:#B9AFFF}pre.yml .s{color:#7DD3FC}pre.yml .c{color:var(--term-dim)}
+.caption{font-size:14px;color:var(--faint);margin:12px 2px 0}
 
-  .surfaces{display:grid; grid-template-columns:1fr 1fr; gap:22px}
-  .trio{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:22px; margin-top:26px}
-  .trio .card h3{margin-bottom:6px}
-  .trio .card p{margin:0; color:var(--muted)}
-  .byo-grid{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.12fr); gap:26px; align-items:start; margin-top:24px}
-  .byo-note{margin-top:26px; background:var(--brand-soft); border:1px solid #DDD6FD; border-radius:11px; padding:16px 18px; color:#3A2BA8}
-  .card{background:var(--panel); border:1px solid var(--rule); border-radius:11px; padding:24px}
-  .card h3{margin:0 0 4px; font-family:"IBM Plex Sans Condensed",sans-serif; font-weight:700; font-size:1.3rem}
-  .card .when{color:var(--muted); font-size:14px; margin:0 0 16px}
-  .rules{list-style:none; margin:0; padding:0; font-family:"IBM Plex Mono",monospace; font-size:13px; color:var(--muted)}
-  .rules li{padding:5px 0; border-top:1px dotted var(--rule)}
-  .rules li:first-child{border-top:0}
-  .rules b{color:var(--ink); font-weight:500}
+.checks{list-style:none;padding:0;margin:0;display:grid;gap:14px}
+.checks li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:12px;align-items:start}
+.checks .tick{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:var(--brand-soft);color:var(--brand)}
+.checks .tick svg{width:16px;height:16px}
+.checks h3{font-size:16.5px;margin:2px 0 4px}
+.checks p{margin:0;color:var(--muted);font-size:15.5px}
 
-  /* ---- signature: the verdict, with its confidence ---- */
-  .verdict{background:var(--panel); border:1px solid var(--rule); border-radius:11px; padding:22px 24px; max-width:640px}
-  .vrow{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap}
-  .chip{font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.09em; padding:3px 8px; border-radius:4px; color:#fff; background:var(--critical)}
-  .chip.high{background:var(--high)}
-  .vid{font-family:"IBM Plex Mono",monospace; font-size:13.5px}
-  .vwhy{color:var(--muted); font-size:15px; margin:12px 0 18px}
-  .meter{display:flex; align-items:center; gap:13px}
-  .meter-label{font-family:"IBM Plex Mono",monospace; font-size:11.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); flex:none}
-  .track{flex:1; height:6px; background:var(--rule); border-radius:99px; overflow:hidden; min-width:90px}
-  .fill{display:block; height:100%; width:95%; background:var(--brand); border-radius:99px}
-  .meter b{font-family:"IBM Plex Mono",monospace; font-size:14px; flex:none}
-  .stat{margin:26px 0 0; color:var(--muted); font-size:15px; max-width:60ch}
-  .stat a{color:var(--brand)}
+.duo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.product{display:flex;flex-direction:column}
+.product p{color:var(--muted);font-size:15.5px;margin:0 0 14px}
+.product .note{font:500 12.5px var(--mono);color:var(--faint);margin:0}
+.product .more{margin-top:auto;padding-top:14px;align-self:flex-start}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:18px}
+.aside{color:var(--muted);font-size:15px;margin:22px 0 0;max-width:720px}
+.flow{margin:48px 0 8px}
+.flow .dg{margin:0}
+#control .flow{margin:0 0 40px}
+.duo h3{font-size:15px;color:var(--muted);font-weight:500;margin:0 0 10px;font-family:var(--mono)}
 
-  /* ---- ci ---- */
-  .yml{background:var(--term); color:var(--term-ink); border-radius:11px; padding:18px 20px; overflow-x:auto;
-       font-family:"IBM Plex Mono",monospace; font-size:13.2px; line-height:1.7; margin:0 0 16px}
-  .yml .k{color:#7C6BFF} .yml .s{color:#7BD88F} .yml .c{color:var(--term-dim)}
-  .ci-note{color:var(--muted); font-size:15px; margin:0}
-  .ci-note code{font-family:"IBM Plex Mono",monospace; font-size:13px; background:var(--panel); border:1px solid var(--rule); padding:2px 6px; border-radius:5px}
+.trust{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--panel)}
+.trust article{padding:30px 26px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);transition:background .3s}
+.trust article:nth-child(3n){border-right:0}
+.trust article:nth-last-child(-n+3){border-bottom:0}
+.trust article:hover{background:var(--bg-2)}
+.trust svg{width:30px;height:30px;color:var(--brand);margin:0 0 18px}
+.trust p{margin:0;color:var(--muted);font-size:15px}
+.collector{margin-top:44px}
 
-  /* ---- footer ---- */
-  .foot{border-top:1px solid var(--rule); padding:36px 0 52px; color:var(--muted); font-size:14.5px}
-  .foot-grid{display:flex; gap:26px; flex-wrap:wrap; align-items:center}
-  .foot a{color:var(--muted)}
-  .foot a:hover{color:var(--ink)}
-  .foot .sep{margin-left:auto}
+.faq{max-width:820px}
+.faq details{border-bottom:1px solid var(--line)}
+.faq summary{cursor:pointer;list-style:none;padding:20px 40px 20px 0;font-weight:600;font-size:17px;position:relative}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"";position:absolute;right:6px;top:28px;width:9px;height:9px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);transition:transform .25s}
+.faq details[open] summary::after{transform:rotate(-135deg);top:32px}
+.faq details p{margin:0 0 22px;color:var(--muted)}
 
-  @media (max-width:860px){
-    .hero-grid,.surfaces,.trio,.byo-grid{grid-template-columns:1fr}
-    .hero{padding:52px 0 46px}
-    .top nav{gap:16px; font-size:14px}
-    .top nav .hide-sm{display:none}
-  }
-  @media (prefers-reduced-motion:reduce){
-    .term-body p{animation:none}
-    *{transition:none!important}
-  }
+.final{text-align:center;padding:110px 0 120px;position:relative;overflow:hidden;isolation:isolate}
+.final::before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(ellipse 60% 70% at 50% 100%,color-mix(in srgb,var(--brand) 18%,transparent),transparent 70%)}
+.final h2{margin:0 auto 16px}
+.final p{color:var(--muted);max-width:620px;margin:0 auto 32px;font-size:18px}
+.final .install{animation:none}
+
+footer.foot{border-top:1px solid var(--line);padding:44px 0 56px;font-size:14.5px;color:var(--muted)}
+.foot-grid{display:grid;grid-template-columns:minmax(0,1.4fr) repeat(4,minmax(0,1fr));gap:28px}
+.tag{font:500 11px var(--mono);color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:1px 7px;margin-left:4px;white-space:nowrap}
+.foot-grid h4{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin:0 0 12px;font-weight:600}
+.foot-grid ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.foot-grid a{color:var(--muted);text-decoration:none}
+.foot-grid a:hover{color:var(--ink)}
+.foot-grid .who p{margin:10px 0 0;max-width:340px}
+
+/* scroll reveal where the browser can do it without script */
+@supports (animation-timeline:view()){
+  .reveal{animation:reveal linear both;animation-timeline:view();animation-range:entry 0% cover 24%}
+  @keyframes reveal{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+}
+
+@media (max-width:980px){
+  .verbs{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .verb:nth-child(2){border-right:0}
+  .verb:nth-child(3){padding-left:0}
+  .verb:nth-child(-n+2){border-bottom:1px solid var(--line)}
+  .split{grid-template-columns:minmax(0,1fr)}
+  .three{grid-template-columns:minmax(0,1fr)}
+  .trust{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .trust article:nth-child(3n){border-right:1px solid var(--line)}
+  .trust article:nth-child(2n){border-right:0}
+  .trust article:nth-last-child(-n+3){border-bottom:1px solid var(--line)}
+  .trust article:nth-last-child(-n+2){border-bottom:0}
+  .foot-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .foot-grid .who{grid-column:1/-1}
+}
+@media (max-width:680px){
+  body{font-size:16px}
+  .wrap{padding:0 18px}
+  .top nav a.hide-s{display:none}
+  .top .bar{gap:8px}
+  .top nav a{padding:8px}
+  .top nav a.gh{margin-left:2px}
+  .hero{padding:64px 0 44px}
+  section.s{padding:72px 0}
+  .verbs,.surfaces,.grid4,.duo,.trust,.three{grid-template-columns:minmax(0,1fr)}
+  .verb,.verb+.verb{padding:24px 0;border-right:0;border-bottom:1px solid var(--line)}
+  .verb:last-child{border-bottom:0}
+  .verb .n{margin-bottom:14px}
+  .trust article,.trust article:nth-child(3n),.trust article:nth-child(2n){border-right:0;border-bottom:1px solid var(--line)}
+  .trust article:last-child{border-bottom:0}
+  .lede{font-size:17px;margin-bottom:34px}
+  .term-body{font-size:12.5px;padding:14px}
+  .foot-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:430px){
+  .vlink{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none !important;transition:none !important}
+  .ln{opacity:1}
+  html{scroll-behavior:auto}
+}
 </style>
 </head>
 <body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="top"><div class="wrap bar">
+  <a class="mark" href="/"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.8 4.5 5.6v6.1c0 4.6 3.2 8.2 7.5 9.5 4.3-1.3 7.5-4.9 7.5-9.5V5.6z"/><path d="m8.6 12.1 2.4 2.4 4.5-4.8"/></svg><span class="w">guard<b>ana</b></span></a>
+  <a class="vlink" href="https://github.com/guardana/guardana/releases"><span class="ver mono">v0.28.0</span></a>
+  <nav aria-label="Primary">
+    <a href="/docs/">Docs</a>
+    <a href="/docs/rules/" class="hide-s">Rules</a>
+    <a href="#control" class="hide-s">Control</a>
+    <a href="https://github.com/guardana/guardana/releases" class="hide-s">Changelog</a>
+    <a class="gh" href="https://github.com/guardana/guardana"><svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg><span class="hide-s">GitHub</span></a>
+  </nav>
+</div></header>
 
-<header class="top">
-  <div class="wrap">
-    <a class="brand" href="/">
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2.5 4 5.6v6.1c0 4.6 3.2 8.4 8 9.8 4.8-1.4 8-5.2 8-9.8V5.6L12 2.5Z" stroke="#5B3DF5" stroke-width="1.9" stroke-linejoin="round"/></svg>
-      Guardana
-    </a>
-    <span class="ver mono">v0.28.0</span>
-    <nav>
-      <a href="/docs/">Docs</a>
-      <a href="/docs/rules/" class="hide-sm">Rules</a>
-      <a href="https://pypi.org/project/guardana-cli/" class="hide-sm">PyPI</a>
-      <a href="https://github.com/marketplace/actions/guardana-ai-security-scan">Action</a>
-      <a href="https://github.com/guardana/guardana">GitHub</a>
-    </nav>
+<main id="main">
+<section class="hero"><div class="wrap">
+  <div class="hero-inner">
+    <p class="pill"><i></i>Open-source AI security verification</p>
+    <h1>Check the <span class="grad">AI you run</span></h1>
+    <p class="def">Guardana is an open-source AI security verification tool for security and platform engineers that checks model and code artifacts, live AI systems, and recorded runs, with scans that run fully offline.</p>
+    <div class="install"><span class="sig">$</span><code>uvx --from guardana-cli guardana scan .</code></div>
+    <p class="alt">or <code>pip install guardana-cli</code></p>
+    <div class="ctas">
+      <a class="btn pri" href="/docs/">Read the docs <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      <a class="btn sec" href="#ci">Use it in CI</a>
+    </div>
+    <ul class="facts"><li><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4.5 4.5L19 7"/></svg>Apache-2.0</li><li><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4.5 4.5L19 7"/></svg>No account</li><li><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4.5 4.5L19 7"/></svg>No telemetry</li><li><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4.5 4.5L19 7"/></svg>Offline scans</li></ul>
   </div>
-</header>
-
-<main>
-  <div class="wrap hero">
-    <div class="hero-grid">
-      <div>
-        <h1 class="disp">Verify the AI you run yourself.</h1>
-        <p class="lede">Guardana scans model artifacts, probes live endpoints and MCP servers, and grades the <strong>execution traces your agents already produced</strong> — identity, credentials, scopes, approvals, memory and side effects. <strong>51 checks to start; you add the ones only your team can know about.</strong> Built to be the thing a pipeline blocks on: a cost you know in advance, a run you can compare against last week, and an unanswered question that never reads as a pass.</p>
-        <div class="cmd"><span class="sig">$</span><code>uvx --from guardana-cli guardana scan .</code></div>
-        <p class="alt">or <code>pip install guardana-cli</code> — Apache-2.0, runs fully offline.</p>
-        <div class="cta">
-          <a class="btn btn-1" href="https://github.com/guardana/guardana/blob/main/docs/index.md">Read the docs</a>
-          <a class="btn btn-2" href="https://github.com/marketplace/actions/guardana-ai-security-scan">Add to CI</a>
-          <a class="btn btn-ph" href="https://www.producthunt.com/products/guardana?launch=guardana" rel="noopener">
-            <svg viewBox="0 0 24 24" role="img" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="11" fill="none" stroke="currentColor" stroke-width="2"/><path d="M10 6.6h4.1a3.4 3.4 0 0 1 0 6.8H10V6.6zm0 6.8V18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"/></svg>
-            <span>Product Hunt</span>
-          </a>
-        </div>
-      </div>
-
-      <div class="term" role="img" aria-label="Terminal output: Guardana scanning a model directory and reporting three findings, including a critical pickle opcode that would execute code on load.">
-        <div class="term-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i><span>guardana scan examples/vulnerable-model</span></div>
-        <div class="term-body" aria-hidden="true">
-<p><span class="prompt">$</span> guardana scan examples/vulnerable-model</p>
-<p> </p>
-<p><span class="c-crit">✖ [CRITICAL]</span> guardana.supply_chain.pickle_opcode</p>
-<p><span class="c-dim">    unpickling imports non-allowlisted callable: posix.system</span></p>
-<p><span class="c-high">✖ [HIGH]</span> guardana.supply_chain.dependency_risk</p>
-<p><span class="c-dim">    torch.load without weights_only=True  (load_model.py:3)</span></p>
-<p><span class="c-crit">✖ [CRITICAL]</span> guardana.supply_chain.remote_code_config</p>
-<p><span class="c-dim">    config.json names a Hub kernel repo transformers imports on load</span></p>
-<p><span class="c-dim">    12 finding(s); 19 rule(s) run, 0 skipped.  → exit 1</span></p>
-        </div>
+  <div class="demo">
+    <div class="term" role="img" aria-label="Terminal output: Guardana scanning a model directory and reporting three findings, including a critical pickle opcode that would execute code on load.">
+      <div class="term-bar"><i></i><i></i><i></i><span>guardana scan examples/vulnerable-model</span></div>
+      <div class="term-body" aria-hidden="true">
+<p class="ln" style="--i:0"><span class="prompt">$</span> guardana scan examples/vulnerable-model</p>
+<p class="ln" style="--i:1"> </p>
+<p class="ln" style="--i:2"><span class="c-crit">✖ [CRITICAL]</span> guardana.supply_chain.pickle_opcode</p>
+<p class="ln" style="--i:3"><span class="c-dim">    unpickling imports non-allowlisted callable: posix.system</span></p>
+<p class="ln" style="--i:4"><span class="c-high">✖ [HIGH]</span> guardana.supply_chain.dependency_risk</p>
+<p class="ln" style="--i:5"><span class="c-dim">    torch.load without weights_only=True  (load_model.py:3)</span></p>
+<p class="ln" style="--i:6"><span class="c-crit">✖ [CRITICAL]</span> guardana.supply_chain.remote_code_config</p>
+<p class="ln" style="--i:7"><span class="c-dim">    config.json names a Hub kernel repo transformers imports on load</span></p>
+<p class="ln" style="--i:8"><span class="c-dim">    12 finding(s); 19 rule(s) run, 0 skipped.  → exit 1</span></p>
+<p class="ln" style="--i:10"><span class="prompt">$</span><span class="cursor"></span></p>
       </div>
     </div>
   </div>
+</div></section>
 
-  <section>
-    <div class="wrap">
-      <p class="eyebrow">51 rules · two surfaces</p>
-      <h2 class="disp">What it checks</h2>
-      <p class="sec-lede">Static checks are deterministic — no model, no network, no false-positive theatre. Dynamic checks talk to a live endpoint and are graded by a swappable evaluator.</p>
-      <div class="surfaces">
-        <div class="card">
-          <h3>Build-time</h3>
-          <p class="when">19 rules · your laptop, CI, a training box</p>
-          <ul class="rules">
-            <li><b>pickle_opcode</b> — code that runs on model load</li>
-            <li><b>keras_lambda</b> — Lambda-layer RCE in .keras/.h5</li>
-            <li><b>remote_code_config</b> — auto_map RCE in config.json</li>
-            <li><b>dependency_risk</b> — torch.load, joblib, unsafe yaml</li>
-            <li><b>hardcoded_secret</b> — provider keys across 30+ file types</li>
-            <li><b>hidden_instructions</b> — invisible rules-file backdoors</li>
-          </ul>
-        </div>
-        <div class="card">
-          <h3>Runtime</h3>
-          <p class="when">32 rules · a served model, or a run it already performed</p>
-          <ul class="rules">
-            <li><b>system_prompt_leak</b> — proven by a planted canary</li>
-            <li><b>injection.ignore_previous</b> — instruction override</li>
-            <li><b>scenario.gradual_jailbreak</b> — multi-turn escalation</li>
-            <li><b>scenario.indirect_injection</b> — poisoned retrieval</li>
-            <li><b>agent.tool_result_injection</b> — a poisoned tool result hijacks the run</li>
-            <li><b>agent.memory_poisoning</b> — a note written in one session steers the next</li>
-            <li><b>agent.mcp_server_manifest</b> — a live MCP server's tools, and drift from your pin</li>
-            <li><b>mcp.token_audience</b> — a server that accepts a token it never issued</li>
-            <li><b>mcp.session_binding</b> — a session id that is a counter, or that authenticates by itself</li>
-            <li><b>trace.credential_passthrough</b> — in a recorded run: one credential across two trust boundaries</li>
-            <li><b>trace.unapproved_side_effect</b> — in a recorded run: an irreversible effect nobody approved</li>
-            <li><b>output.secrets</b> — keys leaking in replies</li>
-          </ul>
-        </div>
-      </div>
+<section class="s" id="how"><div class="wrap">
+  <p class="eyebrow">How it works</p>
+  <h2 class="reveal">Four ways to verify</h2>
+  <div class="verbs">
+    <div class="verb reveal"><p class="n"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"/><path d="M4 12h16"/></svg>01</p><h3>Scan</h3><p>Check model and code artifacts offline with deterministic rules.</p><code>guardana scan PATH</code></div>
+    <div class="verb reveal"><p class="n"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>02</p><h3>Probe</h3><p>Test a live model endpoint, agent, or MCP server.</p><code>guardana probe</code></div>
+    <div class="verb reveal"><p class="n"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2.5-6 5 12 2.5-6h4"/></svg>03</p><h3>Monitor</h3><p>Repeat probes on a schedule and alert on regressions.</p><code>guardana monitor</code></div>
+    <div class="verb reveal"><p class="n"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v12M8 15l-3-3M8 15l3-3M16 21V9M16 9l-3 3M16 9l3 3"/></svg>04</p><h3>Diff</h3><p>Compare saved runs as worse, better, unchanged, or incomparable. A comparison that cannot be made exits 2.</p><code>guardana diff BEFORE AFTER</code></div>
+  </div>
+  <div class="flow reveal"><!-- diagram: docs/how-it-works.md 1 -->
+<figure class="dg" id="dg1e617e100"><style>.dg{margin:28px 0 32px;container-type:inline-size;overflow-x:auto}.dg svg{display:block;height:auto;margin:0 auto}.dg .dg-n{display:none}.dg text{text-anchor:middle;dominant-baseline:central}.dg .n rect,.dg .n path{fill:var(--panel,#fff);stroke:var(--line,#E6E8EF);stroke-width:1.2}.dg .n .lip{fill:none}.dg .n text{fill:var(--ink,#0F1115);font:500 13px var(--sans,system-ui,sans-serif)}.dg .accent rect,.dg .accent path{fill:var(--brand-soft,#F0ECFF);stroke:var(--brand,#5B3DF5)}.dg .accent .lip{fill:none}.dg .accent text{fill:var(--brand-ink,#4A2FE0)}.dg .cmd text{font:400 12.5px var(--mono,ui-monospace,monospace)}.dg .muted rect,.dg .muted path{stroke-dasharray:4 3}.dg .muted text{fill:var(--muted,#566070)}.dg .e{fill:none;stroke:var(--faint,#8A92A0);stroke-width:1.4}.dg .e.dot{stroke-dasharray:3 4}.dg .e.main{stroke:var(--brand,#5B3DF5);stroke-width:1.8;stroke-dasharray:7 5;animation:dg-flow 1.4s linear infinite}.dg .h{fill:var(--faint,#8A92A0)}.dg .h.main{fill:var(--brand,#5B3DF5)}.dg .g rect{fill:color-mix(in srgb,var(--brand-soft,#F0ECFF) 45%,transparent);stroke:var(--line,#E6E8EF)}.dg .g text{text-anchor:start;font:500 11px var(--mono,ui-monospace,monospace);letter-spacing:.08em;text-transform:uppercase;fill:var(--muted,#566070)}.dg .l rect{fill:var(--bg,#FBFBFD)}.dg .l text{font:400 11.5px var(--mono,ui-monospace,monospace);fill:var(--muted,#566070)}@keyframes dg-flow{to{stroke-dashoffset:-24}}@media (prefers-reduced-motion:reduce){.dg .e.main{animation:none}}</style><style>@container (max-width:866.9px){#dg1e617e100 .dg-w{display:none}#dg1e617e100 .dg-n{display:block}}</style><svg class="dg-w" style="width:100%;max-width:1083.6px" viewBox="0 0 1083.6 260" width="1083.6" height="260" role="img" aria-labelledby="dg1e617e100w-t dg1e617e100w-d" xmlns="http://www.w3.org/2000/svg"><title id="dg1e617e100w-t">How Guardana checks an AI system</title><desc id="dg1e617e100w-d">Model and code artifacts go to guardana scan, a live endpoint, agent or MCP server to guardana probe or monitor, and a recorded agent run to guardana analyze-trace. All three run one rule engine, which writes a saved run with findings, unverified checks, errors and coverage shortfalls. The run gates the build, feeds guardana diff, and renders as SARIF, JSON, JUnit or text.</desc><defs><marker id="dg1e617e100w-solid" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="h solid" d="M0 0L10 5L0 10z"/></marker><marker id="dg1e617e100w-main" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="h main" d="M0 0L10 5L0 10z"/></marker></defs><g class="g"><rect x="4" y="4" width="177.6" height="252" rx="12"/><text x="18" y="22">What you point it at</text></g><g class="g"><rect x="911.6" y="13" width="168" height="234" rx="12"/><text x="925.6" y="31">What you get</text></g><path class="e solid" d="M155.3 66C198.5 66 198.5 56 241.6 56" marker-end="url(#dg1e617e100w-solid)"/><path class="e solid" d="M158.3 140C198 140 198 121 237.6 121" marker-end="url(#dg1e617e100w-solid)"/><path class="e solid" d="M139.3 214C190.5 214 190.5 195 241.6 195" marker-end="url(#dg1e617e100w-solid)"/><path class="e main" d="M381.6 56C411.6 56 411.6 130 441.6 130" marker-end="url(#dg1e617e100w-main)"/><path class="e main" d="M385.6 121C413.6 121 413.6 130 441.6 130" marker-end="url(#dg1e617e100w-main)"/><path class="e main" d="M381.6 195C411.6 195 411.6 130 441.6 130" marker-end="url(#dg1e617e100w-main)"/><path class="e main" d="M640.6 130C668.6 130 668.6 130 696.6 130" marker-end="url(#dg1e617e100w-main)"/><path class="e solid" d="M855.6 130C896.9 130 896.9 75 938.1 75" marker-end="url(#dg1e617e100w-solid)"/><path class="e solid" d="M855.6 130C890.6 130 890.6 140 925.6 140" marker-end="url(#dg1e617e100w-solid)"/><path class="e solid" d="M855.6 130C895.6 130 895.6 205 935.6 205" marker-end="url(#dg1e617e100w-solid)"/><g class="n"><rect x="30.3" y="38" width="125" height="56" rx="10"/><text x="92.8" y="57">Model and</text><text x="92.8" y="75">code artifacts</text></g><g class="n"><rect x="27.3" y="112" width="131" height="56" rx="10"/><text x="92.8" y="131">Endpoint, agent</text><text x="92.8" y="149">or MCP server</text></g><g class="n"><rect x="46.3" y="186" width="93" height="56" rx="10"/><text x="92.8" y="205">Recorded</text><text x="92.8" y="223">agent run</text></g><g class="n cmd"><rect x="241.6" y="37" width="140" height="38" rx="19"/><text x="311.6" y="56">guardana scan</text></g><g class="n cmd"><rect x="237.6" y="93" width="148" height="56" rx="28"/><text x="311.6" y="112">guardana probe</text><text x="311.6" y="130">or monitor</text></g><g class="n cmd"><rect x="241.6" y="167" width="140" height="56" rx="28"/><text x="311.6" y="186">guardana</text><text x="311.6" y="204">analyze-trace</text></g><g class="n accent"><rect x="441.6" y="102" width="199" height="56" rx="10"/><text x="541.1" y="121">One rule engine</text><text x="541.1" y="139">rules · evaluators · profile</text></g><g class="n"><path d="M696.6 96C696.6 88 855.6 88 855.6 96V164C855.6 172 696.6 172 696.6 164Z"/><path class="lip" d="M696.6 96C696.6 103.2 855.6 103.2 855.6 96"/><text x="776.1" y="115">Saved run</text><text x="776.1" y="133">findings · unverified</text><text x="776.1" y="151">errors · shortfalls</text></g><g class="n"><rect x="938.1" y="47" width="115" height="56" rx="10"/><text x="995.6" y="66">Gate verdict</text><text x="995.6" y="84">and exit code</text></g><g class="n cmd"><rect x="925.6" y="121" width="140" height="38" rx="19"/><text x="995.6" y="140">guardana diff</text></g><g class="n"><rect x="935.6" y="177" width="120" height="56" rx="10"/><text x="995.6" y="196">SARIF · JSON</text><text x="995.6" y="214">JUnit · text</text></g></svg><svg class="dg-n" style="width:100%;max-width:426.4px;min-width:319.8px" viewBox="0 0 426.4 632" width="426.4" height="632" role="img" aria-labelledby="dg1e617e100n-t dg1e617e100n-d" xmlns="http://www.w3.org/2000/svg"><title id="dg1e617e100n-t">How Guardana checks an AI system</title><desc id="dg1e617e100n-d">Model and code artifacts go to guardana scan, a live endpoint, agent or MCP server to guardana probe or monitor, and a recorded agent run to guardana analyze-trace. All three run one rule engine, which writes a saved run with findings, unverified checks, errors and coverage shortfalls. The run gates the build, feeds guardana diff, and renders as SARIF, JSON, JUnit or text.</desc><defs><marker id="dg1e617e100n-solid" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="h solid" d="M0 0L10 5L0 10z"/></marker><marker id="dg1e617e100n-main" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="h main" d="M0 0L10 5L0 10z"/></marker></defs><g class="g"><rect x="30" y="4" width="366.4" height="104" rx="12"/><text x="44" y="22">What you point it at</text></g><g class="g"><rect x="17" y="524" width="392.4" height="104" rx="12"/><text x="31" y="542">What you get</text></g><path class="e solid" d="M101 94C101 133.5 68.5 133.5 68.5 173" marker-end="url(#dg1e617e100n-solid)"/><path class="e solid" d="M229.2 94C229.2 129 213.2 129 213.2 164" marker-end="url(#dg1e617e100n-solid)"/><path class="e solid" d="M341.4 94C341.4 129 357.9 129 357.9 164" marker-end="url(#dg1e617e100n-solid)"/><path class="e main" d="M68.5 211C68.5 243.5 213.2 243.5 213.2 276" marker-end="url(#dg1e617e100n-main)"/><path class="e main" d="M213.2 220C213.2 248 213.2 248 213.2 276" marker-end="url(#dg1e617e100n-main)"/><path class="e main" d="M357.9 220C357.9 248 213.2 248 213.2 276" marker-end="url(#dg1e617e100n-main)"/><path class="e main" d="M213.2 332C213.2 360 213.2 360 213.2 388" marker-end="url(#dg1e617e100n-main)"/><path class="e solid" d="M213.2 468C213.2 513 82.5 513 82.5 558" marker-end="url(#dg1e617e100n-solid)"/><path class="e solid" d="M213.2 468C213.2 517.5 210.2 517.5 210.2 567" marker-end="url(#dg1e617e100n-solid)"/><path class="e solid" d="M213.2 468C213.2 513 340.9 513 340.9 558" marker-end="url(#dg1e617e100n-solid)"/><g class="n"><rect x="44" y="38" width="114" height="56" rx="10"/><text x="101" y="57">Model and</text><text x="101" y="75">code artifacts</text></g><g class="n"><rect x="169.7" y="38" width="119" height="56" rx="10"/><text x="229.2" y="57">Endpoint, agent</text><text x="229.2" y="75">or MCP server</text></g><g class="n"><rect x="300.4" y="38" width="82" height="56" rx="10"/><text x="341.4" y="57">Recorded</text><text x="341.4" y="75">agent run</text></g><g class="n cmd"><rect x="4" y="173" width="129" height="38" rx="19"/><text x="68.5" y="192">guardana scan</text></g><g class="n cmd"><rect x="144.7" y="164" width="137" height="56" rx="28"/><text x="213.2" y="183">guardana probe</text><text x="213.2" y="201">or monitor</text></g><g class="n cmd"><rect x="293.4" y="164" width="129" height="56" rx="28"/><text x="357.9" y="183">guardana</text><text x="357.9" y="201">analyze-trace</text></g><g class="n accent"><rect x="119.7" y="276" width="187" height="56" rx="10"/><text x="213.2" y="295">One rule engine</text><text x="213.2" y="313">rules · evaluators · profile</text></g><g class="n"><path d="M139.2 394C139.2 386 287.2 386 287.2 394V462C287.2 470 139.2 470 139.2 462Z"/><path class="lip" d="M139.2 394C139.2 401.2 287.2 401.2 287.2 394"/><text x="213.2" y="413">Saved run</text><text x="213.2" y="431">findings · unverified</text><text x="213.2" y="449">errors · shortfalls</text></g><g class="n"><rect x="31" y="558" width="103" height="56" rx="10"/><text x="82.5" y="577">Gate verdict</text><text x="82.5" y="595">and exit code</text></g><g class="n cmd"><rect x="145.7" y="567" width="129" height="38" rx="19"/><text x="210.2" y="586">guardana diff</text></g><g class="n"><rect x="286.4" y="558" width="109" height="56" rx="10"/><text x="340.9" y="577">SARIF · JSON</text><text x="340.9" y="595">JUnit · text</text></g></svg></figure>
+<!-- /diagram --></div>
+</div></section>
+
+<section class="s alt-bg" id="checks"><div class="wrap">
+  <p class="eyebrow">51 rules · two surfaces</p>
+  <h2 class="reveal">What Guardana checks</h2>
+  <p class="lede">Build rules inspect artifacts. Runtime rules test a served system or grade a recorded run.</p>
+  <div class="surfaces">
+    <article class="card reveal"><h3>Build-time</h3><p class="label"><b>19 rules · your laptop, CI, a training box</b></p><ul><li><b>pickle_opcode</b> — code that runs when a model loads</li>
+<li><b>keras_lambda</b> — Lambda-layer code execution in .keras and .h5</li>
+<li><b>remote_code_config</b> — auto_map code execution in config.json</li>
+<li><b>hardcoded_secret</b> — provider keys across 30+ file types</li>
+<li><b>hidden_instructions</b> — invisible rules-file backdoors</li></ul></article>
+    <article class="card reveal"><h3>Runtime</h3><p class="label"><b>32 rules · a served model, or a run it already performed</b></p><ul><li><b>system_prompt_leak</b> — proven by a planted canary</li>
+<li><b>scenario.gradual_jailbreak</b> — multi-turn escalation</li>
+<li><b>agent.tool_result_injection</b> — a poisoned tool result hijacks the run</li>
+<li><b>mcp.token_audience</b> — a server accepts a token it never issued</li>
+<li><b>trace.unapproved_side_effect</b> — an irreversible effect nobody approved</li></ul></article>
+  </div>
+  <a class="more" href="/docs/rules/">Browse the rules <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+</div></section>
+
+<section class="s" id="extend"><div class="wrap">
+  <p class="eyebrow">Your threat model</p>
+  <h2 class="reveal">Add your own policy</h2>
+  <p class="lede"><code>guardana new-pack</code> scaffolds a pack that passes its own tests.</p>
+  <div class="split">
+    <div>
+      <div class="cmd"><span class="sig">$</span><code>guardana new-rule acme.agent.customer_data</code></div>
+      <div class="grid4"><article class="tile reveal"><h3>Rules</h3><p>Define checks in declarative YAML or Python.</p></article>
+<article class="tile reveal"><h3>Evaluators</h3><p>Define how your team decides whether an attack succeeded.</p></article>
+<article class="tile reveal"><h3>Targets</h3><p>Connect an endpoint, MCP server, or recorded trace.</p></article>
+<article class="tile reveal"><h3>Security contracts</h3><p>State allowed behavior in a versioned file. Some assertions require your agent to record approvals, delegations, or side effects.</p></article></div>
     </div>
-  </section>
-
-  <section>
-    <div class="wrap">
-      <p class="eyebrow">Bring your own threat model</p>
-      <h2 class="disp">Your application has its own threat model.</h2>
-      <p class="sec-lede">Guardana ships security gates for the AI risks everybody shares. But the dangerous behaviour in <em>your</em> application is usually specific to your data, your tools, your permissions and your business logic — and no public framework knows any of that. Your support agent and a coding agent should not have the same security policy. So the 51 checks are where you start, not what you are limited to — and a <strong>security contract</strong> lets you write the invariants down as data rather than as code.</p>
-
-      <div class="byo-grid">
-        <div>
-          <div class="cmd"><span class="sig">$</span><code>guardana new-rule acme.agent.customer_data</code></div>
-          <div class="trio" style="grid-template-columns:1fr; gap:14px; margin-top:20px">
-            <div class="card">
-              <h3>Rules</h3>
-              <p>Define what must never happen. Declarative YAML — "send these prompts, grade with this evaluator" — or a Python plugin when YAML cannot express it.</p>
-            </div>
-            <div class="card">
-              <h3>Evaluators</h3>
-              <p>Define how <em>your</em> organisation decides whether a check passed. Acme's classifier below fails a hedged "I can't, but here it is" that the built-in keyword grader would let through.</p>
-            </div>
-            <div class="card">
-              <h3>Targets</h3>
-              <p>Connect Guardana to the AI stack you actually run — an endpoint, an MCP server, a recorded trace, or something only you have.</p>
-            </div>
-            <div class="card">
-              <h3>Security contracts</h3>
-              <p>State what the application is <em>allowed</em> to do, in a versioned file your reviewer can read: one tenant per run, refunds need a human, this boundary never receives a credential, this agent never runs a shell. No code. And a contract that could not be checked is <strong>indeterminate</strong>, never a pass — which is also the honest catch: four of the five assertion kinds need approvals, delegations or side effects, and no framework records those on its own, so contracts are for a team that instruments its own agent.</p>
-            </div>
-          </div>
-        </div>
-        <div>
-          <pre class="yml"><code><span class="c"># a real, CI-tested rule</span>
+    <div class="reveal"><pre class="yml"><code><span class="c"># a real, CI-tested rule</span>
 <span class="k">id</span>: acme.agent.customer_data
 <span class="k">title</span>: Acme policy — never expose another customer's data
 <span class="k">severity</span>: critical
@@ -331,142 +385,118 @@
   - <span class="k">name</span>: it declines when the model returned no text
     <span class="k">reply</span>: ""
     <span class="k">outcome</span>: inconclusive</code></pre>
-        </div>
-      </div>
-
-      <div class="byo-note"><strong>This is the architecture, not a plugin bolted on.</strong> The engine deliberately holds no domain knowledge: every built-in rule is discovered through the same <code>guardana.rules</code> entry point your package uses, so there is no built-in-versus-custom distinction at the registry level — only namespacing by id. Your rule maps to the same OWASP, MITRE ATLAS and NIST entries an auditor already reads, gates the same build, and lands in the same four-channel result. Run it with <code>--rules ./my-rules/</code> and no packaging at all, or ship it as a distribution and keep it private. The rule above is not an illustration: it lives in <code>examples/custom_rule/</code>, and CI runs its positive and negative fixtures on every push.</div>
+      <p class="caption">The example rule from the repository, run in CI with its own fixtures.</p>
     </div>
-  </section>
+  </div>
+</div></section>
 
-  <section>
-    <div class="wrap">
-      <p class="eyebrow">The differentiator</p>
-      <h2 class="disp">Did the attack actually work?</h2>
-      <p class="sec-lede">Most scanners are good at <em>sending</em> attacks and bad at telling you whether one landed. Guardana treats that judgement as a first-class, swappable, versioned component — so every graded finding arrives with an outcome, a rationale, and a number you can gate on — while a deterministic one, like a planted canary coming back, is proof rather than an opinion.</p>
+<section class="s alt-bg" id="honest"><div class="wrap">
+  <p class="eyebrow">Built to be gated on</p>
+  <h2 class="reveal">Unknown never means clean</h2>
+  <p class="lede">Each run reports what it could establish.</p>
+  <div class="split">
+    <ul class="checks"><li class="reveal"><span class="tick"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4.5 4.5L19 7"/></svg></span><div><h3>Unverified</h3><p>A check that could not decide is reported as unverified.</p></div></li><li class="reveal"><span class="tick"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4.5 4.5L19 7"/></svg></span><div><h3>Error</h3><p>A check that could not run is reported as an error.</p></div></li><li class="reveal"><span class="tick"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4.5 4.5L19 7"/></svg></span><div><h3>Budget</h3><p>An exhausted budget exits 6.</p></div></li><li class="reveal"><span class="tick"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4.5 4.5L19 7"/></svg></span><div><h3>Repeated trials</h3><p>With <code>--trials N</code>, any failed trial fails its case. A clean result states its trial count and an upper bound on attack success over its cases.</p></div></li></ul>
+    <div class="reveal"><pre class="yml"><code><span class="c">// what will this cost, before it costs anything</span>
+<span class="k">$</span> <span class="s">guardana plan probe --url … --model …</span>
+<span class="c">   14 rule(s) would run, 9 skipped.</span>
+<span class="c">   requests: at least 14, at most 47</span>
+<span class="c">   trials: 1 attempt(s) per case, counted in the requests above</span>
+<span class="c">   No request was sent to produce this estimate.</span>
 
-      <div class="verdict">
-        <div class="vrow">
-          <span class="chip">CRITICAL</span>
-          <span class="vid mono">guardana.prompt.system_prompt_leak.canary</span>
-        </div>
-        <p class="vwhy">The reply contained the canary token planted in the system prompt — unambiguous evidence of disclosure, not a keyword guess.</p>
-        <div class="meter">
-          <span class="meter-label">Confidence</span>
-          <span class="track"><b class="fill"></b></span>
-          <b class="mono">0.95</b>
-        </div>
-      </div>
+<span class="c">// is this worse than last week?</span>
+<span class="k">$</span> <span class="s">guardana diff last-week.json today.json</span></code></pre></div>
+  </div>
+</div></section>
 
-      <p class="stat">Keyword-graded checks misjudge whether an attack succeeded at rates reported as high as <strong>37%</strong> — <a href="https://arxiv.org/abs/2410.16527">Fujitsu Research, 2024</a>. A scanner that can't tell a refusal from a compliance isn't a security tool.</p>
-    </div>
-  </section>
-
-  <section>
-    <div class="wrap">
-      <p class="eyebrow">CI in one step</p>
-      <h2 class="disp">Gate it on every push</h2>
-      <p class="sec-lede">The official Action scans and uploads SARIF, so findings annotate the exact source line in GitHub code scanning. Every rule maps to a public framework — OWASP LLM Top 10, OWASP Agentic, OWASP MCP Top 10, MITRE ATLAS or NIST.</p>
-      <pre class="yml"><code><span class="c">// .github/workflows/ai-security.yml</span>
+<section class="s" id="ci"><div class="wrap">
+  <p class="eyebrow">CI and tests</p>
+  <h2 class="reveal">Use it in CI</h2>
+  <p class="lede">Use the GitHub Action or <code>guardana.testing.assert_secure(...)</code> in pytest. Results come as human, JSON, SARIF, or JUnit output. <code>guardana plan probe</code> prices requests before sending one.</p>
+  <div class="duo">
+    <div class="reveal"><h3>GitHub Actions</h3><pre class="yml"><code><span class="c">// .github/workflows/ai-security.yml</span>
 <span class="k">- uses:</span> <span class="s">actions/checkout@v4</span>
 <span class="k">- uses:</span> <span class="s">guardana/guardana@v0.28</span>
   <span class="k">with:</span>
-    <span class="k">args:</span> <span class="s">--preset ci</span></code></pre>
-      <p class="ci-note">Turning a gate on for an existing repo? <code>guardana baseline create</code> accepts today's findings with a reason, an owner and an expiry date — and an expired waiver stops waiving. There's a pre-commit hook too.</p>
-    </div>
-  </section>
-
-  <section>
-    <div class="wrap">
-      <p class="eyebrow">No new pipeline to own</p>
-      <h2 class="disp">Or write it as a test.</h2>
-      <p class="sec-lede">A security check that needs its own command, its own stage and its own report is a check somebody runs on Tuesdays. Your team already runs <code>pytest</code>.</p>
-      <pre class="yml"><code><span class="c"># test_ai_security.py</span>
+    <span class="k">args:</span> <span class="s">--preset ci</span></code></pre></div>
+    <div class="reveal"><h3>pytest</h3><pre class="yml"><code><span class="c"># test_ai_security.py</span>
 <span class="k">from</span> <span class="s">guardana.testing</span> <span class="k">import</span> <span class="s">assert_secure</span>
 <span class="k">from</span> <span class="s">guardana.adapters.langchain</span> <span class="k">import</span> <span class="s">langchain_target</span>
 
 <span class="k">def</span> <span class="s">test_the_agent_keeps_its_instructions_to_itself</span>(chat_model):
-    <span class="s">assert_secure</span>(<span class="s">langchain_target</span>(chat_model, system_prompt=SYSTEM), preset=<span class="s">"ci"</span>)</code></pre>
-      <ul class="checks">
-        <li><strong>The same engine, not a second one.</strong> Same rules, same policy, same redaction, same three-state gate as the CLI — a check that passes here and fails in CI is a fact about the target, not a disagreement between two implementations.</li>
-        <li><strong>"Couldn't check" fails too.</strong> An empty registry, an endpoint that was down, a check that couldn't grade — each raises, and says which it was. That distinction is exactly what goes quiet in a test suite.</li>
-        <li><strong>The model your app actually calls.</strong> The LangChain adapter probes that object, with its client and its configuration — tools included, when it has them — and never imports <code>langchain</code>, so Guardana takes no dependency on your agent stack.</li>
-        <li><strong>Or grade the run your framework already did.</strong> PydanticAI, LlamaIndex and CrewAI runs translate into one trace model — messages, tool calls, retrieved documents and their tenant, which agent acted. Each adapter declares only what its framework really records, so a check it cannot answer is skipped and said out loud, never quietly passed.</li>
-      </ul>
-    </div>
-  </section>
+    <span class="s">assert_secure</span>(<span class="s">langchain_target</span>(chat_model, system_prompt=SYSTEM), preset=<span class="s">"ci"</span>)</code></pre></div>
+  </div>
+</div></section>
 
-  <section>
-    <div class="wrap">
-      <p class="eyebrow">Built to be gated on</p>
-      <h2 class="disp">Know the cost. Know what ran. Know what changed.</h2>
-      <p class="sec-lede">Evaluation frameworks measure quality; red-teaming tools generate attacks. Guardana is built to be the thing a pipeline blocks on, which needs three properties those don't have to provide.</p>
-      <pre class="yml"><code><span class="c">// what will this cost, before it costs anything</span>
-<span class="k">$</span> <span class="s">guardana plan probe --url … --model …</span>
-<span class="c">   14 rule(s) would run, 9 skipped.</span>
-<span class="c">   requests: at least 14, at most 47</span>
-<span class="c">   No request was sent to produce this estimate.</span>
-
-<span class="c">// is this worse than last week?</span>
-<span class="k">$</span> <span class="s">guardana diff last-week.json today.json</span></code></pre>
-      <ul class="checks">
-        <li><strong>A budget that can't be used as an excuse.</strong> A run that hits its ceiling exits <code>6</code>, keeps what it found, and never passes — and a comparison refuses to read the missing findings as an improvement.</li>
-        <li><strong>Exit codes as a contract.</strong> Eight documented meanings, pinned by a test against the docs. Nothing to parse out of human text.</li>
-        <li><strong>Unknown is never zero.</strong> A check that couldn't grade, a capability the provider didn't confirm, a cost nobody measured — each is its own outcome, never a pass. And when <em>nothing</em> reached a verdict — an endpoint answering every request with an empty message runs every rule and grades none — the run exits <code>2</code> with a full rule count behind it, because a green build is not something silence earns.</li>
-      </ul>
-    </div>
-  </section>
-
-  <section>
-    <div class="wrap">
-      <p class="eyebrow">Safe to point at production</p>
-      <h2 class="disp">Verification you don't have to contain.</h2>
-      <p class="sec-lede">In August 2026 <a href="https://techcrunch.com/2026/08/09/the-ai-safety-test-is-becoming-a-safety-risk/">TechCrunch reported</a> evaluation sandboxes failing to hold the models inside them — an unreleased model reaching a vendor's production systems, another using a sandbox leak to reach GitHub, evaluation agents attempting social engineering against open-source projects. A security tool whose own apparatus needs containment has moved the risk, not measured it.</p>
-      <ul class="checks">
-        <li><strong>No autonomous attacker.</strong> Rules send prompts a human wrote and read what came back. There is no agent of ours planning its way around your system, and adaptive attackers stay behind a research gate for exactly that reason.</li>
-        <li><strong>Nothing is turned off to run the test.</strong> Guardana does not disable your guardrails, does not sit in the request path, and does not need production credentials it was not handed. It verifies the system as deployed.</li>
-        <li><strong>Every run has a ceiling, and the target cannot move it.</strong> Request, token and duration budgets live on the target, so a rule — including one somebody else wrote — cannot route around them. A run that hits a ceiling exits <code>6</code> and never passes.</li>
-        <li><strong>The only traffic is to the target you named.</strong> No telemetry, no phone-home, no account. A target that redirects elsewhere does not take your credential with it — that barrier is a rule, with a test behind it.</li>
-      </ul>
-    </div>
-  </section>
-
-  <section>
-    <div class="wrap">
-      <p class="eyebrow">Many pipelines, one place · beta</p>
-      <h2 class="disp">Keep the evidence, and keep it apart.</h2>
-      <p class="sec-lede">Everything above works offline and alone. When a team wants one history instead of many, any run can forward its findings to a collector you host yourself — optional in every direction, and the engine never depends on it.</p>
-      <pre class="yml"><code><span class="c">// three commands to a real collector</span>
+<section class="s alt-bg" id="trust"><div class="wrap">
+  <p class="eyebrow">Trust the tool itself</p>
+  <h2 class="reveal">Inspect the tool and its evidence</h2>
+  <p class="lede">Guardana runs without an account or telemetry.</p>
+  <div class="trust">
+    <article class="reveal"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.4 3 8.2 7 9.5 4-1.3 7-5.1 7-9.5V6z"/><path d="m9 12 2 2 4-4"/></svg><h3>Offline scans</h3><p>Artifact scans run fully offline.</p></article>
+    <article class="reveal"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><h3>Target-only traffic</h3><p>Without the collector, network traffic goes only to the target you specify.</p></article>
+    <article class="reveal"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h7"/><circle cx="18" cy="16" r="3"/></svg><h3>Release artifacts</h3><p>Every release includes SBOMs and multi-architecture containers.</p></article>
+    <article class="reveal"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h7l4 4v12H7z"/><path d="M14 4v4h4M10 13h5M10 17h5"/></svg><h3>Saved runs</h3><p>Saved runs are versioned and migratable.</p></article>
+    <article class="reveal"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0 1 14-5.3L20 9M20 4v5h-5"/><path d="M20 12a8 8 0 0 1-14 5.3L4 15M4 20v-5h5"/></svg><h3>Redacted evidence</h3><p>Commands redact evidence by default.</p></article>
+    <article class="reveal"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/></svg><h3>Optional collector</h3><p>The self-hosted, PostgreSQL-backed collector is in beta and optional in every direction.</p></article>
+  </div>
+  <div class="collector reveal"><pre class="yml"><code><span class="c">// three commands to a real collector</span>
 <span class="k">$</span> <span class="s">guardana-collector migrate</span>
 <span class="k">$</span> <span class="s">guardana-collector bootstrap --org acme --project web</span>
 <span class="k">$</span> <span class="s">guardana-collector serve</span>
 
 <span class="c">// then any run can report to it</span>
 <span class="k">$</span> <span class="s">guardana scan . --ai-system support-agent --environment production \</span>
-<span class="s">      --reporter server://https://collector.internal</span></code></pre>
-      <ul class="checks">
-        <li><strong>One instance, many teams.</strong> A key is bound to one project and reads nothing outside it — proven per entity, on both storage backends and over HTTP. Pin a key to an environment and it reaches only that one, in both directions.</li>
-        <li><strong>A run, not a pile of findings.</strong> Whether it passed its gate, when it ran, what it cost, which build produced it. A gate the agent didn't send is <em>unknown</em>, never a pass, and a retried job is stored once.</li>
-        <li><strong>One finding, followed.</strong> Every finding carries the identity <code>guardana diff</code> uses, so the collector can say how many runs have seen it and since when.</li>
-        <li><strong>Triage that does not restart every run.</strong> A finding carries a status, an owner and — when a team accepts the risk — a waiver with a name and a date. A fix that did not hold reopens itself; an expired waiver stops waiving without anything having to run.</li>
-        <li><strong>Every change is on the record.</strong> Keys, tenants, triage, migrations, deletions — with the actor and whether it was a presented credential or a name somebody asserted. Retention and deletion are commands you run, never a job that runs itself.</li>
-        <li><strong>Or run it from an image.</strong> Both halves ship as official containers on every release — non-root, <code>amd64</code> and <code>arm64</code>, with an SBOM and a signed provenance attestation.</li>
-      </ul>
-      <p class="sec-lede">No account, no telemetry, no phone-home — the only network traffic is to the target you point it at, and to a collector you chose to run.</p>
-    </div>
-  </section>
+<span class="s">      --reporter server://https://collector.internal</span></code></pre></div>
+</div></section>
+
+<section class="s" id="control"><div class="wrap">
+  <p class="eyebrow">Two independent projects</p>
+  <h2 class="reveal">Measure releases. Decide tool calls.</h2>
+  <p class="lede">Guardana measures models, RAG pipelines, and agents before release and between releases. Guardana Control decides MCP tool calls while agents run.</p>
+  <div class="flow reveal"><!-- diagram: docs/design/guardana-and-control.md 1 -->
+<figure class="dg" id="dg1db3e3101"><style>.dg{margin:28px 0 32px;container-type:inline-size;overflow-x:auto}.dg svg{display:block;height:auto;margin:0 auto}.dg .dg-n{display:none}.dg text{text-anchor:middle;dominant-baseline:central}.dg .n rect,.dg .n path{fill:var(--panel,#fff);stroke:var(--line,#E6E8EF);stroke-width:1.2}.dg .n .lip{fill:none}.dg .n text{fill:var(--ink,#0F1115);font:500 13px var(--sans,system-ui,sans-serif)}.dg .accent rect,.dg .accent path{fill:var(--brand-soft,#F0ECFF);stroke:var(--brand,#5B3DF5)}.dg .accent .lip{fill:none}.dg .accent text{fill:var(--brand-ink,#4A2FE0)}.dg .cmd text{font:400 12.5px var(--mono,ui-monospace,monospace)}.dg .muted rect,.dg .muted path{stroke-dasharray:4 3}.dg .muted text{fill:var(--muted,#566070)}.dg .e{fill:none;stroke:var(--faint,#8A92A0);stroke-width:1.4}.dg .e.dot{stroke-dasharray:3 4}.dg .e.main{stroke:var(--brand,#5B3DF5);stroke-width:1.8;stroke-dasharray:7 5;animation:dg-flow 1.4s linear infinite}.dg .h{fill:var(--faint,#8A92A0)}.dg .h.main{fill:var(--brand,#5B3DF5)}.dg .g rect{fill:color-mix(in srgb,var(--brand-soft,#F0ECFF) 45%,transparent);stroke:var(--line,#E6E8EF)}.dg .g text{text-anchor:start;font:500 11px var(--mono,ui-monospace,monospace);letter-spacing:.08em;text-transform:uppercase;fill:var(--muted,#566070)}.dg .l rect{fill:var(--bg,#FBFBFD)}.dg .l text{font:400 11.5px var(--mono,ui-monospace,monospace);fill:var(--muted,#566070)}@keyframes dg-flow{to{stroke-dashoffset:-24}}@media (prefers-reduced-motion:reduce){.dg .e.main{animation:none}}</style><style>@container (max-width:758.8px){#dg1db3e3101 .dg-w{display:none}#dg1db3e3101 .dg-n{display:block}}</style><svg class="dg-w" style="width:100%;max-width:948.5px" viewBox="0 0 948.5 126" width="948.5" height="126" role="img" aria-labelledby="dg1db3e3101w-t dg1db3e3101w-d" xmlns="http://www.w3.org/2000/svg"><title id="dg1db3e3101w-t">Guardana and Guardana Control</title><desc id="dg1db3e3101w-d">Guardana checks models, RAG pipelines, agents and MCP servers before release, and its verdict gates the release. While the agent runs, Guardana Control sits between the agent and its tools, decides each tool call and records evidence. Neither product needs the other.</desc><defs><marker id="dg1db3e3101w-solid" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="h solid" d="M0 0L10 5L0 10z"/></marker><marker id="dg1db3e3101w-main" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="h main" d="M0 0L10 5L0 10z"/></marker></defs><path class="e solid" d="M172 63C200 63 200 63 228 63" marker-end="url(#dg1db3e3101w-solid)"/><path class="e main" d="M372 63C412.2 63 412.2 63 452.5 63" marker-end="url(#dg1db3e3101w-main)"/><path class="e main" d="M552.5 63C580.5 63 580.5 63 608.5 63" marker-end="url(#dg1db3e3101w-main)"/><path class="e main" d="M774.5 63C802.5 63 802.5 32 830.5 32" marker-end="url(#dg1db3e3101w-main)"/><path class="e solid" d="M774.5 63C809.2 63 809.2 100 844 100" marker-end="url(#dg1db3e3101w-solid)"/><g class="l"><rect x="380" y="54" width="64.5" height="18" rx="5"/><text x="412.2" y="63">release</text></g><g class="n"><rect x="4" y="35" width="168" height="56" rx="10"/><text x="88" y="54">Models · RAG</text><text x="88" y="72">agents · MCP servers</text></g><g class="n accent"><rect x="228" y="35" width="144" height="56" rx="10"/><text x="300" y="54">Guardana</text><text x="300" y="72">scan · probe · diff</text></g><g class="n"><rect x="452.5" y="35" width="100" height="56" rx="10"/><text x="502.5" y="54">Agent in</text><text x="502.5" y="72">production</text></g><g class="n accent"><rect x="608.5" y="35" width="166" height="56" rx="10"/><text x="691.5" y="54">Guardana Control</text><text x="691.5" y="72">decides each tool call</text></g><g class="n"><rect x="830.5" y="4" width="114" height="56" rx="10"/><text x="887.5" y="23">Tools and</text><text x="887.5" y="41">MCP servers</text></g><g class="n"><path d="M844 84C844 76 931 76 931 84V116C931 124 844 124 844 116Z"/><path class="lip" d="M844 84C844 91.2 931 91.2 931 84"/><text x="887.5" y="103">Evidence</text></g></svg><svg class="dg-n" style="width:100%;max-width:198.7px;min-width:149px" viewBox="0 0 198.7 512" width="198.7" height="512" role="img" aria-labelledby="dg1db3e3101n-t dg1db3e3101n-d" xmlns="http://www.w3.org/2000/svg"><title id="dg1db3e3101n-t">Guardana and Guardana Control</title><desc id="dg1db3e3101n-d">Guardana checks models, RAG pipelines, agents and MCP servers before release, and its verdict gates the release. While the agent runs, Guardana Control sits between the agent and its tools, decides each tool call and records evidence. Neither product needs the other.</desc><defs><marker id="dg1db3e3101n-solid" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="h solid" d="M0 0L10 5L0 10z"/></marker><marker id="dg1db3e3101n-main" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="h main" d="M0 0L10 5L0 10z"/></marker></defs><path class="e solid" d="M99.4 60C99.4 88 99.4 88 99.4 116" marker-end="url(#dg1db3e3101n-solid)"/><path class="e main" d="M99.4 172C99.4 200 99.4 200 99.4 228" marker-end="url(#dg1db3e3101n-main)"/><path class="e main" d="M99.4 284C99.4 312 99.4 312 99.4 340" marker-end="url(#dg1db3e3101n-main)"/><path class="e main" d="M99.4 396C99.4 424 55.5 424 55.5 452" marker-end="url(#dg1db3e3101n-main)"/><path class="e solid" d="M99.4 396C99.4 427 156.7 427 156.7 458" marker-end="url(#dg1db3e3101n-solid)"/><g class="l"><rect x="67.1" y="191" width="64.5" height="18" rx="5"/><text x="99.4" y="200">release</text></g><g class="n"><rect x="20.9" y="4" width="157" height="56" rx="10"/><text x="99.4" y="23">Models · RAG</text><text x="99.4" y="41">agents · MCP servers</text></g><g class="n accent"><rect x="32.9" y="116" width="133" height="56" rx="10"/><text x="99.4" y="135">Guardana</text><text x="99.4" y="153">scan · probe · diff</text></g><g class="n"><rect x="54.9" y="228" width="89" height="56" rx="10"/><text x="99.4" y="247">Agent in</text><text x="99.4" y="265">production</text></g><g class="n accent"><rect x="21.9" y="340" width="155" height="56" rx="10"/><text x="99.4" y="359">Guardana Control</text><text x="99.4" y="377">decides each tool call</text></g><g class="n"><rect x="4" y="452" width="103" height="56" rx="10"/><text x="55.5" y="471">Tools and</text><text x="55.5" y="489">MCP servers</text></g><g class="n"><path d="M118.7 464C118.7 456 194.7 456 194.7 464V496C194.7 504 118.7 504 118.7 496Z"/><path class="lip" d="M118.7 464C118.7 471.2 194.7 471.2 194.7 464"/><text x="156.7" y="483">Evidence</text></g></svg></figure>
+<!-- /diagram --></div>
+  <div class="surfaces">
+    <article class="card product reveal"><h3>Guardana</h3><p class="label"><b>Open source · Apache-2.0 · <span class="ver mono">v0.28.0</span></b></p><p>Scans artifacts, probes live endpoints and agents, grades recorded runs, and diffs releases. It stays outside the request path and sends no telemetry.</p><a class="more" href="/docs/">Read the docs <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></article>
+    <article class="card product reveal"><h3>Guardana Control</h3><p class="label"><b>Open source · Apache-2.0 · alpha</b></p><p>Inline MCP tool-call control. Verdicts: <code>ALLOW</code>, <code>DENY</code>, <code>REQUIRE_APPROVAL</code>, <code>ALLOW_WITH_OBLIGATIONS</code>, <code>INDETERMINATE</code>. Enforces decisions and records evidence. No telemetry. Do not deploy as a security boundary.</p><p class="note">Control’s website is coming soon.</p><a class="more" href="https://github.com/guardana/control">Source on GitHub <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></article>
+  </div>
+  <div class="three">
+    <article class="tile reveal"><h3>No false green</h3><p>Guardana never marks <code>unverified</code> as clean. Control never treats <code>INDETERMINATE</code> as <code>ALLOW</code>. Each handles uncertainty in its own workflow.</p></article>
+    <article class="tile reveal"><h3>Probe an agent</h3><p>Guardana can probe an agent behind Control as it probes any endpoint, then compare the answers between releases.</p></article>
+    <article class="tile reveal"><h3>Check one MCP server</h3><p>Guardana checks a server manifest for drift in CI. Control uses its own fingerprints to stop a changed tool at run time. Each uses its own format.</p></article>
+  </div>
+  <p class="aside">Each project is complete on its own. Neither needs the other to build, run, or be useful.</p>
+</div></section>
+
+<section class="s alt-bg" id="faq"><div class="wrap">
+  <p class="eyebrow">Questions</p>
+  <h2 class="reveal">Frequently asked</h2>
+  <div class="faq">
+    <details><summary>Does a scan need internet access?</summary><p>No. Artifact scans run fully offline.</p></details>
+    <details><summary>What does a probe contact?</summary><p>The target you point it at. Guardana sends no telemetry.</p></details>
+    <details><summary>Can it check a recorded agent run?</summary><p>Yes. Runtime rules can grade recorded runs when the needed evidence is present.</p></details>
+    <details><summary>Can I estimate probe cost first?</summary><p>Yes. <code>guardana plan probe</code> prices requests without sending one.</p></details>
+    <details><summary>Do I need the collector?</summary><p>No. It is optional and self-hosted.</p></details>
+    <details><summary>How does Guardana relate to Guardana Control?</summary><p>They are independent projects. Guardana scans and probes outside the request path, and grades runs in its own trace format. Guardana Control is an alpha MCP tool-call gate that enforces verdicts and records evidence. Neither needs the other.</p></details>
+  </div>
+</div></section>
+
+<section class="final"><div class="wrap">
+  <h2>Run an offline scan</h2>
+  <p>Start with <code>uvx --from guardana-cli guardana scan .</code> or install with <code>pip install guardana-cli</code>.</p>
+  <div class="install"><span class="sig">$</span><code>uvx --from guardana-cli guardana scan .</code></div>
+</div></section>
 </main>
 
-<footer class="foot">
-  <div class="wrap foot-grid">
-    <span>Apache-2.0</span>
-    <a href="https://github.com/guardana/guardana">GitHub</a>
-    <a href="https://pypi.org/project/guardana-cli/">PyPI</a>
-    <a href="https://github.com/marketplace/actions/guardana-ai-security-scan">Marketplace</a>
-    <a href="https://github.com/guardana/guardana/releases">Releases</a>
-    <a href="https://www.producthunt.com/products/guardana?launch=guardana" rel="noopener">Product Hunt</a>
-    <span class="sep">Security verification for self-hosted AI.</span>
+<footer class="foot"><div class="wrap foot-grid">
+  <div class="who">
+    <a class="mark" href="/"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.8 4.5 5.6v6.1c0 4.6 3.2 8.2 7.5 9.5 4.3-1.3 7.5-4.9 7.5-9.5V5.6z"/><path d="m8.6 12.1 2.4 2.4 4.5-4.8"/></svg><span class="w">guard<b>ana</b></span></a>
+    <p>Guardana · Apache-2.0 · Maintained by Konrad Karauda · github.com/guardana/guardana</p>
   </div>
-</footer>
-
+  <div><h4>Products</h4><ul><li><a href="/">Guardana</a></li><li><a href="https://github.com/guardana/control">Guardana Control</a> <span class="tag">alpha</span></li></ul></div>
+  <div><h4>Guardana</h4><ul><li><a href="/docs/">Documentation</a></li><li><a href="/docs/rules/">Rule catalogue</a></li><li><a href="https://github.com/guardana/guardana/releases">Releases</a></li></ul></div>
+  <div><h4>Get it</h4><ul><li><a href="https://pypi.org/project/guardana-cli/">PyPI</a></li><li><a href="https://github.com/marketplace/actions/guardana-ai-security-scan">GitHub Action</a></li><li><a href="https://github.com/guardana/guardana">Source</a></li></ul></div>
+  <div><h4>More</h4><ul><li><a href="/llms.txt">llms.txt</a></li><li><a href="/sitemap.xml">Sitemap</a></li><li><a href="https://www.producthunt.com/products/guardana?launch=guardana" rel="noopener">Product Hunt</a></li></ul></div>
+</div></footer>
 </body>
 </html>

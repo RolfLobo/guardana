@@ -7,13 +7,7 @@ status: stable
 
 # `guardana diff` — is this worse than last time?
 
-`scan`, `probe` and `monitor` all answer *how is it now*. This one answers the
-question a team actually has at every change — a new model, an edited system
-prompt, one more tool wired into an agent: **is it worse than it was?**
-
-That is what turns security testing from a launch ritual into part of the change
-process. A regression stops the deploy, and a comparison that cannot honestly be
-made says so instead of going green.
+`guardana diff` compares runs when you need to see whether a change made results worse. `scan`, `probe`, and `monitor` check current results. A regression can stop a deploy; an incomparable pair is reported as such.
 
 ## Save a run, then compare two
 

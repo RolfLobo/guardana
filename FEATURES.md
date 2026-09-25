@@ -127,6 +127,8 @@ without guessing from a short id.
 - OpenTelemetry GenAI input plus LangChain, Pydantic AI, OpenAI Agents, Hermes,
   and shell-hook integration examples.
 - No account, telemetry, or network access for artifact scans.
+- JSON Schemas for saved runs, plans, comparisons, and traces, served at the URL each
+  `$id` names under `https://guardana.dev/schemas/`.
 
 ## Extension surface
 

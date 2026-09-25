@@ -7,9 +7,7 @@ status: stable
 
 # `guardana calibrate` — measure the judge instead of trusting it
 
-A graded finding carries a confidence. **A confidence nobody checked is the same
-unbacked claim every scanner makes**, so this is the check: grade a corpus whose
-outcomes are already known and compare what the evaluator said with what happened.
+`guardana calibrate` compares evaluator grades with known outcomes when you need to check confidence.
 
 ```bash
 guardana calibrate --evaluator keyword --corpus mine.jsonl

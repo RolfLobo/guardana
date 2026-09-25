@@ -191,8 +191,9 @@ def test_no_sentence_on_the_page_states_a_stale_check_count() -> None:
     """
     stated = {int(match.group(1)) for match in _PROSE_CHECKS_RE.finditer(_page())}
 
-    assert stated, "the page no longer states a check count in prose; update this test with it"
-    assert stated == {len(list(provide_rules()))}, (
+    # The counted labels (`_TOTAL_RE` and its two siblings) are pinned above; prose may
+    # leave the number out, and when it names one, it names the registry's.
+    assert stated <= {len(list(provide_rules()))}, (
         f"site/index.html states {sorted(stated)} check(s) in prose, and the registry has "
         f"{len(list(provide_rules()))} — run `uv run python scripts/sync_site.py`"
     )

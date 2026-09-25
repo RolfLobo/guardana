@@ -7,16 +7,13 @@ status: stable
 
 # `guardana analyze-trace` — grade an execution that already happened
 
-`scan` reads files. `probe` talks to a live model. `analyze-trace` reads a **trace**:
-a recording of what your agent actually did, exported by whatever instrumentation you
-already run.
+`analyze-trace` reads a recorded agent execution when you need to check what happened offline. `scan` reads files; `probe` talks to a live model.
 
 ```bash
 guardana analyze-trace trace.jsonl
 ```
 
-It opens one file and no socket. Nothing is sent anywhere, no model is called, and no
-tool is invoked.
+It opens one file. It makes no network request, calls no model, and invokes no tool.
 
 ## What it is for
 

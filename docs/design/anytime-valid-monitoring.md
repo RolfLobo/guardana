@@ -107,4 +107,4 @@ already gives.
 
 - [`paired-regression-statistics.md`](paired-regression-statistics.md): the paired test each cycle runs
 - [`repeated-trials.md`](repeated-trials.md): per-case rates, the quantity being watched
-- [`production-intake.md`](production-intake.md): the lane where samples arrive over time
+- [`guardana-and-control.md`](guardana-and-control.md): why samples of live traffic are Guardana Control's, and synthetic cycles are this rule's

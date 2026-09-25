@@ -7,8 +7,7 @@ status: stable
 
 # `guardana import-observations` — carry another tool's results in as claims
 
-You ran garak. You ran promptfoo. You have an internal harness. Their results are real
-evidence and they belong beside Guardana's — without Guardana pretending it produced them.
+`guardana import-observations` brings external test results into Guardana when you need to review them beside its findings. It keeps results from garak, promptfoo, or an internal harness attributed to their source.
 
 ```bash
 guardana import-observations garak.report.jsonl --target https://llm.internal/v1

@@ -1,10 +1,10 @@
 # Guardana
 
-> Open-source AI security verification. One rule engine scans model artifacts, probes live endpoints and MCP servers, and grades agent executions that already happened — on a laptop, in CI, and next to a served model. It runs offline, needs no account, and sends nothing anywhere except to the target you name.
+> Guardana is open-source AI security verification. Its rule engine scans model artifacts, probes live endpoints and MCP servers, and grades completed agent runs. Use it on a laptop, in CI, or beside a served model. It runs offline, needs no account, and sends nothing anywhere except to the target you name.
 
 Version 0.28.0, Apache-2.0. 51 built-in rules: 19 static ones that need no model and no network, and 32 that grade a live system or a recorded run. Every rule maps to a public framework (OWASP LLM Top 10 in both editions, OWASP ASI, OWASP MCP, OWASP ML, MITRE ATLAS, NIST AI 100-2e2025).
 
-The distinguishing property is what happens when a check cannot reach a verdict. Guardana reports four separate outcomes — a finding, an unverified check, a check that errored, and evidence that was demanded and not available — and none of them is silently a pass. A run that could not establish something says so and exits non-zero.
+Guardana reports four separate outcomes: a finding, an unverified check, a check that errored, and required evidence that was unavailable. None silently counts as a pass. If a run cannot establish something, it says so and exits non-zero.
 
 This file is generated from the documentation map; do not edit it by hand.
 
@@ -81,7 +81,19 @@ This file is generated from the documentation map; do not edit it by hand.
 - [design/audit-0.23-market.md](https://raw.githubusercontent.com/guardana/guardana/refs/heads/main/docs/design/audit-0.23-market.md): repository audit, market evidence, and the rationale for the current order
 - [design/audit-0.25-market.md](https://raw.githubusercontent.com/guardana/guardana/refs/heads/main/docs/design/audit-0.25-market.md): whether that order still follows from evidence, and the validation plan that replaces the one it could not run
 - [design/audit-0.26-measurement.md](https://raw.githubusercontent.com/guardana/guardana/refs/heads/main/docs/design/audit-0.26-measurement.md): what a clean result rests on, and why rows 1 and 2 widened and a re-grading row was added
+- [design/guardana-and-control.md](https://raw.githubusercontent.com/guardana/guardana/refs/heads/main/docs/design/guardana-and-control.md): Guardana and Guardana Control: measuring before release versus supervising agents while they run, what the two exchange, and how the two sites divide the work
 - [../CHANGELOG.md](https://raw.githubusercontent.com/guardana/guardana/refs/heads/main/CHANGELOG.md): release history
+
+## Schemas
+
+- [Guardana Run Comparison v2](https://guardana.dev/schemas/diff/v2.schema.json): What changed between two saved runs.
+- [Guardana Run Plan v2](https://guardana.dev/schemas/plan/v2.schema.json): What a run would cost, worked out without sending a request.
+- [Guardana Saved Run v8](https://guardana.dev/schemas/run/v8.schema.json): One Guardana run written to disk: the manifest (what was verified, against what, under which configuration and limits, at what cost, with what reach, and with what verdict) plus the finding channels.
+- [Guardana Trace v3](https://guardana.dev/schemas/trace/v3.schema.json): One record of a Guardana native trace file.
+
+## Related project
+
+- [Guardana Control](https://raw.githubusercontent.com/guardana/control/refs/heads/main/README.md): Decide, enforce and record the tool calls your AI agents make. Status: alpha.
 
 ## Optional
 

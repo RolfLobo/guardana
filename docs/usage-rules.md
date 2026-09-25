@@ -7,18 +7,13 @@ status: stable
 
 # `guardana rules` — what is discovered, before anything runs
 
-List all discovered rules, grouped by the layer they secure — build-time
-(static, artifact — dev machine, CI, training server) versus runtime (dynamic,
-endpoint — live probe and monitor).
+`guardana rules` lists discovered build-time and runtime rules when you need to check what is available.
 
 ```bash
 guardana rules
 ```
 
-Pass `--rules <dir>` to include your own YAML rules in the listing — the same
-flag `scan`/`probe` take — so you can confirm a rule pack parses and is picked
-up without launching a full probe. A file that fails to load is warned about,
-never silently dropped.
+Pass `--rules <dir>` to include YAML rules, as with `scan` and `probe`. Files that fail to load produce a warning.
 
 ## Flags
 

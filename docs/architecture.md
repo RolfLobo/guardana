@@ -26,6 +26,19 @@ guardana-server    OPTIONAL collector. Ingests normalized Findings from many
                    service.
 ```
 
+```mermaid
+flowchart LR
+  accTitle: Guardana's five packages
+  accDescr: guardana-cli runs guardana-core, which discovers the built-in rules in guardana-rules and the rules in your own extension packages. guardana-report renders the results. guardana-server, the optional collector, receives a versioned envelope over HTTP and is never imported by the engine.
+  classDef accent fill:#F0ECFF,stroke:#5B3DF5,color:#4A2FE0
+  classDef cmd font-family:monospace
+  CLI([guardana-cli]):::cmd ==> CORE[guardana-core<br>Target · Rule · Evaluator<br>Finding · Profile · Runner]:::accent
+  RULES([guardana-rules]):::cmd --> CORE
+  EXT[Your extension<br>packages] -.-> CORE
+  CORE ==> REP([guardana-report]):::cmd
+  CORE -.->|versioned envelope| SRV([guardana-server<br>optional collector]):::cmd
+```
+
 Each is `src/guardana/<name>` — a PEP 420 namespace package. No package
 directory has a bare `guardana/__init__.py`; only the subpackages
 (`guardana.core`, `guardana.rules`, etc.) do, so five distributions can

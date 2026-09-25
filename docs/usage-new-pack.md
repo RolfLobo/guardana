@@ -7,11 +7,7 @@ status: stable
 
 # `guardana new-pack` — start from something that already passes
 
-Guardana has had an extension contract since 0.18 and target locators since 0.24,
-and every declarative rule shape can carry its own samples since 0.25. What it did
-not have was a way to start: `guardana init` writes a policy file, `guardana
-new-rule` writes one rule, and everything else had to be copied out of this
-repository's example.
+`guardana new-pack` creates an extension pack when you need a starting point for rules. `guardana init` writes a policy file; `guardana new-rule` writes a rule.
 
 ```bash
 guardana new-pack acme-rules

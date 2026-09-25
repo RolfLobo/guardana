@@ -39,6 +39,14 @@ def test_every_schema_carries_its_version_in_its_identifier(path: Path) -> None:
 
 
 @pytest.mark.parametrize("path", sorted(_SCHEMAS.glob("*.schema.json")))
+def test_every_schema_title_names_the_version_its_identifier_names(path: Path) -> None:
+    schema = json.loads(path.read_text(encoding="utf-8"))
+    version = schema["$id"].rsplit("/v", 1)[1].removesuffix(".schema.json")
+
+    assert schema["title"].endswith(f" v{version}"), f"{path.name}: {schema['title']!r}"
+
+
+@pytest.mark.parametrize("path", sorted(_SCHEMAS.glob("*.schema.json")))
 def test_every_schema_refuses_unknown_fields_at_the_top_level(path: Path) -> None:
     # A document that silently accepts anything is not a contract. This is also
     # what makes a writer that invents a field fail loudly rather than producing

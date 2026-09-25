@@ -7,10 +7,7 @@ status: stable
 
 # `guardana taxonomy` — which framework entry a rule actually means
 
-Every Guardana rule maps to a public framework, because a finding nobody can look
-up is a finding nobody can answer for. This command shows what those mappings can
-name: which catalogues are installed, what each entry is called, and what an entry
-recorded years ago corresponds to today.
+`guardana taxonomy` shows installed framework catalogues and rule mappings when you need to look up a finding's reference.
 
 ## Why an edition is part of a reference
 

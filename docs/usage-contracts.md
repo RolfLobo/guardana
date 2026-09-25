@@ -7,14 +7,7 @@ status: stable
 
 # Security contracts — your application's threat model, executable
 
-Built-in rules cover the risks everyone shares. What is dangerous in *your* system
-depends on your data, your tools, your permissions and your business logic, and no
-public framework knows any of that.
-
-A **security contract** is a file your team keeps in its own repository, saying
-what the application is allowed to do. Guardana compiles it into ordinary rules and
-grades a recorded execution against it — deterministically, offline, with the same
-evidence semantics as the built-ins.
+`guardana analyze-trace` checks a recorded execution against a security contract when you need to verify application rules. Your team keeps the contract in its repository. Guardana compiles it into rules and grades the trace offline.
 
 ```bash
 guardana analyze-trace run.jsonl --contract checkout.yaml --ai-system checkout-agent

@@ -43,9 +43,9 @@ implementations.
 ### `monitor` is scheduled, not passive
 
 It re-runs checks on an interval. It does not observe production traffic, cannot
-see what your real users are doing, and is not an inline control. A passive
-out-of-band tap is researched and deferred — the hard constraint is zero impact on
-model latency.
+see what your real users are doing, and is not an inline control. Watching live
+agent traffic is not planned here: it belongs to Guardana Control, a separate
+project ([Guardana and Guardana Control](design/guardana-and-control.md)).
 
 ### The collector stores and triages findings — it does not trend quality
 

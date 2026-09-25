@@ -99,6 +99,9 @@ def pin_bearing_files(pattern: re.Pattern[str]) -> tuple[Path, ...]:
 # the same staleness one file over. Each is `(pattern, replacement template)`,
 # rewritten in the same pass and checked by the same pre-flight.
 _SITE_VERSION_RE = re.compile(r'(<span class="ver mono">)v\d+\.\d+\.\d+')
+_SITE_LD_VERSION_RE = re.compile(
+    r'("name": "Guardana", [^}]*?"softwareVersion": ")\d+\.\d+\.\d+[^"]*(")'
+)
 # The Action's own CLI pin: `guardana/guardana@vX.Y` must install the CLI that tag
 # ships, or a workflow nobody edited changes engine on the next release.
 _ACTION_CLI_RE = re.compile(r'(default: ")\d+\.\d+\.\d+(?:(?:a|b|rc)\d+|\.post\d+|\.dev\d+)?(")')
@@ -176,6 +179,7 @@ def _rewrite_dunder(text: str, new: str) -> str:
 
 _VERSION_MARKERS: tuple[tuple[Path, re.Pattern[str]], ...] = (
     (Path("site/index.html"), _SITE_VERSION_RE),
+    (Path("site/index.html"), _SITE_LD_VERSION_RE),
     (Path("SECURITY.md"), _SECURITY_VERSION_RE),
     (Path("README.md"), _PIN_PROSE_RE),
     (Path("docs/integrations.md"), _PIN_PROSE_RE),
@@ -189,6 +193,7 @@ def _documented_versions(new: str) -> tuple[tuple[Path, re.Pattern[str], str], .
     major, minor, _ = _core(new)
     replacements = (
         rf"\g<1>v{new}",
+        rf"\g<1>{new}\g<2>",
         rf"\g<1>({major}.{minor}.x)",
         rf"\g<1>{major}.{minor}\g<2>",
         rf"\g<1>{major}.{minor}\g<2>",

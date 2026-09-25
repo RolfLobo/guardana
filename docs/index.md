@@ -7,9 +7,7 @@ status: stable
 
 # Guardana documentation
 
-Start with the root [README](../README.md). Before production use, read
-[Product status](product-status.md), [Safe testing](safe-testing.md), and the
-[Threat model](threat-model.md).
+Start with the root [README](../README.md). Before production use, read [Product status](product-status.md), [Safe testing](safe-testing.md), and the [Threat model](threat-model.md).
 
 ## First run
 
@@ -94,6 +92,7 @@ not task guides and may describe rejected or superseded alternatives.
 - [`design/audit-0.23-market.md`](design/audit-0.23-market.md) — repository audit, market evidence, and the rationale for the current order
 - [`design/audit-0.25-market.md`](design/audit-0.25-market.md) — whether that order still follows from evidence, and the validation plan that replaces the one it could not run
 - [`design/audit-0.26-measurement.md`](design/audit-0.26-measurement.md) — what a clean result rests on, and why rows 1 and 2 widened and a re-grading row was added
+- [`design/guardana-and-control.md`](design/guardana-and-control.md) — Guardana and Guardana Control: measuring before release versus supervising agents while they run, what the two exchange, and how the two sites divide the work
 - [`../CHANGELOG.md`](../CHANGELOG.md) — release history
 
 ## Maintainers

@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from sitegen import explorer, layout, nav, render, theme
+from sitegen.diagram import DiagramError
 from sitegen.errors import SiteBuildError
 from sitegen.links import LinkResolver
 from sitegen.page import Page, read_pages
@@ -45,6 +46,10 @@ def _prose(repo: Path, docs: Path, pages: list[Page], chrome: layout.Chrome) -> 
     rendered = {}
     for page in pages:
         title_html, body = render.split_heading(page.body)
+        try:
+            html = render.render(body, resolver.for_page(page)).html
+        except DiagramError as exc:
+            raise SiteBuildError(f"docs/{page.relative.as_posix()}: diagram: {exc}") from None
         rendered[page.output.as_posix()] = layout.page(
             chrome=chrome,
             href=page.output.as_posix(),
@@ -55,7 +60,7 @@ def _prose(repo: Path, docs: Path, pages: list[Page], chrome: layout.Chrome) -> 
                 render.inline(page.summary),
                 page.status,
             )
-            + _tables(render.render(body, resolver.for_page(page)).html),
+            + _tables(html),
             edit_path=f"docs/{page.relative.as_posix()}",
         )
     if resolver.problems:

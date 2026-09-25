@@ -2,12 +2,17 @@
 title: "Production intake"
 nav_order: 23
 summary: "why assessing production traffic has to be a second lane rather than a faster monitor, what an intake must refuse before it stores anything, and what has to exist before any of it is worth building"
-status: proposed
+status: superseded
 ---
 
 # Production intake: assessing real traffic without being in its path
 
-**Status:** proposed · **Written:** 2026-08-20 · **Horizon 2**
+**Status:** superseded by [`guardana-and-control.md`](guardana-and-control.md) ·
+**Written:** 2026-08-20 · **Horizon 2**
+
+Not planned any more: intake of live production traffic belongs to Guardana Control, and
+Guardana grades exported recordings offline. The refusals and exit criteria below still
+describe what an honest intake has to be.
 
 Not implemented. Written now because the shape of the measurement channel had to
 be decided with this in mind, and because "we will add production monitoring

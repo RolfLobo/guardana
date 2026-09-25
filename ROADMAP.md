@@ -69,11 +69,11 @@ Design inputs exist for everything shipped so far and for rows 1 to 4:
 - [judge error in a measured rate](docs/design/judge-error-correction.md)
 - [re-grading stored exchanges](docs/design/regrading-stored-exchanges.md)
 
-The full OTLP intake remains in the next milestone because the OpenTelemetry
-GenAI agent conventions are still changing. A compatibility spike may proceed
-after items 1 and 2, in parallel with items 5 and 6, but it must normalize an
-explicit supported subset behind an adapter rather than make a development
-convention a persisted Guardana schema.
+Live OTLP intake is not planned: supervising agents in production is Guardana
+Control's ([Guardana and Guardana Control](docs/design/guardana-and-control.md)).
+Reading an exported recording stays, as an explicit supported subset of the
+OpenTelemetry GenAI conventions behind an adapter, never as a persisted Guardana
+schema.
 
 ### Milestone exit criteria
 
@@ -87,34 +87,37 @@ convention a persisted Guardana schema.
   auditable statistical reason.
 - The collector can plot measurements without turning missing samples into zero.
 
-## Next: continuous assurance
+## Next: continuous re-verification
 
-Consume a bounded sample of real interactions without becoming an APM or an
-inline control.
+Keep verifying after release without watching production. Intake of live agent
+traffic, supervision, and alerts on production runs belong to Guardana Control;
+Guardana keeps what it controls: the requests it sends and the files it is handed
+([Guardana and Guardana Control](docs/design/guardana-and-control.md)).
 
-1. OTLP intake with redaction before persistence or queuing.
-2. A bounded queue, backpressure, sampling, and stateless workers.
-3. Continuous rules over synthetic runs and recorded traffic, alerting through a
-   confidence sequence rather than a fixed level on every look
+1. Continuous rules over synthetic runs, alerting through a confidence sequence
+   rather than a fixed level on every look
    ([anytime-valid monitoring](docs/design/anytime-valid-monitoring.md)).
-4. Prometheus and webhook outputs through the reporter seam.
-5. Retention, deletion, and audit behavior proven under the new data volume.
+2. Grading an exported sample offline: a recording or a sample of answers, exported
+   by the team, becomes a versioned dataset a suite grades, with redaction before
+   anything is stored. OpenTelemetry GenAI input stays an explicit supported subset
+   behind an adapter.
+3. Prometheus and webhook outputs for Guardana's own results, through the reporter
+   seam.
+4. Retention, deletion, and audit behavior proven under the new data volume.
 
 This lane starts as soon as suite and statistical shapes are stable; it does not
-wait for every provider-matrix entry. That ordering responds to the market need
-for continuous inventory and post-deployment evidence without freezing a moving
-external telemetry convention into Guardana's own documents.
+wait for every provider-matrix entry.
 
-Exit criteria: overload fails closed without affecting the application; raw
-sensitive payloads are not retained by default; every trend identifies its sample
-and deployment revision.
+Exit criteria: every alert names its sample, its deployment revision, and the rule
+that made it an alert; a sample that cannot be graded is reported as unverified,
+never as clean; raw sensitive payloads are not retained by default.
 
 ## Then: self-hosted platform fit
 
 - Helm deployment with tested upgrade, rollback, backup, and restore.
 - OIDC/SSO and role-based access for human users.
 - Live RAG targets with safe fixtures and explicit data boundaries.
-- Central policy distribution with signed, versioned policy artifacts.
+- Central distribution of signed, versioned gate policies and profiles.
 - Integrations through output plugins rather than product-specific engine code.
 
 ## 1.0: compatibility, not a feature count
@@ -143,7 +146,8 @@ behind, and report utility under attack beside attack success.
 
 ## Researched after the foundations
 
-- multi-agent protocols and delegated identity;
+- probing multi-agent protocols and delegated identity (enforcing delegation at run
+  time is Guardana Control's);
 - multimodal attack carriers;
 - adaptive attack generation inside a strict sandbox;
 - reusable attack techniques composed with rules
@@ -161,6 +165,8 @@ it.
 Guardana is not planned to become:
 
 - an inline firewall, WAF, or guardrail proxy;
+- a supervisor of agents in production: live intake, deviation alerts, and
+  stopping an agent are [Guardana Control](https://github.com/guardana/control)'s;
 - a general SAST, CVE, secret, or network-discovery scanner;
 - a second trace store competing with observability platforms;
 - a compliance certification or legal-advice engine;

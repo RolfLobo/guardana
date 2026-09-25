@@ -11,8 +11,7 @@ Guardana requires **Python 3.11+**.
 
 ## Install from source (recommended today)
 
-Guardana is currently GitHub-first: clone the workspace and run it with
-[`uv`](https://docs.astral.sh/uv/).
+Clone the repository and use [`uv`](https://docs.astral.sh/uv/):
 
 ```bash
 git clone https://github.com/guardana/guardana
@@ -22,22 +21,13 @@ uv run guardana --version
 uv run guardana scan examples/vulnerable-model   # exits 1: finds the planted issues
 ```
 
-(Inside this checkout, `guardana scan .` also exits `1` — by design:
-`examples/vulnerable-model/` is deliberately malicious so there is always
-something real to find. In your own projects, `guardana scan .` is the
-normal invocation.)
+Inside the checkout, `guardana scan .` exits `1` because `examples/vulnerable-model/` contains planted issues. In your own project, `guardana scan .` scans the current directory.
 
-`uv sync` installs `guardana-core`, `guardana-rules`, `guardana-cli`,
-`guardana-report`, and `guardana-server` from the workspace defined in the
-root `pyproject.toml`, plus `ruff`, `mypy`, and `pytest`. Run every command
-with `uv run guardana ...` from inside the checkout. See
-[`CONTRIBUTING.md`](../CONTRIBUTING.md) for the full contributor setup and
-test/lint gates.
+`uv sync` installs `guardana-core`, `guardana-rules`, `guardana-cli`, `guardana-report`, and `guardana-server` from the root `pyproject.toml`, plus `ruff`, `mypy`, and `pytest`. Run commands with `uv run guardana ...` inside the checkout. See [`CONTRIBUTING.md`](../CONTRIBUTING.md) for contributor setup and test/lint gates.
 
 ## Install from PyPI
 
-All five packages are on PyPI (Apache-2.0). For most users the CLI is all you
-need:
+All five packages are on PyPI (Apache-2.0). Install the CLI with any of these commands:
 
 ```bash
 uvx --from guardana-cli guardana scan .   # zero-install run
@@ -45,12 +35,9 @@ uv add guardana-cli                       # or add it to a project
 pip install guardana-cli                  # or plain pip
 ```
 
-The console script is `guardana`; its distribution is `guardana-cli`, which pulls
-in `guardana-core` / `guardana-rules` / `guardana-report`, so `uvx` needs
-`--from guardana-cli` to find the script by name. The optional collector is a
-separate install: `pip install guardana-server`.
+The `guardana` console script comes from `guardana-cli`, which installs `guardana-core`, `guardana-rules`, and `guardana-report`. Use `--from guardana-cli` so `uvx` finds the script. The optional collector has a separate install: `pip install guardana-server`.
 
-To run an unreleased revision with zero install, point `uvx` at the git repo:
+Run the Git repository with `uvx`:
 
 ```bash
 uvx --from git+https://github.com/guardana/guardana#subdirectory=packages/guardana-cli guardana scan .
@@ -58,50 +45,32 @@ uvx --from git+https://github.com/guardana/guardana#subdirectory=packages/guarda
 
 ## Run it as a container
 
-For a pipeline that runs containers rather than Python, both halves are published
-to the GitHub Container Registry on every release:
+The CLI and collector images are available from GitHub Container Registry:
 
 ```bash
 docker run --rm -v "$PWD:/work:ro" ghcr.io/guardana/guardana:0.28 scan /work
 docker run --rm ghcr.io/guardana/guardana-collector:0.28 --help
 ```
 
-Three tags: the exact version, the moving minor (what the commands above pin),
-and `latest`. Pin the moving minor in CI so fixes arrive and the rule set does
-not change under you.
-Both images run as a non-root user, ship `linux/amd64` and `linux/arm64`, and
-carry an SBOM and a signed provenance attestation.
-[`deploy/docker/README.md`](../deploy/docker/README.md) covers mounts, exit codes,
-writing reports out, and building the images yourself.
+Tags include the exact version, the moving minor used above, and `latest`. Pin the moving minor in CI to receive fixes without changing the rule set. Both images run as a non-root user, support `linux/amd64` and `linux/arm64`, and include an SBOM and signed provenance attestation. See [`deploy/docker/README.md`](../deploy/docker/README.md) for mounts, exit codes, reports, and image builds.
 
 ## The optional collector
 
-`guardana-server` (the collector) is a separate, optionally-deployed
-service — it is never required to use `scan`/`probe`/`monitor`. Install and
-run it only if you want a central place to receive findings from many
-agents; see [`architecture.md`](architecture.md#the-coreserver-boundary).
+`guardana-server` is a separate service. `scan`, `probe`, and `monitor` do not require it. Install it to collect findings centrally; see [`architecture.md`](architecture.md#the-coreserver-boundary).
 
 ```bash
 pip install "guardana-server[serve]"   # `[serve]` adds the ASGI server
 guardana-collector migrate             # then: guardana-collector serve
 ```
 
-The `[serve]` extra is an extra rather than a dependency because a deployment
-already running gunicorn or hypercorn should not be made to install a second
-server. [`usage-collector.md`](usage-collector.md) is the full guide, and
-[`deployment.md`](deployment.md) is how you run it in production.
+The `[serve]` extra adds an ASGI server. Deployments using gunicorn or hypercorn can omit it. See [`usage-collector.md`](usage-collector.md) for collector use and [`deployment.md`](deployment.md) for production deployment.
 
 ## Installing a third-party rule package
 
-Third-party rule/evaluator packages are ordinary Python distributions —
-install them like any dependency:
+Install third-party rule/evaluator packages as Python dependencies:
 
 ```bash
 uv add acme-guardana-rules   # example; see examples/custom_rule/
 ```
 
-Guardana discovers their rules automatically the next time it runs, via the
-`guardana.rules` entry point (see [`extending.md`](extending.md)). Because
-this executes the installed package's code, only install rule packages you
-trust — or run with `--plugins builtins` to keep Guardana's own reviewed rules
-while refusing every third-party one; see [`SECURITY.md`](../SECURITY.md).
+Guardana discovers installed rules through the `guardana.rules` entry point (see [`extending.md`](extending.md)). These packages execute code, so install only packages you trust. Use `--plugins builtins` to allow only Guardana's reviewed rules; see [`SECURITY.md`](../SECURITY.md).

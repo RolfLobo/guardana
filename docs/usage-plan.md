@@ -7,8 +7,7 @@ status: stable
 
 # `guardana plan` — what a run would cost, before it costs anything
 
-Probing a hosted model costs money, and the number nobody could state before 0.7
-was the upper bound. `guardana plan` states it, and **sends no request to do so**.
+`guardana plan` estimates request costs when you need to budget a probe or scan without sending a request.
 
 ```bash
 guardana plan probe --url https://api.example.com --model gpt-4o-mini

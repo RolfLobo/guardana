@@ -119,3 +119,24 @@ Found on 2026-09-24 by the pre-ship review of ROADMAP row 1, lane 2.
 - An evaluator whose verdicts carry several ids is recorded without per-class counts
   (`cli/calibrate.py::_record`), and a run then says "lacks per-class counts; rerun guardana
   calibrate --record", which a rerun cannot fix.
+
+## Guardana Control on guardana.dev, and the product line
+
+Left open when the site shipped on 2026-09-25 with Control in coming-soon mode
+(`docs/design/guardana-and-control.md`, decision 7).
+
+- When `control.guardana.dev` answers: point the landing page's Control links at it, add
+  `control.guardana.dev/llms.txt` to `site/llms.txt`, name Control's released version in its
+  JSON-LD, and update `test_nothing_links_to_control_guardana_dev_before_it_answers` and
+  `test_guardana_control_is_described_where_its_code_is_public` in the same change.
+- `scripts/generate_llms_txt.py` quotes Control's README tagline and "Status: alpha" by hand;
+  re-read Control's README when its status changes.
+- `docs/threat-model.md` ("does not verify the correctness of a model's outputs") and the
+  README row "Measures security rather than answer quality" contradict ROADMAP row 1 and the
+  line in the design document (answer quality before release is Guardana's). Decide the
+  wording when suites ship.
+- For the `control` repository, not this one: a site generator for `control.guardana.dev`
+  that vendors `site/assets/brand/v1/` and checks it against its `SHA256SUMS`; and its
+  `docs/foundation/12_INTEGRATION_WITH_GUARDANA.md` and product spec still describe a
+  coupling its ADR-0024 refuses.
+

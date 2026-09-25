@@ -27,10 +27,10 @@ from guardana.core.surface import Surface
 from guardana.rules import provide_rules
 
 _FAMILY_ROW = re.compile(r"^\| `guardana\.([a-z_]+)\.\*` \| (\d+) \| ([a-z +]+) \| ", re.MULTILINE)
-_TOTAL = re.compile(r"^(\d+) built-in rules,", re.MULTILINE)
+_TOTAL = re.compile(r"^(\d+) built-in rules map to", re.MULTILINE)
 _SPLIT = re.compile(r"The static (\d+) \(`artifact` surface\).+?The dynamic (\d+) ", re.DOTALL)
-_LEDE = re.compile(r"\*\*(\d+) security checks to start")
-_THREAT_MODEL = re.compile(r"The (\d+) built-ins cover the risks everybody shares")
+_LEDE = re.compile(r"\*\*(\d+) built-in security checks\.")
+_THREAT_MODEL = re.compile(r"The (\d+) built-ins cover shared risks")
 _TRANSCRIPT = re.compile(r"^\d+ finding\(s\); (\d+) rule\(s\) run", re.MULTILINE)
 
 _REWORDED = (

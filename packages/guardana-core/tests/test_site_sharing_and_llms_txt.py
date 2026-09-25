@@ -11,11 +11,14 @@ produces. `test_docs_consistency.py` runs the generator's own `--check`; this co
 the half that lives in HTML.
 """
 
+import json
 import re
 import struct
 from pathlib import Path
 
 import pytest
+from guardana.core import __version__
+from guardana.core.manifest.serialize import SCHEMA_URL
 
 _OG_IMAGE_WIDTH = 1200
 _OG_IMAGE_HEIGHT = 630
@@ -123,3 +126,39 @@ def test_nothing_the_site_publishes_is_excluded_from_the_deploy() -> None:
     assert {"llms.txt", "og.png"}.isdisjoint(ignored), (
         f"site/.assetsignore excludes something the page links to: {sorted(ignored)}"
     )
+
+
+def test_every_guardana_dev_url_in_llms_txt_is_a_file_the_site_serves() -> None:
+    llms = (_repo() / "site" / "llms.txt").read_text(encoding="utf-8")
+    urls = re.findall(r"\((https://guardana\.dev/[^)]+)\)", llms)
+    missing = [url for url in urls if not (_repo() / "site" / url.split("/", 3)[3]).is_file()]
+
+    assert urls, "llms.txt names no guardana.dev URL — its schema list is gone"
+    assert not missing, f"llms.txt points at files site/ does not serve: {missing}"
+
+
+def test_llms_txt_lists_the_schema_a_saved_run_is_written_to() -> None:
+    assert f"({SCHEMA_URL})" in (_repo() / "site" / "llms.txt").read_text(encoding="utf-8")
+
+
+def _structured_data() -> dict[str, dict[str, object]]:
+    blocks = re.findall(r'<script type="application/ld\+json">(.*?)</script>', _page(), re.DOTALL)
+    return {str(block.get("name", block["@type"])): block for block in map(json.loads, blocks)}
+
+
+def test_the_structured_data_states_the_version_that_ships() -> None:
+    assert _structured_data()["Guardana"]["softwareVersion"] == __version__
+
+
+def test_guardana_control_is_described_where_its_code_is_public() -> None:
+    """Control's own site does not answer yet; its link and its structured data go to the repo."""
+    control = _structured_data()["Guardana Control"]
+
+    assert control["url"] == "https://github.com/guardana/control"
+    assert "softwareVersion" not in control, "name a Control version only once it is released"
+
+
+@pytest.mark.parametrize("published", ["index.html", "llms.txt"])
+def test_nothing_links_to_control_guardana_dev_before_it_answers(published: str) -> None:
+    """Update this test in the same change that points the links at the live subdomain."""
+    assert "control.guardana.dev" not in (_repo() / "site" / published).read_text(encoding="utf-8")
