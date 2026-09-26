@@ -19,6 +19,7 @@ from guardana.cli._evaluators import wire_config_evaluators
 from guardana.cli._plugins import resolve_trust, warn_about_load_errors
 from guardana.cli._profile import resolve_profile
 from guardana.cli._rules_loading import load_custom_rules
+from guardana.cli._run_meta import calibrations_or_exit
 from guardana.cli.exit_codes import ExitCode
 from guardana.core.calibration.corpus import dump_corpus
 from guardana.core.calibration.sample import CalibrationSample
@@ -26,6 +27,7 @@ from guardana.core.exchange import Exchange
 from guardana.core.registry import Registry
 from guardana.core.report import CheckError
 from guardana.core.rule import FixtureOutcome, Rule, RuleContext, RuleFixture
+from guardana.core.rule.suite_rule import SuiteRule
 from guardana.core.rule.verify import FixtureVerdict, RuleVerification, verify_rule
 from guardana.core.target import ChatMessage, EndpointTarget
 
@@ -74,8 +76,9 @@ def run_fixtures(  # noqa: PLR0913, PLR0917 — one typer.Option per CLI flag; t
     prof = resolve_profile(profile, None)
     registry = Registry.discover(resolve_trust(plugins, allow_plugin, no_plugins=False))
     load_custom_rules(registry, prof, rules)
-    wire_config_evaluators(registry, prof)
+    wire_config_evaluators(registry, prof, budgets=prof.budgets)
     warn_about_load_errors(registry, what="rule")
+    calibrations = {key: value.as_record() for key, value in calibrations_or_exit(prof).items()}
 
     selected = [r for r in registry.rules() if fnmatch(r.meta.id, selector)]
     if not selected:
@@ -94,6 +97,7 @@ def run_fixtures(  # noqa: PLR0913, PLR0917 — one typer.Option per CLI flag; t
         return RuleContext(
             config=dict(prof.rule_config.get(rule.meta.id, {})),
             evaluators=registry.evaluators(),
+            calibrations=calibrations,
         )
 
     verifications = tuple(verify_rule(rule, context(rule)) for rule in selected)
@@ -166,13 +170,21 @@ def _render(
 
 
 _LEFT_OUT = (
+    "from a suite (its outcome is a pass rate, not one reply's label)",
     "inconclusive (no measurable label)",
     "from a rule that declares no expectation or more than one",
     "not a single scripted reply (a conversation or an agent run)",
     "not classified as declared",
     "no request reached the scripted model",
 )
-_INCONCLUSIVE, _NOT_ONE_EXPECTATION, _NOT_ONE_REPLY, _NOT_VERIFIED, _NOTHING_SENT = _LEFT_OUT
+(
+    _SUITE,
+    _INCONCLUSIVE,
+    _NOT_ONE_EXPECTATION,
+    _NOT_ONE_REPLY,
+    _NOT_VERIFIED,
+    _NOTHING_SENT,
+) = _LEFT_OUT
 
 
 def _write_corpus(
@@ -192,7 +204,8 @@ def _write_corpus(
 
     The row pairs the reply with the first prompt the rule really sent. The label is
     the fixture's outcome for the rule as a whole, which is exact for a rule that
-    sends one prompt and for an evaluator that does not read the prompt.
+    sends one prompt and for an evaluator that does not read the prompt. A suite's
+    outcome is about a rate over many cases, so no fixture of one labels a reply.
     """
     samples: list[CalibrationSample] = []
     left_out = dict.fromkeys(_LEFT_OUT, 0)
@@ -200,7 +213,9 @@ def _write_corpus(
         expectations = tuple(e for _id, e in rule.declared_expectations())
         for index, fixture in enumerate(rule.fixtures()):
             reply = _scripted_reply(fixture.target)
-            if fixture.outcome is FixtureOutcome.INCONCLUSIVE:
+            if isinstance(rule, SuiteRule):
+                left_out[_SUITE] += 1
+            elif fixture.outcome is FixtureOutcome.INCONCLUSIVE:
                 left_out[_INCONCLUSIVE] += 1
             elif len(expectations) != 1:
                 left_out[_NOT_ONE_EXPECTATION] += 1

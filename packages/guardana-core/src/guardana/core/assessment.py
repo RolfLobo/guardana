@@ -104,9 +104,25 @@ class Assessment:
     """
 
     @property
-    def comparable_key(self) -> tuple[str, str, str | None]:
-        """Return the triple two runs must agree on before their values may be compared."""
-        return (self.case_id, self.assessor, self.dataset)
+    def comparable_key(self) -> "ComparableKey":
+        """Return what two runs must agree on before their values may be compared.
+
+        The case, its assessor and dataset, and the unit, direction and threshold
+        of the measurement: a moved threshold changes the verdict without changing
+        the system.
+        """
+        return (
+            self.case_id,
+            self.assessor,
+            self.dataset,
+            self.unit,
+            self.direction,
+            self.threshold,
+        )
+
+
+ComparableKey = tuple[str, str, str | None, str | None, Direction | None, float | None]
+"""`(case_id, assessor, dataset, unit, direction, threshold)` of one assessment."""
 
 
 def case_id_for(rule_id: str, *parts: str) -> str:
@@ -136,9 +152,11 @@ def from_verdict(  # noqa: PLR0913 — one keyword per fact the verdict cannot s
 
     `passed` is `None` for an inconclusive verdict, never `False`: a judge that
     could not read the reply has not observed a failure, and counting it as one
-    makes a broken grader look like a worsening model.
+    makes a broken grader look like a worsening model. For the same reason an
+    inconclusive verdict records no measurement.
     """
     inconclusive = verdict.outcome == "inconclusive"
+    measurement = None if inconclusive else verdict.measurement
     return Assessment(
         case_id=case_id,
         assessor=verdict.evaluator_id,
@@ -146,6 +164,10 @@ def from_verdict(  # noqa: PLR0913 — one keyword per fact the verdict cannot s
         status=AssessmentStatus.INCONCLUSIVE if inconclusive else AssessmentStatus.MEASURED,
         rule_id=rule_id,
         passed=None if inconclusive else verdict.outcome == "pass",
+        value=None if measurement is None else measurement.value,
+        unit=None if measurement is None else measurement.unit,
+        direction=None if measurement is None else measurement.direction,
+        threshold=None if measurement is None else measurement.threshold,
         confidence=None if inconclusive else verdict.confidence,
         dataset=dataset,
         rationale=verdict.rationale,

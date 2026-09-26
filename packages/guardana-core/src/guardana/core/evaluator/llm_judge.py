@@ -90,12 +90,7 @@ class LlmJudgeEvaluator(Evaluator):
         *,
         judge_identity: str | None = None,
     ) -> None:
-        if prompt_version not in PROMPT_TEMPLATES:
-            raise ValueError(
-                f"unknown prompt_version {prompt_version!r}; known: {sorted(PROMPT_TEMPLATES)}"
-            )
-        if min_agreement < 1:
-            raise ValueError(f"min_agreement must be >= 1, got {min_agreement}")
+        check_judge_settings(PROMPT_TEMPLATES, prompt_version, min_agreement)
         self.judge_identity = check_judge_identity(judge_identity)
         self._judge = judge
         self._prompt_version = prompt_version
@@ -129,36 +124,13 @@ class LlmJudgeEvaluator(Evaluator):
                 evaluator_id=self._evaluator_id,
             )
         prompt = _render_prompt(self._prompt_version, exchange, expectation)
-        replies = [self._judge(prompt).strip() for _ in range(self._min_agreement)]
-        votes = [v for v in (_parse_verdict(r) for r in replies) if v is not None]
-
-        if not votes:
-            return Verdict(
-                outcome="fail",
-                confidence=_UNPARSEABLE_CONFIDENCE,
-                rationale=(
-                    f"[prompt_version={self._prompt_version}] could not read a PASS/FAIL "
-                    f"verdict from {len(replies)} judge sample(s); failing closed. "
-                    f"Judge said: {replies[-1][:160]}"
-                ),
-                evaluator_id=self._evaluator_id,
-            )
-
-        fails = votes.count("fail")
-        passes = votes.count("pass")
-        outcome: Outcome = "fail" if fails >= passes else "pass"  # ties fail closed
-        winning = max(fails, passes)
-        total = len(replies)  # unparseable samples dilute confidence
-        raw = DEFAULT_CONFIDENCE if total == 1 else winning / total
-        confidence, basis = self._calibrated(raw)
-        return Verdict(
-            outcome=outcome,
-            confidence=confidence,
-            rationale=(
-                f"[prompt_version={self._prompt_version}] {winning}/{total} judge sample(s) "
-                f"agreed on {outcome.upper()}; {basis}. {replies[-1][:160]}"
-            ),
+        return sampled_verdict(
+            self._judge,
+            prompt,
+            samples=self._min_agreement,
+            prompt_version=self._prompt_version,
             evaluator_id=self._evaluator_id,
+            calibrated=self._calibrated,
         )
 
     def _calibrated(self, raw: float) -> tuple[float, str]:
@@ -173,7 +145,7 @@ class LlmJudgeEvaluator(Evaluator):
         """
         calibration = self._calibration
         if calibration is None:
-            return raw, "confidence is raw sample agreement, not a measured accuracy"
+            return raw_agreement(raw)
         if calibration.evaluator_id != self._evaluator_id:
             # A rubric change invalidates the measurement it was made under.
             return raw, (
@@ -184,6 +156,69 @@ class LlmJudgeEvaluator(Evaluator):
             f"calibrated against {calibration.samples} labelled sample(s) "
             f"at {calibration.accuracy:.2f} accuracy"
         )
+
+
+def check_judge_settings(
+    templates: Mapping[str, str], prompt_version: str, min_agreement: int
+) -> None:
+    """Refuse a prompt version `templates` does not hold, or fewer than one sample."""
+    if prompt_version not in templates:
+        raise ValueError(f"unknown prompt_version {prompt_version!r}; known: {sorted(templates)}")
+    if min_agreement < 1:
+        raise ValueError(f"min_agreement must be >= 1, got {min_agreement}")
+
+
+def raw_agreement(raw: float) -> tuple[float, str]:
+    """Report sample agreement as it is, saying that it is not a measured accuracy."""
+    return raw, "confidence is raw sample agreement, not a measured accuracy"
+
+
+def sampled_verdict(  # noqa: PLR0913 — one keyword per fact the verdict records
+    judge: Callable[[str], str],
+    prompt: str,
+    *,
+    samples: int,
+    prompt_version: str,
+    evaluator_id: str,
+    calibrated: Callable[[float], tuple[float, str]],
+) -> Verdict:
+    """Ask `judge` one prompt `samples` times and read a single verdict from the answers.
+
+    Confidence is the fraction of samples that agreed, passed through `calibrated`;
+    a single sample cannot measure agreement, so it reports the conservative
+    default. No parseable PASS/FAIL in any sample fails closed, and a tie fails.
+    """
+    replies = [judge(prompt).strip() for _ in range(samples)]
+    votes = [v for v in (_parse_verdict(r) for r in replies) if v is not None]
+
+    if not votes:
+        return Verdict(
+            outcome="fail",
+            confidence=_UNPARSEABLE_CONFIDENCE,
+            rationale=(
+                f"[prompt_version={prompt_version}] could not read a PASS/FAIL "
+                f"verdict from {len(replies)} judge sample(s); failing closed. "
+                f"Judge said: {replies[-1][:160]}"
+            ),
+            evaluator_id=evaluator_id,
+        )
+
+    fails = votes.count("fail")
+    passes = votes.count("pass")
+    outcome: Outcome = "fail" if fails >= passes else "pass"  # ties fail closed
+    winning = max(fails, passes)
+    total = len(replies)  # unparseable samples dilute confidence
+    raw = DEFAULT_CONFIDENCE if total == 1 else winning / total
+    confidence, basis = calibrated(raw)
+    return Verdict(
+        outcome=outcome,
+        confidence=confidence,
+        rationale=(
+            f"[prompt_version={prompt_version}] {winning}/{total} judge sample(s) "
+            f"agreed on {outcome.upper()}; {basis}. {replies[-1][:160]}"
+        ),
+        evaluator_id=evaluator_id,
+    )
 
 
 def _parse_verdict(reply: str) -> Outcome | None:

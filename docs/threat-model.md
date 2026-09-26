@@ -222,8 +222,7 @@ Documented immutable pins for high-security environments, not just the moving ta
   cannot block an attack in production.
 - Guardana **does not protect the model from its own users** at run time. It tells
   you what a model does when attacked; a guardrail is a different product.
-- Guardana **does not verify the correctness of a model's outputs** beyond
-  security-relevant behaviour.
+- Guardana **does not verify every answer's correctness**. A suite measures answers against a dataset the team supplies, alongside security-relevant checks. Guardana does not grade answers outside that dataset or watch production traffic.
 
 ## Reporting
 

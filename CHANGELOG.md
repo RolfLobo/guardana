@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Quality suites and datasets.** Declarative suite rules grade versioned JSONL datasets supplied by the team. Each case can run for repeated trials, with one assessment per trial.
+- **Suite gates.** A suite passes, fails, or declines against a minimum pass rate and measured-case minimum. Judge-graded suites correct pass rates with qualifying calibration or decline.
+- **Answer evaluators.** Added `answered`, `contains`, `exact_match`, `json_valid`, `regex`, and `reference_judge`.
+- **Measurements and saved summaries.** `Verdict.measurement` carries evaluator values into assessments. Run schema 9 stores a suite summary with its rates, bounds, correction, and outcome.
+- **Suite reports.** Human reports include a Measured block. JUnit emits one testcase per suite, with failures and declined suites represented separately.
 - **Rebuilt guardana.dev.** A new landing page and documentation shell work from 360 px wide without sideways scroll. Documentation navigation folds into a menu under 980 px, and a dark scheme is available. IBM Plex is served locally; the Content-Security-Policy in `site/_headers` names no third-party host. The site runs no JavaScript, and CSS motion stops under `prefers-reduced-motion`. This addresses sideways scrolling on phones, documentation starting far below its navigation, and Google Fonts loading despite the no phone-home promise.
 - **Static diagrams.** `mermaid` blocks render as static SVG in the site's fonts and colours, in light and dark, without a script. GitHub still renders the same blocks. `scripts/sitegen/diagram.py` supports a subset of flowchart syntax and fails the build on anything else. `scripts/sync_site.py` takes the landing page diagrams from those blocks, so the diagrams stay in sync. They cover how Guardana checks an AI system (`docs/how-it-works.md`), the five packages (`docs/architecture.md`), and Guardana beside Guardana Control (`docs/design/guardana-and-control.md`).
 - **Schema URLs.** Every JSON Schema in `schemas/` is served at its `$id` URL, including `https://guardana.dev/schemas/run/v8.schema.json`, so validators can dereference a saved run's `$schema`. `llms.txt` lists the newest schema of each document.
@@ -18,6 +23,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Suite gate outcomes.** A failed suite fails the run (exit 1) whatever its severity. A declined suite, including one that raises before concluding, makes the run indeterminate (exit 2) regardless of `fail_on_error` or `fail_on_inconclusive`. A baseline waiver on a suite finding is honoured and remains visible in `waived`.
+- **Judge budgets.** Judge calls count against run budgets on their own meter during `probe`, `monitor`, and `rule test`. An existing `llm_judge` or `guard` rule can now stop with exit 6 when `budgets.max_requests` is below its judge calls.
+- **Measurement comparison.** `guardana diff` treats a changed measurement unit, direction, or threshold as incomparable and says so in its note.
+- **Saved-run migration.** Runs are written at schema 9. Schema-8 runs migrate with `suite: null` on every rule. Migration refuses a schema 6–8 document when `run.rules` is missing or is not a list.
+- **Corpus writing.** `guardana rule test --write-corpus` leaves suites out of the corpus.
+- **Evaluator catalog.** `docs/generated/evaluator-catalog.md` lists `answered`, `contains`, `exact_match`, `json_valid`, `regex`, and `reference_judge`.
+- **Suite interval.** The 95% Wilson interval at the mean replaced the t-interval after simulation. The t-interval collapsed to a point when every case agreed and missed the true rate from below in 3.1–20.1% of runs at pass rates 0.7–0.995; Wilson missed at most 0.1% per side.
 - **Project boundary.** Guardana measures models, RAG pipelines and answers before release; Guardana Control supervises agents while they run. The independent projects meet only through published formats. `ROADMAP.md` "Next" now describes continuous re-verification instead of live intake of production traffic. `docs/design/guardana-and-control.md` supersedes `docs/design/production-intake.md` to reflect that boundary.
 - **Shorter introductions.** `README.md`, `docs/how-it-works.md`, `docs/install.md` and the introductions of `docs/usage-*.md` are shorter. The README opens with a one-sentence definition of Guardana so readers can identify its purpose quickly.
 

@@ -43,6 +43,7 @@
 <li><a href="usage-monitor.html">guardana monitor</a></li>
 <li><a href="usage-run.html">guardana run</a></li>
 <li><a href="usage-calibrate.html">guardana calibrate</a></li>
+<li><a href="usage-suites.html">Quality suites<span class="tag">beta</span></a></li>
 <li><a href="privacy.html">Evidence and redaction</a></li>
 </ul>
 <h2>Recorded applications</h2><ul>
@@ -109,7 +110,7 @@
 <li><a href="design/extension-author-tooling.html">Extension author tooling<span class="tag">accepted</span></a></li>
 <li><a href="design/target-locators.html">Target locators<span class="tag">implemented</span></a></li>
 <li><a href="design/output-plugins.html">Output plugins<span class="tag">proposed</span></a></li>
-<li><a href="design/quality-suites.html">Quality suites<span class="tag">proposed</span></a></li>
+<li><a href="design/quality-suites.html">Quality suites<span class="tag">implemented</span></a></li>
 <li><a href="design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
 <li><a href="design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
 <li><a href="design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
@@ -158,6 +159,7 @@
 <li><a href="usage-monitor.html">guardana monitor</a></li>
 <li><a href="usage-run.html">guardana run</a></li>
 <li><a href="usage-calibrate.html">guardana calibrate</a></li>
+<li><a href="usage-suites.html">Quality suites<span class="tag">beta</span></a></li>
 <li><a href="privacy.html">Evidence and redaction</a></li>
 </ul>
 <h2>Recorded applications</h2><ul>
@@ -224,7 +226,7 @@
 <li><a href="design/extension-author-tooling.html">Extension author tooling<span class="tag">accepted</span></a></li>
 <li><a href="design/target-locators.html">Target locators<span class="tag">implemented</span></a></li>
 <li><a href="design/output-plugins.html">Output plugins<span class="tag">proposed</span></a></li>
-<li><a href="design/quality-suites.html">Quality suites<span class="tag">proposed</span></a></li>
+<li><a href="design/quality-suites.html">Quality suites<span class="tag">implemented</span></a></li>
 <li><a href="design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
 <li><a href="design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
 <li><a href="design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
@@ -293,6 +295,11 @@ so this page is maintained as carefully as the code.</p>
 <td>Collector (<code>guardana-server</code>)</td>
 <td><strong>beta</strong></td>
 <td>PostgreSQL with reversible migrations, a scoped API key on every route carrying a finding, project isolation on every query, and a record of what each run verified and where. Findings have a lifecycle and expiring waivers; actions are audited; retention and deletion are commands. What it does not yet hold is a quality trend — it aggregates findings, not measurements.</td>
+</tr>
+<tr>
+<td>Quality suites</td>
+<td><strong>beta</strong></td>
+<td>Gates pass rates on team-supplied versioned datasets, with repeated trials and judge correction. No numeric aggregate gate or statistical comparison between suite runs.</td>
 </tr>
 <tr>
 <td>Extension API</td>
@@ -374,6 +381,11 @@ directly.
 Two limits remain: <code>--plugins all</code> is still the default, and a declarative pack
 format that executes no Python has no scheduled release. See the <a href="threat-model.html">threat
 model</a>.</p>
+<h3 id="quality-suites">Quality suites</h3>
+<p>Numeric values are recorded and rendered, but suites do not gate on their aggregate.
+<code>plan probe</code> prices target requests, not judge calls; repeated trials and <code>min_agreement</code> can multiply judge calls.
+<code>guardana diff</code> pairs suite cases but does not statistically test the pass rate between runs.
+A calibration file holds one calibration per evaluator id.</p>
 <h3 id="cost-is-bounded-not-predicted">Cost is bounded, not predicted</h3>
 <p><code>guardana plan</code> prices a run before it sends anything, and
 <code>--max-requests</code>/<code>--max-cost</code>/<code>--max-duration</code> are hard ceilings that stop the run

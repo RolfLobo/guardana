@@ -2,8 +2,7 @@
 
 from pathlib import Path
 
-from guardana.core.evaluator.guard import GuardEvaluator
-from guardana.core.evaluator.llm_judge import LlmJudgeEvaluator
+from guardana.core.evaluator import CONFIG_WIRED
 from guardana.rules import provide_evaluators
 
 
@@ -22,10 +21,9 @@ def test_rule_detail_points_to_the_generated_catalog() -> None:
 
 
 def test_every_builtin_evaluator_is_presented() -> None:
-    # provide_evaluators() covers the always-available pair; the judge and the
-    # guard are config-wired rather than entry-point-provided, so list them
-    # explicitly — they are just as user-visible.
+    # The judges and the guard are config-wired rather than entry-point-provided, and
+    # just as user-visible; the generated catalog reads the same list.
     text = _features_text()
-    ids = [e.id for e in provide_evaluators()] + [LlmJudgeEvaluator.id, GuardEvaluator.id]
+    ids = [e.id for e in provide_evaluators()] + [kind.id for kind in CONFIG_WIRED]
     missing = [i for i in ids if f"`{i}`" not in text]
     assert not missing, f"FEATURES.md does not mention evaluator(s): {missing}"

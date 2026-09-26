@@ -8,12 +8,18 @@ default would let a third-party opinion skip the correction.
 
 import pytest
 from guardana.core.evaluator.amplification import AmplificationEvaluator
+from guardana.core.evaluator.answered import AnsweredEvaluator
 from guardana.core.evaluator.base import Evaluator, Expectation, Verdict
 from guardana.core.evaluator.canary import CanaryEvaluator
+from guardana.core.evaluator.contains import ContainsEvaluator
+from guardana.core.evaluator.exact_match import ExactMatchEvaluator
 from guardana.core.evaluator.guard import GuardEvaluator
+from guardana.core.evaluator.json_valid import JsonValidEvaluator
 from guardana.core.evaluator.keyword import KeywordEvaluator
 from guardana.core.evaluator.length import LengthEvaluator
 from guardana.core.evaluator.llm_judge import LlmJudgeEvaluator
+from guardana.core.evaluator.reference_judge import ReferenceJudgeEvaluator
+from guardana.core.evaluator.regex import RegexEvaluator
 from guardana.core.evaluator.tool_call import ToolCallEvaluator
 from guardana.core.exchange import Exchange
 from guardana.core.registry import Registry
@@ -40,21 +46,59 @@ def test_an_evaluator_that_does_not_declare_determinism_is_a_judge() -> None:
 
 @pytest.mark.parametrize(
     "evaluator",
-    [CanaryEvaluator, LengthEvaluator, AmplificationEvaluator, ToolCallEvaluator],
+    [
+        CanaryEvaluator,
+        LengthEvaluator,
+        AmplificationEvaluator,
+        ToolCallEvaluator,
+        ExactMatchEvaluator,
+        ContainsEvaluator,
+        RegexEvaluator,
+        JsonValidEvaluator,
+    ],
 )
 def test_the_evaluators_that_read_facts_are_deterministic(evaluator: type[Evaluator]) -> None:
     assert evaluator.deterministic is True
 
 
-@pytest.mark.parametrize("evaluator", [KeywordEvaluator, LlmJudgeEvaluator, GuardEvaluator])
-def test_keyword_llm_judge_and_guard_are_judges(evaluator: type[Evaluator]) -> None:
+@pytest.mark.parametrize(
+    "evaluator",
+    [
+        KeywordEvaluator,
+        LlmJudgeEvaluator,
+        GuardEvaluator,
+        AnsweredEvaluator,
+        ReferenceJudgeEvaluator,
+    ],
+)
+def test_the_refusal_heuristics_and_the_model_judges_are_judges(
+    evaluator: type[Evaluator],
+) -> None:
     assert evaluator.deterministic is False
 
 
 def test_every_registered_builtin_evaluator_is_classified() -> None:
     evaluators = Registry.discover().evaluators()
     deterministic = {eid for eid, ev in evaluators.items() if ev.deterministic}
-    assert deterministic == {"canary", "length", "amplification", "tool_call"}
+    judges = {eid for eid, ev in evaluators.items() if not ev.deterministic}
+    assert deterministic == {
+        "canary",
+        "length",
+        "amplification",
+        "tool_call",
+        "exact_match",
+        "contains",
+        "regex",
+        "json_valid",
+    }
+    assert {"keyword", "answered"} <= judges
+
+
+def test_answered_and_keyword_never_share_an_id() -> None:
+    # One id would share one calibration entry, and the two read a refusal oppositely.
+    evaluators = Registry.discover().evaluators()
+    assert evaluators["answered"].id != evaluators["keyword"].id
+    assert isinstance(evaluators["answered"], AnsweredEvaluator)
 
 
 def test_an_llm_judge_keeps_the_identity_it_was_given() -> None:
@@ -83,5 +127,13 @@ def test_a_blank_judge_identity_is_refused(blank: str) -> None:
 
 
 def test_the_deterministic_evaluators_state_no_judge_identity() -> None:
-    for evaluator in (CanaryEvaluator(), LengthEvaluator(), ToolCallEvaluator()):
+    for evaluator in (
+        CanaryEvaluator(),
+        LengthEvaluator(),
+        ToolCallEvaluator(),
+        ExactMatchEvaluator(),
+        ContainsEvaluator(),
+        RegexEvaluator(),
+        JsonValidEvaluator(),
+    ):
         assert evaluator.judge_identity is None

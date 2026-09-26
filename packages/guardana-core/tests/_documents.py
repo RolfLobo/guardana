@@ -33,6 +33,9 @@ from guardana.core.manifest.records import (
     JudgeCorrection,
     ResultSummary,
     RuleRecord,
+    SuiteCorrection,
+    SuiteOutcome,
+    SuiteSummary,
     TrialSummary,
 )
 from guardana.core.manifest.settings import (
@@ -69,6 +72,40 @@ _SKIPPED = SkippedRule(
     missing=("list_tools",),
     detail="the target exposes no tool surface",
 )
+
+
+_SUITE = SuiteSummary(
+    dataset="support-answers@2026.09",
+    dataset_digest="sha256:adad",
+    sample_size=40,
+    sample_seed=11,
+    trials_per_case=3,
+    cases=40,
+    measured=37,
+    ungraded=3,
+    worst=0.83,
+    best=0.9,
+    low=0.68,
+    high=0.96,
+    min_pass_rate=0.85,
+    min_sample=30,
+    outcome=SuiteOutcome.INCONCLUSIVE,
+    reason="3 ungraded cases could carry the rate to either side of 85%",
+    correction=SuiteCorrection(
+        status=CorrectionStatus.CORRECTED,
+        assessor="llm_judge@2025.1",
+        worst=0.84,
+        best=0.91,
+        low=0.7,
+        high=0.97,
+        sensitivity=0.9,
+        specificity=0.95,
+        dataset_digest="sha256:abab",
+        positives=120,
+        negatives=130,
+    ),
+)
+"""A suite that declined: three ungraded cases could carry it to either side of its bar."""
 
 
 def run_manifest() -> RunManifest:
@@ -172,6 +209,15 @@ def run_manifest() -> RunManifest:
                         negatives=130,
                     ),
                 ),
+            ),
+            RuleRecord(
+                id="acme.suite.support_answers",
+                digest="sha256:888a",
+                version="1.4.0",
+                origin="acme-quality-pack",
+                maturity="experimental",
+                declared_requests=120,
+                suite=_SUITE,
             ),
         ),
         evaluators=(
@@ -302,11 +348,27 @@ def scan_result() -> ScanResult:
         ),
         protocols={"mcp": "2026-07-28"},
         trials_per_case={"guardana.prompt.jailbreak": 3},
+        suites={"acme.suite.support_answers": _SUITE},
     )
+
+
+def saved_run_at_v8(document: dict[str, Any]) -> dict[str, Any]:
+    """Rewrite a document this build wrote into the shape a version-8 build wrote."""
+    run = document["run"]
+    return {
+        **document,
+        "schema_version": 8,
+        "$schema": "https://guardana.dev/schemas/run/v8.schema.json",
+        "run": {
+            **run,
+            "rules": [{k: v for k, v in rule.items() if k != "suite"} for rule in run["rules"]],
+        },
+    }
 
 
 def saved_run_at_v7(document: dict[str, Any]) -> dict[str, Any]:
     """Rewrite a document this build wrote into the shape a version-7 build wrote."""
+    document = saved_run_at_v8(document)
     run = document["run"]
     return {
         **document,

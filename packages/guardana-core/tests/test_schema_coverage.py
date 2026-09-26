@@ -102,7 +102,7 @@ def test_the_schema_version_in_each_schema_matches_the_code() -> None:
     assert _schema("plan-v2.schema.json")["properties"]["schema_version"]["const"] == (  # type: ignore[index]
         PLAN_SCHEMA_VERSION
     )
-    assert _schema("run-v8.schema.json")["properties"]["schema_version"]["const"] == (  # type: ignore[index]
+    assert _schema("run-v9.schema.json")["properties"]["schema_version"]["const"] == (  # type: ignore[index]
         MANIFEST_SCHEMA_VERSION
     )
     assert (
@@ -120,7 +120,7 @@ def test_the_superseded_run_schemas_stay_pinned_to_the_versions_they_describe() 
     v3's target-kind enum in place would have changed a contract under a name that
     promised it had not.
     """
-    for version in (2, 3, 4, 5, 6, 7):
+    for version in (2, 3, 4, 5, 6, 7, 8):
         assert (
             _schema(f"run-v{version}.schema.json")["properties"]["schema_version"][  # type: ignore[index]
                 "const"

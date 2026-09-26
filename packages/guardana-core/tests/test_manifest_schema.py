@@ -1,4 +1,4 @@
-"""`schemas/run-v8.schema.json` is a published contract, so it is tested.
+"""`schemas/run-v9.schema.json` is a published contract, so it is tested.
 
 A schema nothing validates against is a promise. This asserts the two directions
 that matter: what the engine writes satisfies the schema, and the schema refuses
@@ -30,6 +30,9 @@ from guardana.core.manifest import (
     RunSource,
     RunUsage,
     SourceKind,
+    SuiteCorrection,
+    SuiteOutcome,
+    SuiteSummary,
     TargetIdentity,
     ToolInfo,
     TrialSummary,
@@ -42,7 +45,7 @@ from guardana.core.severity import Severity
 from guardana.core.target import TargetKind
 from jsonschema import Draft202012Validator
 
-_SCHEMA_PATH = Path(__file__).resolve().parents[3] / "schemas" / "run-v8.schema.json"
+_SCHEMA_PATH = Path(__file__).resolve().parents[3] / "schemas" / "run-v9.schema.json"
 _NOW = datetime(2026, 8, 2, 10, 0, tzinfo=UTC)
 
 
@@ -164,6 +167,40 @@ def _fully_populated() -> RunManifest:
                         rate=0.2,
                         low=0.01,
                         high=0.7,
+                        sensitivity=0.9,
+                        specificity=0.95,
+                        dataset_digest=digest_of("corpus"),
+                        positives=120,
+                        negatives=130,
+                    ),
+                ),
+            ),
+            RuleRecord(
+                id="guardana.suite",
+                digest="abc124",
+                suite=SuiteSummary(
+                    dataset="answers@1",
+                    dataset_digest=digest_of("answers"),
+                    sample_size=40,
+                    sample_seed=3,
+                    trials_per_case=3,
+                    cases=40,
+                    measured=40,
+                    ungraded=0,
+                    worst=0.7,
+                    best=0.7,
+                    low=0.55,
+                    high=0.82,
+                    min_pass_rate=0.9,
+                    min_sample=30,
+                    outcome=SuiteOutcome.FAIL,
+                    correction=SuiteCorrection(
+                        status=CorrectionStatus.CORRECTED,
+                        assessor="llm_judge@2025.1",
+                        worst=0.72,
+                        best=0.72,
+                        low=0.55,
+                        high=0.86,
                         sensitivity=0.9,
                         specificity=0.95,
                         dataset_digest=digest_of("corpus"),
@@ -309,7 +346,7 @@ def test_the_schema_requires_usage_keys_even_when_unknown() -> None:
     assert list(_validator().iter_errors(document))
 
 
-@pytest.mark.parametrize("version", [1, 2, 3, 4, 5, 6, 7, 9, "8"])
+@pytest.mark.parametrize("version", [1, 2, 3, 4, 5, 6, 7, 8, 10, "9"])
 def test_the_schema_refuses_any_version_but_the_current_one(version: object) -> None:
     document = _document(_minimal())
     document["schema_version"] = version

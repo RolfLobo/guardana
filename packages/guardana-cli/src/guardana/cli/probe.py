@@ -1,4 +1,5 @@
 import os
+from collections.abc import Mapping
 from dataclasses import replace
 from datetime import UTC, datetime
 from pathlib import Path
@@ -23,10 +24,16 @@ from guardana.cli._probe_run import Connection, run_probe, run_target_probe
 from guardana.cli._profile import resolve_profile
 from guardana.cli._reporting import check_reporter_url, submit_safely
 from guardana.cli._rules_loading import load_custom_rules
-from guardana.cli._run_meta import ProbeOutcome, build_manifest, detect_deployment
+from guardana.cli._run_meta import (
+    ProbeOutcome,
+    build_manifest,
+    calibrations_or_exit,
+    detect_deployment,
+)
 from guardana.cli._safety_flags import parse_impact
 from guardana.cli._target_locator import resolve_target
 from guardana.core.budget import BudgetExhausted
+from guardana.core.calibration.store import RecordedCalibration
 from guardana.core.gate import gate_outcome
 from guardana.core.manifest import DeploymentRef
 from guardana.core.profile import Profile
@@ -55,7 +62,7 @@ _ACCEPTED_FLAGS = (
 )
 
 
-def probe(  # noqa: C901, PLR0913, PLR0915, PLR0917 — Typer surface plus target modes
+def probe(  # noqa: C901, PLR0912, PLR0913, PLR0915, PLR0917 — Typer surface, target modes
     url: Annotated[
         str | None, typer.Option(help="Base URL of the OpenAI-compatible endpoint")
     ] = None,
@@ -214,9 +221,16 @@ def probe(  # noqa: C901, PLR0913, PLR0915, PLR0917 — Typer surface plus targe
         trials=prof.trials if trials is None else trials,
     )
     registry = Registry.discover(resolve_trust(plugins, allow_plugin, no_plugins=False))
-    wire_config_evaluators(registry, prof)
+    try:
+        wire_config_evaluators(registry, prof, prof.budgets)
+    except BudgetExhausted as exc:
+        raise refuse_unenforceable_budget(exc) from exc
     load_custom_rules(registry, prof, rules)
     registry.apply_trials(prof.trials)
+    # Read before anything is sent, and once: the rules correct with these while they
+    # run, and the manifest records the very same ones.
+    calibrations = calibrations_or_exit(prof)
+    records = {key: value.as_record() for key, value in calibrations.items()}
 
     if target is not None:
         conflicting = {
@@ -248,7 +262,9 @@ def probe(  # noqa: C901, PLR0913, PLR0915, PLR0917 — Typer surface plus targe
         try:
             custom_probed = run_against_endpoint(
                 selected.ref,
-                lambda: run_target_probe(registry, prof, selected, concurrency=concurrency),
+                lambda: run_target_probe(
+                    registry, prof, selected, concurrency=concurrency, calibrations=records
+                ),
                 accepts=_ACCEPTED_FLAGS,
             )
         except BudgetExhausted as exc:
@@ -264,6 +280,7 @@ def probe(  # noqa: C901, PLR0913, PLR0915, PLR0917 — Typer surface plus targe
             format=format,
             output=output,
             reporter=reporter,
+            calibrations=calibrations,
         )
         return
 
@@ -301,6 +318,7 @@ def probe(  # noqa: C901, PLR0913, PLR0915, PLR0917 — Typer surface plus targe
             identity=mcp_probed.identity,
             concurrency=concurrency,
             deployment=deployment,
+            calibrations=calibrations,
         )
         emit(get_renderer(format.value, run=run).render(result), output, format.value)
         if reporter:
@@ -330,7 +348,9 @@ def probe(  # noqa: C901, PLR0913, PLR0915, PLR0917 — Typer surface plus targe
     try:
         endpoint_probed = run_against_endpoint(
             endpoint_url,
-            lambda: run_probe(registry, prof, connection, concurrency=concurrency),
+            lambda: run_probe(
+                registry, prof, connection, concurrency=concurrency, calibrations=records
+            ),
             accepts=_ACCEPTED_FLAGS,
         )
     except BudgetExhausted as exc:
@@ -354,6 +374,7 @@ def probe(  # noqa: C901, PLR0913, PLR0915, PLR0917 — Typer surface plus targe
         format=format,
         output=output,
         reporter=reporter,
+        calibrations=calibrations,
     )
 
 
@@ -374,6 +395,7 @@ def _finish_probe(  # noqa: PLR0913 — one value per persisted execution fact
     format: OutputFormat,
     output: Path | None,
     reporter: str | None,
+    calibrations: Mapping[str, RecordedCalibration],
 ) -> None:
     """Redact, persist, emit and gate one endpoint probe result."""
     result = EvidenceRedactor(profile.privacy).redact_result(probed.result)
@@ -389,6 +411,7 @@ def _finish_probe(  # noqa: PLR0913 — one value per persisted execution fact
         identity=probed.identity,
         concurrency=concurrency,
         deployment=deployment,
+        calibrations=calibrations,
     )
     emit(get_renderer(format.value, run=run).render(result), output, format.value)
     if reporter:

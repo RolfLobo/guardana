@@ -118,8 +118,9 @@ def _gaps(rule_id: str, fixtures: Sequence[RuleFixture]) -> tuple[str, ...]:
 
 def _run_fixture(rule: Rule, fixture: RuleFixture, ctx: RuleContext) -> FixtureResult:
     """Run one fixture, converting anything it throws into an error rather than a failure."""
+    subject = fixture.rule if fixture.rule is not None else rule
     try:
-        findings = list(rule.run(fixture.target, ctx))
+        findings = list(subject.run(fixture.target, ctx))
     except Exception as exc:  # a rule with an ordinary bug, or a target that would not answer
         return FixtureResult(
             rule.meta.id,

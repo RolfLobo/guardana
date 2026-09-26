@@ -10,6 +10,7 @@ from enum import StrEnum
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # `manifest` records a GateOutcome, and `report` is downstream of both
+    from guardana.core.manifest.records import SuiteSummary
     from guardana.core.profile.model import FailOn, Policy
     from guardana.core.report.result import ScanResult
 
@@ -56,12 +57,19 @@ def gate_outcome(result: "ScanResult", policy: "Policy") -> GateOutcome:
     crashed check is `FAIL`: the finding is a fact somebody has to act on, and
     reporting the missing check instead would bury it.
 
+    **A suite that failed its bar is `FAIL` whatever its severity.** The bar is a demand
+    its author wrote into the rule, and a suite that declined under the same demand is
+    `INDETERMINATE` with no switch in front; filtering the failure by severity would
+    give a worse measurement a greener exit than no measurement.
+
     **Anything else that leaves the question open is `INDETERMINATE`** — see
     `_left_unanswered`, which owns that list. One branch here because they are one
     answer: their order among themselves cannot change a verdict.
     """
     if result.stopped_by is not None:
         return GateOutcome.INDETERMINATE
+    if any(summary.outcome == "fail" for summary in _demanded_suites(result)):
+        return GateOutcome.FAIL
     threshold = policy.fail_on
     for f in result.findings:
         if f.severity < threshold.severity:
@@ -88,7 +96,9 @@ def _left_unanswered(result: "ScanResult", threshold: "FailOn") -> bool:
       empty message cannot pass with a full rule count;
     - **a run that measured cases and measured none of them** — the same fact for
       the measurement channel, which is carried separately and would otherwise
-      satisfy every test above on a sample of zero.
+      satisfy every test above on a sample of zero;
+    - **a suite that declined** — its gate is a demand its author wrote into the rule,
+      and a pass rate the suite could not establish is not a preference to switch off.
 
     The rest are preferences and stay behind their switches.
     """
@@ -96,6 +106,7 @@ def _left_unanswered(result: "ScanResult", threshold: "FailOn") -> bool:
         result.coverage_shortfall
         or result.verified_nothing
         or (result.assessments and not result.measured)
+        or any(summary.outcome == "inconclusive" for summary in _demanded_suites(result))
         or (result.errors and threshold.fail_on_error)
         # Not filtered by severity, and that is the whole point of the switch. A
         # severity answers "how bad is this problem"; an unverified result is the
@@ -105,6 +116,16 @@ def _left_unanswered(result: "ScanResult", threshold: "FailOn") -> bool:
         or (threshold.fail_on_inconclusive and bool(result.unverified))
         or (threshold.fail_on_skipped and any(s.is_coverage_gap for s in result.rules_skipped))
     )
+
+
+def _demanded_suites(result: "ScanResult") -> list["SuiteSummary"]:
+    """Return the suite conclusions the gate reads: every one no baseline accepted.
+
+    A waiver on a suite's finding is an explicit, expiring acceptance of that suite's
+    result, and it stays visible in `waived`.
+    """
+    waived = {f.rule_id for f in result.waived}
+    return [summary for rule_id, summary in result.suites.items() if rule_id not in waived]
 
 
 def gate(result: "ScanResult", policy: "Policy") -> bool:

@@ -120,6 +120,23 @@ Found on 2026-09-24 by the pre-ship review of ROADMAP row 1, lane 2.
   (`cli/calibrate.py::_record`), and a run then says "lacks per-class counts; rerun guardana
   calibrate --record", which a rerun cannot fix.
 
+## Quality suites (found shipping ROADMAP row 1)
+
+Found on 2026-09-26 while building and reviewing the suites
+(`docs/design/quality-suites.md`).
+
+- The collector trend cannot see K: a rate over one trial and a rate over five share a
+  chart (the "Assessments in the collector" row).
+- `guardana plan probe` prices suite requests but not judge calls, which K and
+  `min_agreement` multiply, and judge calls do not appear in the run's usage block. They are
+  bounded by the run's budgets on their own meter, not counted.
+- `guardana run inspect`'s trials summary counts repeating rules and leaves suites out.
+- `regex` runs the rule author's pattern on every reply with no match-time bound.
+- `guardana.training.dataset_integrity` fires on any call named `load_dataset()` without
+  `revision=`, whoever defines it: the suite loader first carried that name and the dogfood
+  scan reported seven LOW findings on Guardana's own code. The rule could check that the
+  name comes from Hugging Face `datasets` before it reports.
+
 ## Guardana Control on guardana.dev, and the product line
 
 Left open when the site shipped on 2026-09-25 with Control in coming-soon mode
@@ -131,10 +148,6 @@ Left open when the site shipped on 2026-09-25 with Control in coming-soon mode
   `test_guardana_control_is_described_where_its_code_is_public` in the same change.
 - `scripts/generate_llms_txt.py` quotes Control's README tagline and "Status: alpha" by hand;
   re-read Control's README when its status changes.
-- `docs/threat-model.md` ("does not verify the correctness of a model's outputs") and the
-  README row "Measures security rather than answer quality" contradict ROADMAP row 1 and the
-  line in the design document (answer quality before release is Guardana's). Decide the
-  wording when suites ship.
 - For the `control` repository, not this one: a site generator for `control.guardana.dev`
   that vendors `site/assets/brand/v1/` and checks it against its `SHA256SUMS`; and its
   `docs/foundation/12_INTEGRATION_WITH_GUARDANA.md` and product spec still describe a

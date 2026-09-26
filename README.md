@@ -161,7 +161,7 @@ Guardana works beside security and evaluation tools.
 |---|---|---|
 | **Model and artifact scanners** | ModelScan, picklescan | Overlaps at the static layer and covers additional AI artifact formats. |
 | **Red-team harnesses** | garak, PyRIT, promptfoo, DeepTeam | Complements their attack libraries. Guardana separates findings, inconclusive results, errors, and missing coverage, and can import their observations. |
-| **Evaluation frameworks** | DeepEval, Ragas | Measures security rather than answer quality. Run both when both matter. |
+| **Evaluation frameworks** | DeepEval, Ragas | Guardana also gates answer quality on team-supplied datasets through suites. Use it alongside DeepEval or Ragas. |
 | **Runtime guardrails** | LlamaFirewall, Llama Guard | Verifies and gates; it does not run inline. |
 | **AI observability** | LangSmith, Langfuse | Uses OpenTelemetry output as trace-analysis input. |
 | **SAST, CVE, and secret scanners** | Semgrep, Trivy, gitleaks | Adds AI-specific verification beside general application security tools. |

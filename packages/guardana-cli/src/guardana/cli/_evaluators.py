@@ -1,4 +1,4 @@
-"""Build config-driven evaluators (the LLM judge and the guard) and register them.
+"""Build config-driven evaluators (the LLM judges and the guard) and register them.
 
 The judge's differentiating value is that it grades "did the attack succeed" — but
 it needs a model to ask, and nothing built one from config until here. Both the
@@ -13,8 +13,10 @@ from collections.abc import Callable, Mapping
 from urllib.parse import urlsplit
 
 from guardana.cli._endpoint import build_endpoint
+from guardana.core.budget import Budgets
 from guardana.core.evaluator.guard import GuardEvaluator
 from guardana.core.evaluator.llm_judge import JudgeCalibration, LlmJudgeEvaluator
+from guardana.core.evaluator.reference_judge import ReferenceJudgeEvaluator
 from guardana.core.fingerprint import digest_of
 from guardana.core.profile import Profile
 from guardana.core.profile.errors import ProfileError
@@ -25,28 +27,39 @@ _DEFAULT_PROMPT_VERSION = "2025.1"
 _DEFAULT_PORTS = {"https": 443, "http": 80}
 
 
-def wire_config_evaluators(registry: Registry, profile: Profile) -> None:
+def wire_config_evaluators(
+    registry: Registry, profile: Profile, budgets: Budgets | None = None
+) -> None:
     """Register every evaluator that must be built from `guardana.yaml` config.
 
-    Today those are `llm_judge` (a judge model) and the optional `guard` (a safety
-    classifier). Call after discovery so they join the evaluator set the runner
-    resolves every rule against.
+    `llm_judge` and `reference_judge` share one judge model, built from
+    `evaluators.llm_judge`; `guard` is an optional safety classifier. Call after
+    discovery so they join the evaluator set the runner resolves every rule against.
+
+    `budgets` bounds every judge and guard call on a meter of the model's own, so a
+    judge-graded run stops at the ceiling like its target instead of spending past it.
+    `None` leaves them unbounded. A token ceiling the judge's transport cannot enforce
+    raises `BudgetExhausted` here, before anything is sent.
     """
     judge_cfg = profile.evaluator_config.get("llm_judge")
     if judge_cfg is not None:
-        registry.register_evaluator(_build_llm_judge(judge_cfg))
+        for evaluator in _build_judges(judge_cfg, budgets):
+            registry.register_evaluator(evaluator)
     guard_cfg = profile.evaluator_config.get("guard")
     if guard_cfg is not None:
         registry.register_evaluator(
             GuardEvaluator(
-                _endpoint_call(guard_cfg, "guard"),
+                _endpoint_call(guard_cfg, "guard", budgets),
                 judge_identity=_identity(guard_cfg, "guard"),
             )
         )
 
 
-def _build_llm_judge(cfg: Mapping[str, object]) -> LlmJudgeEvaluator:
-    judge = _endpoint_call(cfg, "llm_judge")
+def _build_judges(
+    cfg: Mapping[str, object], budgets: Budgets | None
+) -> tuple[LlmJudgeEvaluator, ReferenceJudgeEvaluator]:
+    """Build the security judge and the reference judge on one judge model and one meter."""
+    judge = _endpoint_call(cfg, "llm_judge", budgets)
     version = cfg.get("prompt_version", _DEFAULT_PROMPT_VERSION)
     if not isinstance(version, str):
         raise ProfileError("evaluators.llm_judge.prompt_version must be a string")
@@ -56,8 +69,13 @@ def _build_llm_judge(cfg: Mapping[str, object]) -> LlmJudgeEvaluator:
         raise ProfileError("evaluators.llm_judge.min_agreement must be an integer")
     identity = f"{_identity(cfg, 'llm_judge')}; samples={min_agreement}"
     try:
-        return LlmJudgeEvaluator(
-            judge, version, min_agreement, _calibration(cfg), judge_identity=identity
+        # `prompt_version` names the security judge's rubric; the reference judge keeps
+        # its own, so neither can inherit a calibration measured for the other.
+        return (
+            LlmJudgeEvaluator(
+                judge, version, min_agreement, _calibration(cfg), judge_identity=identity
+            ),
+            ReferenceJudgeEvaluator(judge, min_agreement=min_agreement, judge_identity=identity),
         )
     except ValueError as exc:  # unknown prompt_version or min_agreement < 1 — config typos
         raise ProfileError(f"evaluators.llm_judge: {exc}") from exc
@@ -97,13 +115,17 @@ def _calibration(cfg: Mapping[str, object]) -> JudgeCalibration | None:
         raise ProfileError(f"evaluators.llm_judge.calibration: {exc}") from exc
 
 
-def _endpoint_call(cfg: Mapping[str, object], what: str) -> Callable[[str], str]:
-    """Build a `prompt -> reply` callable from an endpoint config block."""
+def _endpoint_call(
+    cfg: Mapping[str, object], what: str, budgets: Budgets | None
+) -> Callable[[str], str]:
+    """Build a `prompt -> reply` callable from an endpoint config block, bounded when asked."""
     target = build_endpoint(
         _require_str(cfg, "endpoint", what),
         _require_str(cfg, "model", what),
         api_key=_api_key(cfg, what),
     )
+    if budgets is not None:
+        target.apply_budgets(budgets)
 
     def call(prompt: str) -> str:
         return target.chat([ChatMessage(role="user", content=prompt)])

@@ -43,6 +43,7 @@
 <li><a href="usage-monitor.html">guardana monitor</a></li>
 <li><a href="usage-run.html">guardana run</a></li>
 <li><a href="usage-calibrate.html">guardana calibrate</a></li>
+<li><a href="usage-suites.html">Quality suites<span class="tag">beta</span></a></li>
 <li><a href="privacy.html">Evidence and redaction</a></li>
 </ul>
 <h2>Recorded applications</h2><ul>
@@ -109,7 +110,7 @@
 <li><a href="design/extension-author-tooling.html">Extension author tooling<span class="tag">accepted</span></a></li>
 <li><a href="design/target-locators.html">Target locators<span class="tag">implemented</span></a></li>
 <li><a href="design/output-plugins.html">Output plugins<span class="tag">proposed</span></a></li>
-<li><a href="design/quality-suites.html">Quality suites<span class="tag">proposed</span></a></li>
+<li><a href="design/quality-suites.html">Quality suites<span class="tag">implemented</span></a></li>
 <li><a href="design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
 <li><a href="design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
 <li><a href="design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
@@ -158,6 +159,7 @@
 <li><a href="usage-monitor.html">guardana monitor</a></li>
 <li><a href="usage-run.html">guardana run</a></li>
 <li><a href="usage-calibrate.html">guardana calibrate</a></li>
+<li><a href="usage-suites.html">Quality suites<span class="tag">beta</span></a></li>
 <li><a href="privacy.html">Evidence and redaction</a></li>
 </ul>
 <h2>Recorded applications</h2><ul>
@@ -224,7 +226,7 @@
 <li><a href="design/extension-author-tooling.html">Extension author tooling<span class="tag">accepted</span></a></li>
 <li><a href="design/target-locators.html">Target locators<span class="tag">implemented</span></a></li>
 <li><a href="design/output-plugins.html">Output plugins<span class="tag">proposed</span></a></li>
-<li><a href="design/quality-suites.html">Quality suites<span class="tag">proposed</span></a></li>
+<li><a href="design/quality-suites.html">Quality suites<span class="tag">implemented</span></a></li>
 <li><a href="design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
 <li><a href="design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
 <li><a href="design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
@@ -311,6 +313,38 @@ the attempt, or the second attempt reads what the first one left.</p>
 <p><code>Rule.deterministic</code> is a class attribute that defaults to <code>False</code>. Set it to <code>True</code>
 only for a rule that grades in its own code and stamps verdicts with its own id, as
 <code>guardana.output.secrets</code> does.</p>
+<h3 id="reading-calibrations-and-concluding">Reading calibrations and concluding</h3>
+<p>These are additive extension points for a rule:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Extension point</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RuleContext.calibrations</code></td>
+<td>Read calibrations available to the rule.</td>
+</tr>
+<tr>
+<td><code>RuleContext.conclude(summary)</code></td>
+<td>Record the rule's conclusion.</td>
+</tr>
+<tr>
+<td><code>RuleFixture.rule</code></td>
+<td>Use the variant of the declaring rule that a sample runs.</td>
+</tr>
+<tr>
+<td><code>Runner(calibrations=...)</code></td>
+<td>Pass calibrations to the runner.</td>
+</tr>
+<tr>
+<td><code>ScanResult.suites</code></td>
+<td>Read suite results from the scan result.</td>
+</tr>
+</tbody>
+</table></div>
 <h2 id="adding-an-evaluator">Adding an Evaluator</h2>
 <p>An <code>Evaluator</code> turns a model response (or artifact observation) into a
 <code>Verdict</code> — the &quot;did it succeed, and how sure are we&quot; judgment that's
@@ -360,6 +394,21 @@ five small one-file examples spanning cheap heuristic, exact marker match,
 reply-length lead, LLM-judge, and safety-classifier patterns. (<code>llm_judge</code> and <code>guard</code> need a
 model of their own and are wired from the profile's <code>evaluators:</code> block —
 see <a href="profiles.html#config-wired-evaluators-llm_judge-and-guard"><code>profiles.md</code></a>.)</p>
+<h3 id="reporting-a-measurement">Reporting a measurement</h3>
+<p><code>Verdict.measurement: Measurement | None</code> carries <code>value</code>, <code>unit</code>, <code>direction</code> and <code>threshold</code>. <code>from_verdict</code> carries the measurement onto the assessment.</p>
+<p>An evaluator reports one by passing it with its verdict:</p>
+<pre><code class="language-python">from guardana.core.assessment import Direction
+from guardana.core.evaluator import Measurement, Verdict
+
+Verdict(
+    &quot;pass&quot;,
+    1.0,
+    &quot;reply stayed under the limit&quot;,
+    self.id,
+    measurement=Measurement(len(reply), &quot;chars&quot;, Direction.LOWER_IS_BETTER, 4000),
+)
+</code></pre>
+<p><code>Assessment.comparable_key</code> includes unit, direction and threshold. <code>diff</code> compares measurements only when both runs carry matching values for those fields.</p>
 <h3 id="declaring-grader-identity-and-determinism">Declaring grader identity and determinism</h3>
 <p><code>Evaluator.deterministic</code> is a class attribute that defaults to <code>False</code>. Set it to
 <code>True</code> only when the evaluator's verdict does not need judge-error correction, as with

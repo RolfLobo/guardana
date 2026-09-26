@@ -153,6 +153,24 @@ class MyRule(Rule):
         ]
 ```
 
+## Suites
+
+Suite fixtures use the single-turn shape. One `reply:` answers every case; a fixture can instead name its own `dataset:`. Each case in that fixture dataset may carry `reply`, falling back to the fixture's `reply:`.
+
+This fixture list shows a separate dataset and a single reply:
+
+```yaml
+fixtures:
+  - name: every answer names the setting
+    dataset: ./fixtures/answers-pass.jsonl
+    outcome: clean
+  - name: the model says nothing
+    reply: ""
+    outcome: inconclusive
+```
+
+A case-level `reply` is allowed only in a fixture dataset. Two different replies to the same messages are refused. A fixture dataset with fewer cases than `gate.min_sample` is refused at load. A suite without clean, finding and inconclusive samples is reported `indeterminate`, like any rule. See [quality suites](usage-suites.md).
+
 ## Exit codes
 
 | Situation | Verdict | Exit |

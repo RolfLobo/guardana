@@ -43,6 +43,7 @@
 <li><a href="../usage-monitor.html">guardana monitor</a></li>
 <li><a href="../usage-run.html">guardana run</a></li>
 <li><a href="../usage-calibrate.html">guardana calibrate</a></li>
+<li><a href="../usage-suites.html">Quality suites<span class="tag">beta</span></a></li>
 <li><a href="../privacy.html">Evidence and redaction</a></li>
 </ul>
 <h2>Recorded applications</h2><ul>
@@ -109,7 +110,7 @@
 <li><a href="../design/extension-author-tooling.html">Extension author tooling<span class="tag">accepted</span></a></li>
 <li><a href="../design/target-locators.html">Target locators<span class="tag">implemented</span></a></li>
 <li><a href="../design/output-plugins.html">Output plugins<span class="tag">proposed</span></a></li>
-<li><a href="../design/quality-suites.html" aria-current="page">Quality suites<span class="tag">proposed</span></a></li>
+<li><a href="../design/quality-suites.html" aria-current="page">Quality suites<span class="tag">implemented</span></a></li>
 <li><a href="../design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
 <li><a href="../design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
 <li><a href="../design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
@@ -158,6 +159,7 @@
 <li><a href="../usage-monitor.html">guardana monitor</a></li>
 <li><a href="../usage-run.html">guardana run</a></li>
 <li><a href="../usage-calibrate.html">guardana calibrate</a></li>
+<li><a href="../usage-suites.html">Quality suites<span class="tag">beta</span></a></li>
 <li><a href="../privacy.html">Evidence and redaction</a></li>
 </ul>
 <h2>Recorded applications</h2><ul>
@@ -224,7 +226,7 @@
 <li><a href="../design/extension-author-tooling.html">Extension author tooling<span class="tag">accepted</span></a></li>
 <li><a href="../design/target-locators.html">Target locators<span class="tag">implemented</span></a></li>
 <li><a href="../design/output-plugins.html">Output plugins<span class="tag">proposed</span></a></li>
-<li><a href="../design/quality-suites.html" aria-current="page">Quality suites<span class="tag">proposed</span></a></li>
+<li><a href="../design/quality-suites.html" aria-current="page">Quality suites<span class="tag">implemented</span></a></li>
 <li><a href="../design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
 <li><a href="../design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
 <li><a href="../design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
@@ -250,7 +252,7 @@
 </nav>
 </details>
 <main>
-<h1>Quality suites: did the model get worse, on a sample we can name?<span class="status proposed">proposed</span></h1><p class="lede">a versioned dataset, a suite that is a rule, an assessor that is an evaluator, and a gate that refuses a pass rate it has not earned — Horizon 1 on the channel 0.22.0 shipped</p><p><strong>Status:</strong> proposed · <strong>Written:</strong> 2026-09-02 · <strong>Amended:</strong> 2026-09-23 (trials, judge error) · <strong>Cycle 2 of the extensibility program</strong> (<a href="audit-0.22.html"><code>audit-0.22.md</code></a>)</p>
+<h1>Quality suites: did the model get worse, on a sample we can name?<span class="status implemented">implemented</span></h1><p class="lede">a versioned dataset, a suite that is a rule, an assessor that is an evaluator, and a gate that refuses a pass rate it has not earned — Horizon 1 on the channel 0.22.0 shipped</p><p><strong>Status:</strong> implemented in 0.29.0 · <strong>Written:</strong> 2026-09-02 · <strong>Amended:</strong> 2026-09-23 (trials, judge error) · <strong>Cycle 2 of the extensibility program</strong> (<a href="audit-0.22.html"><code>audit-0.22.md</code></a>)</p>
 <h2 id="the-question">The question</h2>
 <p>A team swaps a model, retrains on new data, or tightens a system prompt, and
 wants to know whether the answers got worse — not whether an attack landed, but
@@ -469,6 +471,21 @@ know how to show. <code>json</code> carries what it already carries.</p>
 <p>Additive throughout: an evaluator that ignores <code>Measurement</code> is unchanged, and
 <code>SuiteRule</code> is one more shape <code>load_yaml_rules</code> returns. The build advertises API
 <code>2</code> from cycle 1 and nothing here needs a further number.</p>
+<h2 id="changed-while-building">Changed while building</h2>
+<ul>
+<li>The t-interval over per-case shares was replaced by a 95% Wilson interval at their mean. In simulation, the t-interval collapsed to a point when every case agreed and missed the true rate from below in 3.1–20.1% of runs at pass rates 0.7–0.995. Wilson missed at most 0.1% per side.</li>
+<li>Ungraded trials stay in the denominator. The <code>worst</code> bound counts them as failed; the <code>best</code> bound counts them as passed, across all cases.</li>
+<li>The gate reads the suite conclusion directly. A failed suite fails the run and a declined suite makes it indeterminate, with no switch required, whatever the severity.</li>
+<li>When raw <code>worst</code> falls below the bar, a corrected rate passes only if its 95% lower limit clears the bar. Otherwise the suite declines and states both rates.</li>
+<li>Judge correction also declines if a corner of the sensitivity and specificity 95% box has sensitivity plus specificity minus one at or below zero.</li>
+<li><code>answered</code> replaced the planned <code>keyword</code> <code>should_refuse</code> mode. An id suffix would share <code>keyword</code>'s calibration entry; a per-case mode would put two assessors in one suite. <code>answered</code> has its own id and calibration entry.</li>
+<li>JUnit emits one testcase per suite because the gated result is the suite's rate, not an individual case. A declined suite is an error testcase.</li>
+<li>Fixtures can use their own datasets and case-specific replies, so a sample can exercise both sides of the bar.</li>
+<li><code>reference_judge</code> uses the configured <code>llm_judge</code> connection, samples, and judge identity, with no new profile keys. Its own id means <code>llm_judge</code> calibration does not apply.</li>
+<li>Correction uses a separate SuiteCorrection type in pass space.</li>
+<li>The suite builds its summary once and stores it at run schema 9. A saved run prints that stored conclusion.</li>
+<li>Configured judge calls during <code>probe</code> and <code>monitor</code> use the run's budgets on a separate meter from the target.</li>
+</ul>
 <h2 id="see-also">See also</h2>
 <ul>
 <li><a href="assessment-channel.html"><code>assessment-channel.md</code></a> — the record every case becomes</li>

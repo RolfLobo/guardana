@@ -2,12 +2,12 @@
 title: "Quality suites"
 nav_order: 73
 summary: "a versioned dataset, a suite that is a rule, an assessor that is an evaluator, and a gate that refuses a pass rate it has not earned — Horizon 1 on the channel 0.22.0 shipped"
-status: proposed
+status: implemented
 ---
 
 # Quality suites: did the model get worse, on a sample we can name?
 
-**Status:** proposed · **Written:** 2026-09-02 · **Amended:** 2026-09-23 (trials, judge error) · **Cycle 2 of the extensibility program** ([`audit-0.22.md`](audit-0.22.md))
+**Status:** implemented in 0.29.0 · **Written:** 2026-09-02 · **Amended:** 2026-09-23 (trials, judge error) · **Cycle 2 of the extensibility program** ([`audit-0.22.md`](audit-0.22.md))
 
 ## The question
 
@@ -220,6 +220,21 @@ know how to show. `json` carries what it already carries.
 Additive throughout: an evaluator that ignores `Measurement` is unchanged, and
 `SuiteRule` is one more shape `load_yaml_rules` returns. The build advertises API
 `2` from cycle 1 and nothing here needs a further number.
+
+## Changed while building
+
+- The t-interval over per-case shares was replaced by a 95% Wilson interval at their mean. In simulation, the t-interval collapsed to a point when every case agreed and missed the true rate from below in 3.1–20.1% of runs at pass rates 0.7–0.995. Wilson missed at most 0.1% per side.
+- Ungraded trials stay in the denominator. The `worst` bound counts them as failed; the `best` bound counts them as passed, across all cases.
+- The gate reads the suite conclusion directly. A failed suite fails the run and a declined suite makes it indeterminate, with no switch required, whatever the severity.
+- When raw `worst` falls below the bar, a corrected rate passes only if its 95% lower limit clears the bar. Otherwise the suite declines and states both rates.
+- Judge correction also declines if a corner of the sensitivity and specificity 95% box has sensitivity plus specificity minus one at or below zero.
+- `answered` replaced the planned `keyword` `should_refuse` mode. An id suffix would share `keyword`'s calibration entry; a per-case mode would put two assessors in one suite. `answered` has its own id and calibration entry.
+- JUnit emits one testcase per suite because the gated result is the suite's rate, not an individual case. A declined suite is an error testcase.
+- Fixtures can use their own datasets and case-specific replies, so a sample can exercise both sides of the bar.
+- `reference_judge` uses the configured `llm_judge` connection, samples, and judge identity, with no new profile keys. Its own id means `llm_judge` calibration does not apply.
+- Correction uses a separate SuiteCorrection type in pass space.
+- The suite builds its summary once and stores it at run schema 9. A saved run prints that stored conclusion.
+- Configured judge calls during `probe` and `monitor` use the run's budgets on a separate meter from the target.
 
 ## See also
 

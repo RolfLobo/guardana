@@ -237,6 +237,246 @@ class TrialSummary:
         )
 
 
+class SuiteOutcome(StrEnum):
+    """What a suite's gate concluded about its pass rate."""
+
+    PASS = "pass"  # noqa: S105 — an outcome name, not a credential
+    FAIL = "fail"
+    INCONCLUSIVE = "inconclusive"
+    """The suite declined: too few cases measured, a judge it could not correct, or ungraded
+    trials that could carry the rate to either side of the threshold."""
+
+
+_SUITE_SHARES = ("worst", "best", "low", "high")
+
+
+@dataclass(frozen=True, slots=True)
+class SuiteCorrection:
+    """A suite's pass rate corrected for its judge's error, or why it was not.
+
+    In pass space throughout, unlike `JudgeCorrection`, whose rate is a corrected failure
+    rate: the two are separate types so no reader can take one for the other.
+    """
+
+    status: CorrectionStatus
+    assessor: str | None = None
+    reason: str | None = None
+    worst: float | None = None
+    """The corrected pass rate with every ungraded trial counted failed."""
+
+    best: float | None = None
+    """The corrected pass rate with every ungraded trial counted passed."""
+
+    low: float | None = None
+    high: float | None = None
+    sensitivity: float | None = None
+    specificity: float | None = None
+    dataset_digest: str | None = None
+    positives: int | None = None
+    negatives: int | None = None
+
+    def __post_init__(self) -> None:
+        """Refuse a correction whose numbers contradict its status or each other."""
+        if not isinstance(self.status, CorrectionStatus):
+            raise TypeError(f"status must be a CorrectionStatus, got {self.status!r}")
+        for name in (*_SUITE_SHARES, "sensitivity", "specificity"):
+            value = getattr(self, name)
+            if value is not None and not _is_share(value):
+                raise ValueError(f"{name} must lie in [0, 1], got {value!r}")
+        stated = [name for name in _SUITE_SHARES if getattr(self, name) is not None]
+        if self.status is CorrectionStatus.CORRECTED:
+            self._check_corrected()
+        elif self.status is CorrectionStatus.UNCORRECTED:
+            if not self.reason:
+                raise ValueError("an uncorrected rate must name why it was not corrected")
+            if stated:
+                raise ValueError(f"an uncorrected rate states no corrected {', '.join(stated)}")
+        else:
+            stated += [
+                name
+                for name in (
+                    "assessor",
+                    "reason",
+                    "sensitivity",
+                    "specificity",
+                    "dataset_digest",
+                    "positives",
+                    "negatives",
+                )
+                if getattr(self, name) is not None
+            ]
+            if stated:
+                raise ValueError(f"a deterministic grader has no {', '.join(stated)} to state")
+
+    def _check_corrected(self) -> None:
+        worst, best, low, high = self.worst, self.best, self.low, self.high
+        sensitivity, specificity = self.sensitivity, self.specificity
+        if (
+            worst is None
+            or best is None
+            or low is None
+            or high is None
+            or sensitivity is None
+            or specificity is None
+            or not self.assessor
+            or not self.dataset_digest
+        ):
+            raise ValueError(
+                "a corrected pass rate needs its worst, best, low, high, sensitivity, "
+                "specificity, assessor and dataset_digest"
+            )
+        if not low <= worst <= best <= high:
+            raise ValueError(
+                f"a corrected pass rate needs low <= worst <= best <= high, "
+                f"got {low}, {worst}, {best}, {high}"
+            )
+        for name, graded in (("positives", self.positives), ("negatives", self.negatives)):
+            if (
+                isinstance(graded, bool)
+                or not isinstance(graded, int)
+                or graded < MIN_RELIABLE_SAMPLES
+            ):
+                raise ValueError(
+                    f"a corrected rate needs at least {MIN_RELIABLE_SAMPLES} graded {name} "
+                    f"behind it, got {graded!r}"
+                )
+        youden = sensitivity + specificity - 1.0
+        if youden < MIN_YOUDEN:
+            raise ValueError(
+                f"sensitivity + specificity - 1 is {youden:.3f}; a judge below {MIN_YOUDEN} "
+                f"is not corrected"
+            )
+
+
+@dataclass(frozen=True, slots=True)
+class SuiteSummary:
+    """What a suite measured over its dataset and what its gate concluded.
+
+    Built once, by the suite while it runs, and stored as it was built: a reader that
+    recomputed it could hold other calibrations or another K and print another verdict.
+    Every rate is a pass share over cases, each case weighted by its share of passed trials.
+    """
+
+    dataset: str
+    """The dataset's declared identity, `name@version`."""
+
+    dataset_digest: str
+    trials_per_case: int
+    cases: int
+    """Cases after sampling: the ones the suite set out to measure."""
+
+    measured: int
+    """Cases whose every planned trial was graded: what `min_sample` counts."""
+
+    ungraded: int
+    """Cases with at least one trial that could not be graded."""
+
+    min_pass_rate: float
+    min_sample: int
+    outcome: SuiteOutcome
+    correction: SuiteCorrection
+    worst: float | None = None
+    """The raw pass rate with every ungraded trial counted failed; None with no case."""
+
+    best: float | None = None
+    """The raw pass rate with every ungraded trial counted passed; None with no case."""
+
+    low: float | None = None
+    """The 95% lower limit at `worst`."""
+
+    high: float | None = None
+    """The 95% upper limit at `best`."""
+
+    sample_size: int | None = None
+    sample_seed: int | None = None
+    reason: str | None = None
+    """Why the suite declined; set exactly when it did."""
+
+    def __post_init__(self) -> None:
+        """Refuse a summary whose outcome its own numbers do not support.
+
+        A stored pass is what a pipeline reads; one the counts or the rates contradict would
+        be a green build nobody measured.
+        """
+        self._check_counts()
+        shares = [getattr(self, name) for name in _SUITE_SHARES]
+        if any(value is not None and not _is_share(value) for value in shares):
+            raise ValueError(f"worst, best, low and high must lie in [0, 1], got {shares}")
+        if self.cases and any(value is None for value in shares):
+            raise ValueError("a suite with cases states worst, best, low and high")
+        worst, best, low, high = shares
+        if (
+            worst is not None
+            and best is not None
+            and low is not None
+            and high is not None
+            and not low <= worst <= best <= high
+        ):
+            raise ValueError(f"a suite needs low <= worst <= best <= high, got {shares}")
+        if not _is_share(self.min_pass_rate) or self.min_pass_rate == 0.0:
+            raise ValueError(f"min_pass_rate must lie in (0, 1], got {self.min_pass_rate!r}")
+        self._check_outcome()
+
+    def _check_counts(self) -> None:
+        for name in ("trials_per_case", "min_sample"):
+            value = getattr(self, name)
+            if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+                raise ValueError(f"{name} must be a whole number of at least 1, got {value!r}")
+        counts = (self.cases, self.measured, self.ungraded)
+        if any(isinstance(n, bool) or not isinstance(n, int) or n < 0 for n in counts):
+            raise ValueError(f"case counts must be whole numbers of at least 0, got {counts}")
+        if self.measured + self.ungraded != self.cases:
+            raise ValueError(
+                f"{self.measured} measured and {self.ungraded} ungraded cases do not make "
+                f"{self.cases}"
+            )
+        if (self.sample_size is None) != (self.sample_seed is None):
+            raise ValueError("a sample states both its size and its seed, or neither")
+
+    def _check_outcome(self) -> None:
+        if not isinstance(self.outcome, SuiteOutcome):
+            raise TypeError(f"outcome must be a SuiteOutcome, got {self.outcome!r}")
+        if self.outcome is SuiteOutcome.INCONCLUSIVE:
+            if not self.reason:
+                raise ValueError("a suite that declined must say why")
+            return
+        if self.reason is not None:
+            raise ValueError(f"a suite that concluded {self.outcome} states no reason")
+        if self.measured < self.min_sample:
+            raise ValueError(
+                f"{self.measured} measured cases are below min_sample {self.min_sample}; "
+                f"the suite cannot conclude {self.outcome}"
+            )
+        worst, best, low = self._gated()
+        threshold = self.min_pass_rate
+        if self.outcome is SuiteOutcome.PASS and not (
+            worst >= threshold and (low is None or low >= threshold)
+        ):
+            raise ValueError(f"a suite passes only with its worst rate at {threshold} or above")
+        if self.outcome is SuiteOutcome.FAIL and not best < threshold:
+            raise ValueError(f"a suite fails only with its best rate below {threshold}")
+
+    def _gated(self) -> tuple[float, float, float | None]:
+        """Return the worst and best rates the gate reads, and the low end a pass must clear.
+
+        Raw for a deterministic assessor, corrected for a judge. A corrected pass over a raw
+        worst below the threshold must also clear it at the corrected lower limit; the low
+        end is None when no lower limit is required.
+        """
+        status = self.correction.status
+        if status is CorrectionStatus.UNCORRECTED:
+            raise ValueError("a suite graded by an uncorrected judge cannot conclude")
+        if self.worst is None or self.best is None:
+            raise ValueError("a suite with no case cannot conclude")
+        if status is CorrectionStatus.DETERMINISTIC:
+            return self.worst, self.best, None
+        corrected = self.correction
+        if corrected.worst is None or corrected.best is None or corrected.low is None:
+            raise ValueError("a corrected suite states its corrected rates")
+        low = corrected.low if self.worst < self.min_pass_rate else None
+        return corrected.worst, corrected.best, low
+
+
 @dataclass(frozen=True, slots=True)
 class RuleRecord:
     """One rule that ran, with the digest of what it was when it ran.
@@ -275,6 +515,9 @@ class RuleRecord:
 
     trial_summary: TrialSummary | None = None
     """What the rule's repeated trials added up to; None for a rule that made one attempt."""
+
+    suite: SuiteSummary | None = None
+    """What a suite measured and concluded; None for every rule that is not a suite."""
 
 
 @dataclass(frozen=True, slots=True)

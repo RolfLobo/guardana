@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from _documents import run_manifest, saved_run_at_v7, scan_result
+from _documents import run_manifest, saved_run_at_v7, saved_run_at_v8, scan_result
 from guardana.core.manifest.load import ManifestLoadError, manifest_from_dict
 from guardana.core.manifest.migrations import migrate_v7
 from guardana.core.manifest.records import (
@@ -23,7 +23,7 @@ from guardana.core.manifest.records import (
     TrialSummary,
 )
 from guardana.core.manifest.serialize import manifest_to_dict
-from guardana.core.report.load import ReportLoadError, load_report, migrate_forward
+from guardana.core.report.load import ReportLoadError, load_report
 from guardana.core.report.serialize import run_to_dict
 from jsonschema import Draft202012Validator
 
@@ -66,6 +66,9 @@ _DETERMINISTIC: dict[str, Any] = {**dict.fromkeys(_CORRECTED), "status": "determ
 
 
 def _errors(document: dict[str, Any], version: int = 8) -> list[str]:
+    """Validate `document` against the schema at `version`, in the shape that version wrote."""
+    if version == 8:
+        document = saved_run_at_v8(document)
     schema = json.loads((_SCHEMAS / f"run-v{version}.schema.json").read_text(encoding="utf-8"))
     return [error.message for error in Draft202012Validator(schema).iter_errors(document)]
 
@@ -387,7 +390,7 @@ def test_a_v7_run_migrates_to_8_with_every_correction_and_per_class_field_null()
     v7 = saved_run_at_v7(_document())
     assert not _errors(v7, 7), "the fixture must be a real version-7 document"
 
-    migrated = migrate_forward(v7, 7)
+    migrated = migrate_v7(v7)
 
     assert migrated["schema_version"] == 8
     assert migrated["$schema"].endswith("/v8.schema.json")

@@ -100,12 +100,30 @@ Built-in evaluators are:
 - `tool_call` for actions and arguments over a trajectory;
 - `length` and `amplification` for resource-consumption signals;
 - `llm_judge` for configurable semantic grading;
+- `answered` for judging whether a reply refuses a benign task;
+- `contains` for required or forbidden case-sensitive substrings;
+- `exact_match` for comparison with a reference answer, with optional normalization;
+- `json_valid` for valid JSON and optional required keys;
+- `regex` for matching a reply against a pattern;
+- `reference_judge` for grading against a reference answer with a versioned rubric;
 - `guard` for an optional external safety classifier.
 
 `guardana calibrate` measures evaluator confidence against labelled samples, including
 per-class sensitivity and specificity. A run can carry a corrected trials rate when its
-recorded calibration qualifies. A third-party evaluator declares the fields it needs,
+recorded calibration qualifies. `reference_judge` uses the configured `llm_judge`
+connection, but its own evaluator id requires its own calibration; `llm_judge`
+calibration does not apply to it. A third-party evaluator declares the fields it needs,
 and malformed configuration is rejected before a run starts.
+
+## Quality suites
+
+A quality suite is a declarative rule that grades a versioned JSONL dataset the team supplies against a chat endpoint before release or in CI. Guardana does not read production traffic.
+
+Each case runs for the configured `trials` or `probe --trials`. The suite records an assessment for every trial, including passes, and gates on the mean pass rate over cases.
+
+The gate passes, fails, or declines when it cannot conclude. Judge-graded suites use a qualifying calibration to correct the pass rate; without one, they decline. A failed suite yields at most one finding, about the rate.
+
+Saved runs retain the suite summary. Human reports show a Measured block, and JUnit emits one testcase per suite. See [Quality suites](docs/usage-suites.md) for the how-to.
 
 ## Policy and repeatability
 

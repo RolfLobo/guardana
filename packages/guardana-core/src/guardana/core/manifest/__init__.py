@@ -14,6 +14,9 @@ from guardana.core.manifest.records import (
     JudgeCorrection,
     ResultSummary,
     RuleRecord,
+    SuiteCorrection,
+    SuiteOutcome,
+    SuiteSummary,
     TrialSummary,
 )
 from guardana.core.manifest.settings import (
@@ -42,6 +45,9 @@ __all__ = [
     "RunSource",
     "RunUsage",
     "SourceKind",
+    "SuiteCorrection",
+    "SuiteOutcome",
+    "SuiteSummary",
     "TargetIdentity",
     "TargetUsage",
     "TokenUsage",

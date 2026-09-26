@@ -43,6 +43,7 @@
 <li><a href="../usage-monitor.html">guardana monitor</a></li>
 <li><a href="../usage-run.html">guardana run</a></li>
 <li><a href="../usage-calibrate.html">guardana calibrate</a></li>
+<li><a href="../usage-suites.html">Quality suites<span class="tag">beta</span></a></li>
 <li><a href="../privacy.html">Evidence and redaction</a></li>
 </ul>
 <h2>Recorded applications</h2><ul>
@@ -109,7 +110,7 @@
 <li><a href="../design/extension-author-tooling.html">Extension author tooling<span class="tag">accepted</span></a></li>
 <li><a href="../design/target-locators.html">Target locators<span class="tag">implemented</span></a></li>
 <li><a href="../design/output-plugins.html">Output plugins<span class="tag">proposed</span></a></li>
-<li><a href="../design/quality-suites.html">Quality suites<span class="tag">proposed</span></a></li>
+<li><a href="../design/quality-suites.html">Quality suites<span class="tag">implemented</span></a></li>
 <li><a href="../design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
 <li><a href="../design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
 <li><a href="../design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
@@ -158,6 +159,7 @@
 <li><a href="../usage-monitor.html">guardana monitor</a></li>
 <li><a href="../usage-run.html">guardana run</a></li>
 <li><a href="../usage-calibrate.html">guardana calibrate</a></li>
+<li><a href="../usage-suites.html">Quality suites<span class="tag">beta</span></a></li>
 <li><a href="../privacy.html">Evidence and redaction</a></li>
 </ul>
 <h2>Recorded applications</h2><ul>
@@ -224,7 +226,7 @@
 <li><a href="../design/extension-author-tooling.html">Extension author tooling<span class="tag">accepted</span></a></li>
 <li><a href="../design/target-locators.html">Target locators<span class="tag">implemented</span></a></li>
 <li><a href="../design/output-plugins.html">Output plugins<span class="tag">proposed</span></a></li>
-<li><a href="../design/quality-suites.html">Quality suites<span class="tag">proposed</span></a></li>
+<li><a href="../design/quality-suites.html">Quality suites<span class="tag">implemented</span></a></li>
 <li><a href="../design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
 <li><a href="../design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
 <li><a href="../design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
@@ -269,9 +271,33 @@ A rule names one by id, so swapping graders never touches the rule.</p>
 <td>Not needed</td>
 </tr>
 <tr>
+<td><code>answered</code></td>
+<td>always</td>
+<td>The utility check: the model must not refuse this benign task.</td>
+<td>With matching calibration</td>
+</tr>
+<tr>
 <td><code>canary</code></td>
 <td>always</td>
 <td>Detects leakage of a planted canary marker. High-confidence by design.</td>
+<td>Not needed</td>
+</tr>
+<tr>
+<td><code>contains</code></td>
+<td>always</td>
+<td>Grades a reply by the substrings it carries, case-sensitively.</td>
+<td>Not needed</td>
+</tr>
+<tr>
+<td><code>exact_match</code></td>
+<td>always</td>
+<td>Passes a reply equal to <code>reference</code>, after an optional normalization.</td>
+<td>Not needed</td>
+</tr>
+<tr>
+<td><code>json_valid</code></td>
+<td>always</td>
+<td>Passes a reply that is one JSON document, optionally an object with given keys.</td>
 <td>Not needed</td>
 </tr>
 <tr>
@@ -284,6 +310,12 @@ A rule names one by id, so swapping graders never touches the rule.</p>
 <td><code>length</code></td>
 <td>always</td>
 <td>Grades a reply by length — a very long answer to a divergence prompt is a lead.</td>
+<td>Not needed</td>
+</tr>
+<tr>
+<td><code>regex</code></td>
+<td>always</td>
+<td>Grades a reply by whether <code>pattern</code> occurs anywhere in it (<code>re.search</code>).</td>
 <td>Not needed</td>
 </tr>
 <tr>
@@ -302,6 +334,12 @@ A rule names one by id, so swapping graders never touches the rule.</p>
 <td><code>llm_judge</code></td>
 <td>when configured</td>
 <td>Delegates the pass/fail decision to another LLM (the &quot;judge&quot;).</td>
+<td>With matching calibration</td>
+</tr>
+<tr>
+<td><code>reference_judge</code></td>
+<td>when configured</td>
+<td>Asks a judge model whether a reply agrees with a reference answer.</td>
 <td>With matching calibration</td>
 </tr>
 </tbody>

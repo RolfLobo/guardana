@@ -14,6 +14,7 @@ from guardana.core.target import Capability, Target, TargetKind
 from guardana.core.taxonomy import TaxonomyRef
 
 if TYPE_CHECKING:
+    from guardana.core.manifest.records import CalibrationRecord, SuiteSummary
     from guardana.core.rule.fixture import RuleFixture
 
 
@@ -75,7 +76,15 @@ class RuleContext:
 
     config: Mapping[str, object] = field(default_factory=dict)
     evaluators: Mapping[str, Evaluator] = field(default_factory=dict)
+    calibrations: Mapping[str, "CalibrationRecord"] = field(default_factory=dict)
+    """The judge calibrations this run was pointed at, keyed by evaluator id.
+
+    Read by a rule that gates on a judge-graded rate while it runs; empty when the run
+    names none, which leaves every judge uncorrected.
+    """
+
     _assessments: list[Assessment] = field(default_factory=list, repr=False)
+    _conclusions: list["SuiteSummary"] = field(default_factory=list, repr=False)
 
     def get(self, key: str, default: object) -> object:
         """Read one config value, falling back to `default`."""
@@ -96,6 +105,18 @@ class RuleContext:
     def recorded(self) -> tuple[Assessment, ...]:
         """Everything `record` was given, in the order it arrived."""
         return tuple(self._assessments)
+
+    def conclude(self, summary: "SuiteSummary") -> None:
+        """Hand over what a suite concluded about its pass rate. The runner carries it.
+
+        A sink for the same reason as `record`: the conclusion is computed once, by the
+        rule that measured it, and every later reader stores or prints it as it was.
+        """
+        self._conclusions.append(summary)
+
+    def concluded(self) -> "SuiteSummary | None":
+        """Return the last conclusion `conclude` was given; None for a rule that is no suite."""
+        return self._conclusions[-1] if self._conclusions else None
 
 
 class Rule(ABC):

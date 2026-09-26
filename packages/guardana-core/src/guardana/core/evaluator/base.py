@@ -1,8 +1,10 @@
+import math
 from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import ClassVar, Literal
 
+from guardana.core.assessment import Direction
 from guardana.core.exchange import Exchange
 
 Outcome = Literal["pass", "fail", "inconclusive"]
@@ -64,17 +66,46 @@ def _typed(expectation: Expectation, name: str) -> object | None:
 
 
 @dataclass(frozen=True, slots=True)
+class Measurement:
+    """The number behind a verdict, what it is counted in, and which way is better.
+
+    `threshold` is the bound the verdict was decided against in this run. Two runs
+    whose unit, direction or threshold differ answered different questions, so a
+    comparison refuses to pair them.
+    """
+
+    value: float
+    unit: str
+    direction: Direction
+    threshold: float | None = None
+
+    def __post_init__(self) -> None:
+        if not math.isfinite(self.value):
+            raise ValueError(f"a measurement's value must be finite, got {self.value}")
+        if self.threshold is not None and not math.isfinite(self.threshold):
+            raise ValueError(f"a measurement's threshold must be finite, got {self.threshold}")
+        if not isinstance(self.unit, str) or not self.unit.strip():
+            raise ValueError("a measurement's unit must be a non-blank string")
+        if not isinstance(self.direction, Direction):
+            raise TypeError(
+                f"a measurement's direction must be a Direction, got {self.direction!r}"
+            )
+
+
+@dataclass(frozen=True, slots=True)
 class Verdict:
     """An evaluator's judgement, with the confidence that makes it actionable.
 
     `confidence` is what lets a policy gate on "only fail CI on findings we're
-    sure about" — a dynamic finding without it is unusable in CI.
+    sure about" — a dynamic finding without it is unusable in CI. `measurement`
+    is the number the verdict was read from, for an evaluator that has one.
     """
 
     outcome: Outcome
     confidence: float
     rationale: str
     evaluator_id: str
+    measurement: Measurement | None = None
 
     def __post_init__(self) -> None:
         # Evaluators are third-party plugins; an out-of-range confidence would

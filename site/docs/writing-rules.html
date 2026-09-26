@@ -43,6 +43,7 @@
 <li><a href="usage-monitor.html">guardana monitor</a></li>
 <li><a href="usage-run.html">guardana run</a></li>
 <li><a href="usage-calibrate.html">guardana calibrate</a></li>
+<li><a href="usage-suites.html">Quality suites<span class="tag">beta</span></a></li>
 <li><a href="privacy.html">Evidence and redaction</a></li>
 </ul>
 <h2>Recorded applications</h2><ul>
@@ -109,7 +110,7 @@
 <li><a href="design/extension-author-tooling.html">Extension author tooling<span class="tag">accepted</span></a></li>
 <li><a href="design/target-locators.html">Target locators<span class="tag">implemented</span></a></li>
 <li><a href="design/output-plugins.html">Output plugins<span class="tag">proposed</span></a></li>
-<li><a href="design/quality-suites.html">Quality suites<span class="tag">proposed</span></a></li>
+<li><a href="design/quality-suites.html">Quality suites<span class="tag">implemented</span></a></li>
 <li><a href="design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
 <li><a href="design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
 <li><a href="design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
@@ -158,6 +159,7 @@
 <li><a href="usage-monitor.html">guardana monitor</a></li>
 <li><a href="usage-run.html">guardana run</a></li>
 <li><a href="usage-calibrate.html">guardana calibrate</a></li>
+<li><a href="usage-suites.html">Quality suites<span class="tag">beta</span></a></li>
 <li><a href="privacy.html">Evidence and redaction</a></li>
 </ul>
 <h2>Recorded applications</h2><ul>
@@ -224,7 +226,7 @@
 <li><a href="design/extension-author-tooling.html">Extension author tooling<span class="tag">accepted</span></a></li>
 <li><a href="design/target-locators.html">Target locators<span class="tag">implemented</span></a></li>
 <li><a href="design/output-plugins.html">Output plugins<span class="tag">proposed</span></a></li>
-<li><a href="design/quality-suites.html">Quality suites<span class="tag">proposed</span></a></li>
+<li><a href="design/quality-suites.html">Quality suites<span class="tag">implemented</span></a></li>
 <li><a href="design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
 <li><a href="design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
 <li><a href="design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
@@ -531,6 +533,20 @@ model that ignored the poisoned document entirely would be reported as robust.</
 <p>A run that hits a bound — steps, per-step tool calls, byte budget, or the 120 s
 deadline — is <code>inconclusive</code> too, and the history is never trimmed to fit: the
 span that would be dropped is the one carrying the payload.</p>
+<h3 id="quality-suites-dataset-instead-of-prompts">Quality suites: <code>dataset:</code> instead of <code>prompts:</code></h3>
+<p>A suite grades a versioned dataset and gates its pass rate. For example:</p>
+<pre><code class="language-yaml">id: acme.quality.support_answers
+title: The support bot still answers the golden set
+severity: high
+target_kind: endpoint
+taxonomy: [LLM09:2025]
+evaluator: contains
+requires: [chat]
+dataset: ./support-golden.jsonl
+gate:
+  min_pass_rate: 0.90
+</code></pre>
+<p>See <a href="usage-suites.html">quality suites</a> for the dataset, gate and results.</p>
 <h3 id="a-note-on-capabilities">A note on capabilities</h3>
 <p>A dynamic YAML rule must declare <code>requires: [chat]</code>. Since 0.5 there is more than
 one endpoint-kind target — an MCP server has a tool manifest and no model to talk

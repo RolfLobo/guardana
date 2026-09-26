@@ -249,7 +249,18 @@ def wilson_interval(successes: int, n: int) -> tuple[float, float]:
     """Return the Wilson score interval for `successes` of `n`, at `CONFIDENCE`."""
     if n < 1 or not 0 <= successes <= n:
         raise ValueError(f"a Wilson interval needs 0 <= successes <= n >= 1, got {successes}/{n}")
-    p = successes / n
+    return wilson_at(successes / n, n)
+
+
+def wilson_at(p: float, n: int) -> tuple[float, float]:
+    """Return the Wilson score interval around a share `p` observed over `n` units, at `CONFIDENCE`.
+
+    `p` may be a mean of per-unit shares in [0, 1] rather than a count over `n`: such a
+    mean has variance at most p(1 - p)/n, the binomial variance, so the interval stays
+    conservative for it.
+    """
+    if n < 1 or not 0.0 <= p <= 1.0:
+        raise ValueError(f"a Wilson interval needs 0 <= p <= 1 and n >= 1, got {p}, {n}")
     denominator = 1.0 + _Z**2 / n
     centre = (p + _Z**2 / (2 * n)) / denominator
     half = _Z * math.sqrt(p * (1.0 - p) / n + _Z**2 / (4 * n * n)) / denominator

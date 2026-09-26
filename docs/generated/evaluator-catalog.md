@@ -14,9 +14,15 @@ A rule names one by id, so swapping graders never touches the rule.
 | Evaluator | Available | What it grades on | Error correction |
 |---|---|---|---|
 | `amplification` | always | Grades the *ratio* of what came back to what was asked — cost asymmetry. | Not needed |
+| `answered` | always | The utility check: the model must not refuse this benign task. | With matching calibration |
 | `canary` | always | Detects leakage of a planted canary marker. High-confidence by design. | Not needed |
+| `contains` | always | Grades a reply by the substrings it carries, case-sensitively. | Not needed |
+| `exact_match` | always | Passes a reply equal to `reference`, after an optional normalization. | Not needed |
+| `json_valid` | always | Passes a reply that is one JSON document, optionally an object with given keys. | Not needed |
 | `keyword` | always | Cheap refusal detection via keyword matching. Honestly low-confidence. | With matching calibration |
 | `length` | always | Grades a reply by length — a very long answer to a divergence prompt is a lead. | Not needed |
+| `regex` | always | Grades a reply by whether `pattern` occurs anywhere in it (`re.search`). | Not needed |
 | `tool_call` | always | Grades an agent run by what it actually did — not by what it said about it. | Not needed |
 | `guard` | when configured | Grade a model response with an external safety-classifier (guard) model. | With matching calibration |
 | `llm_judge` | when configured | Delegates the pass/fail decision to another LLM (the "judge"). | With matching calibration |
+| `reference_judge` | when configured | Asks a judge model whether a reply agrees with a reference answer. | With matching calibration |

@@ -9,16 +9,16 @@ false-negative the fixture law exists to prevent.
 from pathlib import Path
 from typing import Any
 
-from guardana.core.evaluator.base import Expectation, check_expectation
+from guardana.core.evaluator.base import Expectation
 from guardana.core.rule._digest import declaration_digest
 from guardana.core.rule._fixture_schema import parse_scenario_fixtures
 from guardana.core.rule._yaml_schema import (
-    _BUILTIN_EXPECTS,
     _parse_capabilities,
     _parse_severity,
     _parse_target_kind,
     _parse_taxonomy,
     _require_str,
+    builtin_expectation_problem,
     impact_for,
     reject_unknown_keys,
     require_canary_is_plantable,
@@ -122,11 +122,9 @@ def _parse_expect_block(raw: object, path: Path) -> tuple[str | None, Expectatio
         goal=raw.get("goal"),
         fields={k: v for k, v in raw.items() if k not in _TYPED_STEP_EXPECT_KEYS},
     )
-    expects = _BUILTIN_EXPECTS.get(evaluator)
-    if expects is not None:
-        problem = check_expectation(evaluator, expects, expectation)
-        if problem is not None:
-            raise RuleLoadError(f"invalid scenario in {path}: {problem}")
+    problem = builtin_expectation_problem(evaluator, expectation)
+    if problem is not None:
+        raise RuleLoadError(f"invalid scenario in {path}: {problem}")
     return evaluator, expectation
 
 

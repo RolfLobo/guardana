@@ -267,7 +267,7 @@ def test_a_v6_run_migrates_to_7_keeping_the_count_and_inventing_nothing(tmp_path
     assert migrated["$schema"].endswith("/v7.schema.json")
     assert not _errors(migrated, 7)
     rules = migrated["run"]["rules"]
-    assert [rule["declared_requests"] for rule in rules] == [4, 3]
+    assert [rule["declared_requests"] for rule in rules] == [4, 3, 120]
     assert all("trials" not in rule for rule in rules)
     assert all(rule["trial_summary"] is None for rule in rules)
     assert migrated["run"]["execution"]["trials"] == 1

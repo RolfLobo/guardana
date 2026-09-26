@@ -1,6 +1,6 @@
 import os
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import replace
 from pathlib import Path
 from typing import Annotated
@@ -8,18 +8,22 @@ from typing import Annotated
 import typer
 from guardana.cli._errors import EndpointFlag, run_against_endpoint
 from guardana.cli._evaluators import wire_config_evaluators
+from guardana.cli._exit import refuse_unenforceable_budget
 from guardana.cli._plugins import resolve_trust
 from guardana.cli._probe_run import Connection, run_probe, run_target_probe
 from guardana.cli._profile import resolve_profile
 from guardana.cli._reporting import check_reporter_url, submit_safely
 from guardana.cli._rules_loading import load_custom_rules
-from guardana.cli._run_meta import detect_deployment
+from guardana.cli._run_meta import calibrations_or_exit, detect_deployment
 from guardana.cli._target_locator import resolve_target
+from guardana.core.budget import BudgetExhausted
 from guardana.core.manifest import DeploymentRef
+from guardana.core.manifest.records import CalibrationRecord
 from guardana.core.monitor import Alert, Monitor, MonitorConfig
 from guardana.core.profile import Profile
 from guardana.core.redaction import EvidenceRedactor
 from guardana.core.registry import Registry
+from guardana.core.report import ScanResult
 from guardana.core.runner import DEFAULT_ENDPOINT_CONCURRENCY
 from guardana.core.target import Target, TargetKind
 from guardana.report import get_renderer
@@ -76,6 +80,7 @@ def run_monitor(  # noqa: PLR0913 — the test seam needs every hook injectable
     on_alert: Callable[[Alert], None] | None = None,
     on_error: Callable[[int, Exception], None] = _warn_cycle_failed,
     sleep: Callable[[float], None] = time.sleep,
+    calibrations: Mapping[str, CalibrationRecord] | None = None,
 ) -> None:
     """Sample `connection` on a loop, running the same probe `guardana probe` runs.
 
@@ -92,8 +97,15 @@ def run_monitor(  # noqa: PLR0913 — the test seam needs every hook injectable
         if on_alert is not None
         else alert_handler(EvidenceRedactor(profile.privacy), None, connection.url)
     )
+
+    def scan() -> ScanResult:
+        _rearm_judges(registry, profile)
+        return run_probe(
+            registry, profile, connection, concurrency=concurrency, calibrations=calibrations
+        ).result
+
     monitor = Monitor(
-        scan=lambda: run_probe(registry, profile, connection, concurrency=concurrency).result,
+        scan=scan,
         policy=profile.policy,
         config=MonitorConfig(interval_seconds=interval_seconds, max_cycles=max_cycles),
     )
@@ -112,6 +124,7 @@ def run_target_monitor(  # noqa: PLR0913 — mirrors the tested monitor seam
     on_alert: Callable[[Alert], None] | None = None,
     on_error: Callable[[int, Exception], None] = _warn_cycle_failed,
     sleep: Callable[[float], None] = time.sleep,
+    calibrations: Mapping[str, CalibrationRecord] | None = None,
 ) -> None:
     """Sample a freshly built custom endpoint target on every monitor cycle."""
     handler = (
@@ -119,14 +132,32 @@ def run_target_monitor(  # noqa: PLR0913 — mirrors the tested monitor seam
         if on_alert is not None
         else alert_handler(EvidenceRedactor(profile.privacy), None, source)
     )
+
+    def scan() -> ScanResult:
+        _rearm_judges(registry, profile)
+        return run_target_probe(
+            registry,
+            profile,
+            target_factory(),
+            concurrency=concurrency,
+            calibrations=calibrations,
+        ).result
+
     monitor = Monitor(
-        scan=lambda: (
-            run_target_probe(registry, profile, target_factory(), concurrency=concurrency).result
-        ),
+        scan=scan,
         policy=profile.policy,
         config=MonitorConfig(interval_seconds=interval_seconds, max_cycles=max_cycles),
     )
     monitor.run(handler, on_error=on_error, sleep=sleep)
+
+
+def _rearm_judges(registry: Registry, profile: Profile) -> None:
+    """Rebuild the config-built judges on fresh meters, so the budget bounds each cycle.
+
+    A cycle's target starts a fresh bill; a judge meter kept across cycles would run dry
+    after a few and stop every later cycle on a budget no single cycle spent.
+    """
+    wire_config_evaluators(registry, profile, profile.budgets)
 
 
 def monitor(  # noqa: PLR0913, PLR0917 — one typer.Option per CLI flag; this is the command's surface
@@ -213,9 +244,13 @@ def monitor(  # noqa: PLR0913, PLR0917 — one typer.Option per CLI flag; this i
     if trials is not None:
         prof = replace(prof, trials=trials)
     registry = Registry.discover(resolve_trust(plugins, allow_plugin, no_plugins=False))
-    wire_config_evaluators(registry, prof)
+    try:
+        wire_config_evaluators(registry, prof, prof.budgets)
+    except BudgetExhausted as exc:
+        raise refuse_unenforceable_budget(exc) from exc
     load_custom_rules(registry, prof, rules)
     registry.apply_trials(prof.trials)
+    records = {key: value.as_record() for key, value in calibrations_or_exit(prof).items()}
 
     deployment = detect_deployment(ai_system, environment, deployment_id)
     if target is not None:
@@ -261,6 +296,7 @@ def monitor(  # noqa: PLR0913, PLR0917 — one typer.Option per CLI flag; this i
                 max_cycles=max_cycles,
                 concurrency=concurrency,
                 on_alert=on_alert,
+                calibrations=records,
             ),
             accepts=_ACCEPTED_FLAGS,
         )
@@ -296,6 +332,7 @@ def monitor(  # noqa: PLR0913, PLR0917 — one typer.Option per CLI flag; this i
             max_cycles=max_cycles,
             concurrency=concurrency,
             on_alert=on_alert,
+            calibrations=records,
         ),
         accepts=_ACCEPTED_FLAGS,
     )

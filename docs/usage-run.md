@@ -97,6 +97,9 @@ A schema-7 run migrates to schema 8 with the correction fields `null`; nothing i
 recomputed. Its trials line still prints
 `graded by <assessor>, grader error not corrected`, as it was written.
 
+A schema-8 run migrates to schema 9 with `suite: null` on every rule; nothing is
+recomputed.
+
 One thing *is* recovered: the **title** of a framework reference, which version 3
 onward records beside its framework and id. It is looked up from the installed
 catalogue for the exact `(framework, id)` pair the document already carries, so
@@ -142,13 +145,14 @@ with the first empty and the second `null`, because that is what it knew. Versio
 records repeated trials: `run.execution.trials`, `assessments[].trial` and
 `run.rules[].trial_summary`, and renames `run.rules[].trials` to `declared_requests`,
 which is what it always counted. Version 8 records the `correction` block on
-`trial_summary` and the calibration fields on `run.evaluators[]`.
+`trial_summary` and the calibration fields on `run.evaluators[]`. Version 9 records
+`run.rules[].suite`, what a quality suite measured and concluded.
 
 Top level:
 
 | Key | What it is |
 |---|---|
-| `schema_version` | `8`. Stated once, for the whole document. |
+| `schema_version` | `9`. Stated once, for the whole document. |
 | `run` | the manifest — everything below |
 | `findings` / `unverified` / `waived` / `errors` / `observations` | the problem, evidence and inventory channels |
 | `assessments` | what the run *measured*, pass included — see [assessments](#assessments) |
@@ -166,7 +170,7 @@ Inside `run`:
 | `configuration` | which settings produced it, **by digest** |
 | `execution` | what limits it ran under, and `trials`: the attempts per case the run asked for |
 | `usage` | what it actually consumed |
-| `rules` / `evaluators` | what did the checking, with digests, declared request counts, a `trial_summary` for each rule that repeated, and calibration |
+| `rules` / `evaluators` | what did the checking, with digests, declared request counts, a `trial_summary` for each rule that repeated, a `suite` summary for each quality suite, and calibration |
 | `coverage` | what the run was *able* to check: one fingerprint, the framework catalogues it mapped against by digest, and any protocol versions the target negotiated |
 | `result_summary` | the counts, the gate, and whether the run was cut short |
 | `privacy` | which evidence policy was in force |
@@ -295,6 +299,51 @@ The summary is stored rather than recomputed by each reader, as the gate verdict
 a later build prints the verdict this run was written with. A rule that stopped part-way
 is not in `rules`, so it has no summary to misread. `run.rules[].declared_requests` is
 the number of requests the rule declared, attempts included.
+
+## Suite summaries
+
+Each [quality suite](usage-suites.md) carries what it measured over its dataset and what
+its gate concluded, as the suite built it while it ran. A suite has no `trial_summary`.
+
+```json
+"suite": {
+  "dataset": "support-golden@2026.09",
+  "dataset_digest": "sha256:…",
+  "sample_size": 100,
+  "sample_seed": 7,
+  "trials_per_case": 3,
+  "cases": 100,
+  "measured": 98,
+  "ungraded": 2,
+  "worst": 0.9133,
+  "best": 0.92,
+  "low": 0.8418,
+  "high": 0.9589,
+  "min_pass_rate": 0.9,
+  "min_sample": 30,
+  "outcome": "pass",
+  "reason": null,
+  "correction": {"status": "deterministic", "assessor": null, "reason": null, "worst": null,
+                 "best": null, "low": null, "high": null, "sensitivity": null,
+                 "specificity": null, "dataset_digest": null, "positives": null,
+                 "negatives": null}
+}
+```
+
+| Field | What it is |
+|---|---|
+| `dataset`, `dataset_digest` | the dataset's declared `name@version` and the digest of its file |
+| `sample_size`, `sample_seed` | the subset that ran, or both `null` when every case did |
+| `trials_per_case` | the attempts at every case |
+| `cases`, `measured`, `ungraded` | the cases that ran, those whose every attempt was graded, and those with an attempt nobody could grade |
+| `worst`, `best` | the pass rate with every ungraded attempt counted failed, and counted passed |
+| `low`, `high` | the 95% Wilson limits, at `worst` and at `best` |
+| `min_pass_rate`, `min_sample` | the suite's gate |
+| `outcome`, `reason` | `pass`, `fail` or `inconclusive`, and why the suite declined when it did |
+| `correction` | `deterministic`, `corrected` or `uncorrected`; when corrected, the pass rates and limits corrected for the judge's error, in pass space, with the sensitivity, specificity, class counts and corpus digest applied |
+
+A reader refuses a summary whose outcome its own numbers contradict: a pass below
+`min_sample` or under the bar, a fail at or over it, a decline without a reason.
 
 ## Field names borrowed on purpose
 

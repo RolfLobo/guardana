@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from pathlib import Path
 from urllib.error import URLError
 
@@ -9,6 +10,7 @@ from guardana.cli.exit_codes import ExitCode
 from guardana.cli.main import app
 from guardana.core.evaluator.base import Expectation
 from guardana.core.gate import GateOutcome
+from guardana.core.manifest.records import CalibrationRecord
 from guardana.core.profile import Profile
 from guardana.core.registry import Registry
 from guardana.core.report import load_report
@@ -48,9 +50,17 @@ def test_probe_concurrency_flag_reaches_the_runner(monkeypatch: pytest.MonkeyPat
     monkeypatch.setattr(endpoint_module, "transport_factory", RefusingTransport)
     seen: list[int] = []
 
-    def recording_runner(*, registry: Registry, profile: Profile, concurrency: int = 1) -> Runner:
+    def recording_runner(
+        *,
+        registry: Registry,
+        profile: Profile,
+        concurrency: int = 1,
+        calibrations: Mapping[str, CalibrationRecord],
+    ) -> Runner:
         seen.append(concurrency)
-        return Runner(registry=registry, profile=profile, concurrency=concurrency)
+        return Runner(
+            registry=registry, profile=profile, concurrency=concurrency, calibrations=calibrations
+        )
 
     monkeypatch.setattr(probe_run_module, "Runner", recording_runner)
     result = runner.invoke(

@@ -81,7 +81,12 @@ provides:
     - guardana.training.dataset_integrity
   evaluators:
     - amplification
+    - answered
     - canary
+    - contains
+    - exact_match
+    - json_valid
     - keyword
     - length
+    - regex
     - tool_call

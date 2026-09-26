@@ -1,12 +1,13 @@
 import threading
-from collections.abc import Iterator, Sequence
-from dataclasses import dataclass
+from collections.abc import Iterator, Mapping, Sequence
+from dataclasses import dataclass, field
 from urllib.error import URLError
 
 from guardana.core.assessment import Assessment
 from guardana.core.budget import BudgetExhausted
 from guardana.core.gate import GateOutcome, gate, gate_outcome
 from guardana.core.inventory import observe
+from guardana.core.manifest.records import CalibrationRecord, SuiteSummary
 from guardana.core.profile.model import Profile
 from guardana.core.registry import Registry
 from guardana.core.report import CheckError, Finding, ScanResult, StopReason
@@ -36,6 +37,9 @@ class _RuleOutcome:
     unverified: tuple[Finding, ...] = ()
     assessments: tuple[Assessment, ...] = ()
     error: CheckError | None = None
+    suite: SuiteSummary | None = None
+    """What a suite concluded, carried from its context; None for every other rule."""
+
     stopped_by: StopReason | None = None
     """Set when the run ran out of budget part-way through this rule.
 
@@ -59,6 +63,12 @@ class Runner:
     registry: Registry
     profile: Profile
     concurrency: int = DEFAULT_ENDPOINT_CONCURRENCY
+    calibrations: Mapping[str, CalibrationRecord] = field(default_factory=dict)
+    """The judge calibrations each rule may read while it runs, keyed by evaluator id.
+
+    Loaded once by the command and handed to the manifest too, so the run and its record
+    correct with the same measurements.
+    """
 
     def concurrency_for(self, kind: TargetKind) -> int:
         """How many rules may run at once against this kind of target.
@@ -147,6 +157,7 @@ class Runner:
         # pairing by position would then attribute results to the wrong rules.
         ran: list[str] = []
         assessments: list[Assessment] = []
+        suites: dict[str, SuiteSummary] = {}
         stopped_by: StopReason | None = None
         for outcome in self._execute(plan, target):
             # Kept even from a rule the budget cut off: a finding produced before
@@ -163,6 +174,10 @@ class Runner:
                 errors.append(outcome.error)
             else:
                 ran.append(outcome.rule_id)
+            # Carried from an errored suite too: it concluded that it did not finish, and
+            # that decline is a demand no `fail_on_error` preference may switch off.
+            if outcome.suite is not None and outcome.stopped_by is None:
+                suites[outcome.rule_id] = outcome.suite
         # A file the rules were prevented from reading is a check that did not
         # run, so it joins `errors` rather than disappearing. Collected after the
         # rules, because that is when the target knows what it was asked for.
@@ -197,6 +212,7 @@ class Runner:
             trials_per_case={
                 rule.meta.id: rule.trials_per_case for rule in plan if rule.meta.id in ran
             },
+            suites=suites,
         )
 
     def _execute(self, plan: Sequence[Rule], target: Target) -> Iterator[_RuleOutcome]:
@@ -291,6 +307,7 @@ class Runner:
         ctx = RuleContext(
             config=dict(self.profile.rule_config.get(rule.meta.id, {})),
             evaluators=self.registry.evaluators(),
+            calibrations=self.calibrations,
         )
         findings: list[Finding] = []
         unverified: list[Finding] = []
@@ -328,6 +345,7 @@ class Runner:
                 tuple(unverified),
                 ctx.recorded(),
                 error=CheckError.from_exception(rule.meta.id, "run", exc),
+                suite=ctx.concluded(),
             )
         except Exception as exc:
             return _RuleOutcome(
@@ -336,8 +354,11 @@ class Runner:
                 tuple(unverified),
                 ctx.recorded(),
                 error=CheckError.from_exception(rule.meta.id, "run", exc),
+                suite=ctx.concluded(),
             )
-        return _RuleOutcome(rule.meta.id, tuple(findings), tuple(unverified), ctx.recorded())
+        return _RuleOutcome(
+            rule.meta.id, tuple(findings), tuple(unverified), ctx.recorded(), suite=ctx.concluded()
+        )
 
 
 def safety_refusal(profile: Profile, rule: Rule) -> SkippedRule | None:

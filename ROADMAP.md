@@ -43,20 +43,21 @@ repeatable extension into measurement a team can compare and operate. The order 
 workflow and honest measurement come before additional output destinations. The
 [0.25 audit](docs/design/audit-0.25-market.md) re-read the standards and the
 comparable projects a month later and moved no row. The
-[0.26 measurement audit](docs/design/audit-0.26-measurement.md) widened rows 1 and
-2 and added row 3: a clean result that rests on one trial per prompt, graded by a
-judge whose error was never measured, is not yet a measurement.
+[0.26 measurement audit](docs/design/audit-0.26-measurement.md) widened the suite
+and diff rows and added re-gradable evidence: a clean result that rests on one trial
+per prompt, graded by a judge whose error was never measured, is not yet a measurement.
+Suites, versioned datasets and assessors, with repeated trials and judge-error
+correction, have shipped; [FEATURES.md](FEATURES.md) describes them.
 
 | Order | Deliverable | Done when |
 |---:|---|---|
-| 1 | Suites, versioned datasets, and assessors, with repeated trials and judge-error correction | a run records the sample, trials, assessor, denominator, and uncertainty rather than only findings; a clean result states its trials and bound; a judge-graded rate is corrected for the judge's measured error or declines to gate |
-| 2 | Paired statistical diff | comparison refuses unequal or undersized samples and unequal trials, prints the smallest effect its sample can detect, adjusts for several gated suites, and gates only on a declared minimum effect |
-| 3 | Re-gradable evidence | an opted-in run keeps its redacted exchanges, and `guardana run regrade` grades them with a new assessor without target traffic |
-| 4 | Renderer and reporter plugins | outputs are discoverable entry points and every output remains behind the common redaction boundary |
-| 5 | Provider conformance matrix | documented endpoint support is backed by repeatable capability tests |
-| 6 | Assessments in the collector | trends are keyed by system, deployment, dataset, and assessor version; findings and quality measurements stay separate |
+| 1 | Paired statistical diff | comparison refuses unequal or undersized samples and unequal trials, prints the smallest effect its sample can detect, adjusts for several gated suites, and gates only on a declared minimum effect |
+| 2 | Re-gradable evidence | an opted-in run keeps its redacted exchanges, and `guardana run regrade` grades them with a new assessor without target traffic |
+| 3 | Renderer and reporter plugins | outputs are discoverable entry points and every output remains behind the common redaction boundary |
+| 4 | Provider conformance matrix | documented endpoint support is backed by repeatable capability tests |
+| 5 | Assessments in the collector | trends are keyed by system, deployment, dataset, and assessor version; findings and quality measurements stay separate |
 
-Design inputs exist for everything shipped so far and for rows 1 to 4:
+Design inputs exist for everything shipped so far and for rows 1 to 3:
 
 - [target locators](docs/design/target-locators.md)
 - [declarative fixtures](docs/design/declarative-fixtures.md)
@@ -80,9 +81,6 @@ schema.
 - A third-party target, rule, evaluator, renderer, and reporter are usable without
   modifying Guardana; target locators satisfy the target part from 0.24.0, and
   `guardana new-pack` scaffolds the rest.
-- A suite records passes as well as failures and names its dataset version.
-- A clean result states how many trials it rests on, and a rate graded by a judge
-  is corrected for that judge's measured error or declines to gate.
 - `guardana diff` can say better, worse, unchanged, or incomparable with an
   auditable statistical reason.
 - The collector can plot measurements without turning missing samples into zero.

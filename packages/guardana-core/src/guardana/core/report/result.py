@@ -1,5 +1,6 @@
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 from guardana.core.assessment import Assessment, AssessmentStatus
 from guardana.core.observation import Observation
@@ -10,6 +11,9 @@ from guardana.core.report.skipped import SkippedRule
 from guardana.core.report.stop import StopReason
 from guardana.core.severity import Severity
 from guardana.core.usage import TargetUsage, total
+
+if TYPE_CHECKING:  # the manifest records a result's summaries; the result only carries them
+    from guardana.core.manifest.records import SuiteSummary
 
 
 @dataclass(frozen=True, slots=True)
@@ -92,6 +96,13 @@ class ScanResult:
     what it did. A rule absent here made one attempt per case.
     """
 
+    suites: Mapping[str, "SuiteSummary"] = field(default_factory=dict)
+    """What each suite that ran concluded about its pass rate, by rule id.
+
+    Built by the suite while it ran and carried as it was built, so the manifest stores
+    and every renderer prints the conclusion the gate read.
+    """
+
     @classmethod
     def merged(cls, results: Sequence["ScanResult"]) -> "ScanResult":
         """Combine several results into one, carrying every channel.
@@ -111,11 +122,14 @@ class ScanResult:
             rules_skipped=tuple({s.rule_id: s for r in results for s in r.rules_skipped}.values()),
             unverified=tuple(f for r in results for f in r.unverified),
             waived=tuple(f for r in results for f in r.waived),
-            # De-duplicated by comparability key and trial: probe runs each case once
-            # per planted canary, and three copies would inflate every rate — while
-            # the K trials of one case share a key and are K observations, not one.
+            # De-duplicated by case, assessor, dataset and trial: probe runs each case
+            # once per planted canary, and three copies would inflate every rate — while
+            # the K trials of one case are K observations, not one. The measurement half
+            # of the key is left out because an ungraded copy carries none.
             assessments=tuple(
-                {(a.comparable_key, a.trial): a for r in results for a in r.assessments}.values()
+                {
+                    (a.comparable_key[:3], a.trial): a for r in results for a in r.assessments
+                }.values()
             ),
             errors=tuple(e for r in results for e in r.errors),
             # De-duplicated by ref: probe runs the same target several times (one
@@ -143,6 +157,7 @@ class ScanResult:
             # it entirely whenever that pass happened not to open a session.
             protocols={name: v for r in results for name, v in r.protocols.items()},
             trials_per_case={rule: k for r in results for rule, k in r.trials_per_case.items()},
+            suites={rule: summary for r in results for rule, summary in r.suites.items()},
         )
 
     @property

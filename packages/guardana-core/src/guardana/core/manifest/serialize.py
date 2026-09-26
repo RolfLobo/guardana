@@ -11,6 +11,8 @@ from guardana.core.manifest.records import (
     JudgeCorrection,
     ResultSummary,
     RuleRecord,
+    SuiteCorrection,
+    SuiteSummary,
     TrialSummary,
 )
 from guardana.core.manifest.settings import ConfigurationRef, ExecutionSettings, PrivacyRecord
@@ -129,6 +131,46 @@ def _rule(rule: RuleRecord) -> dict[str, object]:
         "maturity": rule.maturity,
         "declared_requests": rule.declared_requests,
         "trial_summary": None if rule.trial_summary is None else _trial_summary(rule.trial_summary),
+        "suite": None if rule.suite is None else _suite(rule.suite),
+    }
+
+
+def _suite(suite: SuiteSummary) -> dict[str, object]:
+    return {
+        "dataset": suite.dataset,
+        "dataset_digest": suite.dataset_digest,
+        "sample_size": suite.sample_size,
+        "sample_seed": suite.sample_seed,
+        "trials_per_case": suite.trials_per_case,
+        "cases": suite.cases,
+        "measured": suite.measured,
+        "ungraded": suite.ungraded,
+        "worst": suite.worst,
+        "best": suite.best,
+        "low": suite.low,
+        "high": suite.high,
+        "min_pass_rate": suite.min_pass_rate,
+        "min_sample": suite.min_sample,
+        "outcome": str(suite.outcome),
+        "reason": suite.reason,
+        "correction": _suite_correction(suite.correction),
+    }
+
+
+def _suite_correction(correction: SuiteCorrection) -> dict[str, object]:
+    return {
+        "status": str(correction.status),
+        "assessor": correction.assessor,
+        "reason": correction.reason,
+        "worst": correction.worst,
+        "best": correction.best,
+        "low": correction.low,
+        "high": correction.high,
+        "sensitivity": correction.sensitivity,
+        "specificity": correction.specificity,
+        "dataset_digest": correction.dataset_digest,
+        "positives": correction.positives,
+        "negatives": correction.negatives,
     }
 
 

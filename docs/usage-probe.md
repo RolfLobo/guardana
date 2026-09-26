@@ -455,3 +455,9 @@ guardana probe --url … --model …  --format json --output run.json
 
 Prefer it to a shell redirect: PowerShell redirects write UTF-16, and the reader
 on the other end cannot parse that.
+
+## Quality suites
+
+[Quality suites](usage-suites.md) grade a versioned dataset under `guardana probe`.
+
+A declined suite exits `2`, and a failed suite exits `1`, whatever its severity.

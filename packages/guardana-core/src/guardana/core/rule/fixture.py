@@ -14,8 +14,12 @@ declares none is *reported as unchecked* rather than passing quietly.
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from enum import StrEnum
+from typing import TYPE_CHECKING
 
 from guardana.core.target import Target
+
+if TYPE_CHECKING:
+    from guardana.core.rule.base import Rule
 
 
 class FixtureOutcome(StrEnum):
@@ -61,6 +65,13 @@ class RuleFixture:
     note: str = ""
     """Why this sample is the shape it is, when that is not obvious from the name."""
 
+    rule: "Rule | None" = None
+    """The variant of the declaring rule this sample runs, when it needs one; None runs the rule.
+
+    A suite samples its gate over a small dataset of its own, so the rule it verifies is
+    the declaring rule with those cases in place of its dataset.
+    """
+
 
 @dataclass(frozen=True, slots=True)
 class DeclaredFixture:
@@ -79,10 +90,12 @@ class DeclaredFixture:
     """Builds the target this sample runs against; called once per `materialise`."""
 
     note: str = ""
+    rule: "Rule | None" = None
+    """The variant of the declaring rule this sample runs; see `RuleFixture.rule`."""
 
     def materialise(self) -> RuleFixture:
         """Build this sample's double afresh and return it as a `RuleFixture`."""
-        return RuleFixture(self.name, self.build(), self.outcome, self.note)
+        return RuleFixture(self.name, self.build(), self.outcome, self.note, self.rule)
 
 
 def materialise(declared: Iterable[RuleFixture | DeclaredFixture]) -> tuple[RuleFixture, ...]:

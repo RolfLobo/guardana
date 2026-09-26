@@ -32,6 +32,7 @@ This file is generated from the documentation map; do not edit it by hand.
 - [usage-baseline.md](https://raw.githubusercontent.com/guardana/guardana/refs/heads/main/docs/usage-baseline.md): accept risk with an expiry
 - [usage-monitor.md](https://raw.githubusercontent.com/guardana/guardana/refs/heads/main/docs/usage-monitor.md): schedule active re-verification
 - [usage-calibrate.md](https://raw.githubusercontent.com/guardana/guardana/refs/heads/main/docs/usage-calibrate.md): measure evaluator confidence
+- [usage-suites.md](https://raw.githubusercontent.com/guardana/guardana/refs/heads/main/docs/usage-suites.md): gate a deployed endpoint against a golden set
 - [privacy.md](https://raw.githubusercontent.com/guardana/guardana/refs/heads/main/docs/privacy.md): control redaction and retained evidence
 
 ## Recorded applications
@@ -88,7 +89,7 @@ This file is generated from the documentation map; do not edit it by hand.
 
 - [Guardana Run Comparison v2](https://guardana.dev/schemas/diff/v2.schema.json): What changed between two saved runs.
 - [Guardana Run Plan v2](https://guardana.dev/schemas/plan/v2.schema.json): What a run would cost, worked out without sending a request.
-- [Guardana Saved Run v8](https://guardana.dev/schemas/run/v8.schema.json): One Guardana run written to disk: the manifest (what was verified, against what, under which configuration and limits, at what cost, with what reach, and with what verdict) plus the finding channels.
+- [Guardana Saved Run v9](https://guardana.dev/schemas/run/v9.schema.json): One Guardana run written to disk: the manifest (what was verified, against what, under which configuration and limits, at what cost, with what reach, and with what verdict) plus the finding channels.
 - [Guardana Trace v3](https://guardana.dev/schemas/trace/v3.schema.json): One record of a Guardana native trace file.
 
 ## Related project

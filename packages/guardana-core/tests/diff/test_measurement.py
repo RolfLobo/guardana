@@ -6,10 +6,10 @@ smaller sample can pass for a better result. It cannot, and every test below
 inverts a behaviour rather than a branch.
 """
 
-from dataclasses import fields
+from dataclasses import fields, replace
 from datetime import UTC, datetime
 
-from guardana.core.assessment import Assessment, AssessmentStatus
+from guardana.core.assessment import Assessment, AssessmentStatus, Direction
 from guardana.core.diff import compare, compare_reports
 from guardana.core.diff.measurement import measure
 from guardana.core.diff.model import RunDiff
@@ -67,7 +67,7 @@ def test_a_case_whose_assessor_changed_is_refused_rather_than_compared() -> None
 
     assert delta.incomparable == 1
     assert delta.paired == 0
-    assert "the assessor or the dataset changed" in " ".join(delta.notes())
+    assert "the assessor, dataset, or measurement unit" in " ".join(delta.notes())
 
 
 def test_a_case_whose_dataset_changed_is_refused_the_same_way() -> None:
@@ -75,6 +75,54 @@ def test_a_case_whose_dataset_changed_is_refused_the_same_way() -> None:
 
     assert delta.incomparable == 1
     assert delta.paired == 0
+
+
+def _chars(
+    case_id: str,
+    threshold: float = 4000.0,
+    *,
+    unit: str = "chars",
+    direction: Direction = Direction.LOWER_IS_BETTER,
+) -> Assessment:
+    return replace(
+        _case(case_id, assessor="length"),
+        value=812.0,
+        unit=unit,
+        direction=direction,
+        threshold=threshold,
+    )
+
+
+def test_a_case_whose_threshold_moved_is_refused_rather_than_compared() -> None:
+    """A tighter bound fails a reply the looser one passed, with nothing in the system moved."""
+    delta = measure([_chars("a", 4000.0)], [_chars("a", 2000.0)])
+
+    assert delta.incomparable == 1
+    assert delta.paired == 0
+
+
+def test_a_case_whose_unit_or_direction_changed_is_refused_the_same_way() -> None:
+    unit = measure([_chars("a")], [_chars("a", unit="tokens")])
+    direction = measure([_chars("a")], [_chars("a", direction=Direction.HIGHER_IS_BETTER)])
+
+    assert (unit.incomparable, direction.incomparable) == (1, 1)
+
+
+def test_the_same_bound_on_both_sides_pairs() -> None:
+    delta = measure([_chars("a")], [_chars("a")])
+
+    assert delta.paired == 1
+    assert delta.incomparable == 0
+
+
+def test_a_measured_case_that_went_ungraded_is_blinded_not_incomparable() -> None:
+    """An ungraded trial records no bound, which is unknown rather than moved."""
+    ungraded = _case("a", assessor="length", passed=None, status=AssessmentStatus.INCONCLUSIVE)
+
+    delta = measure([_chars("a")], [ungraded])
+
+    assert delta.incomparable == 0
+    assert delta.blinded == ("a",)
 
 
 def test_an_edited_case_is_one_refusal_not_a_loss_plus_a_gain() -> None:

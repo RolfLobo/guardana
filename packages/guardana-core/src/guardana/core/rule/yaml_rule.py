@@ -10,6 +10,7 @@ from guardana.core.report import Evidence, Finding
 from guardana.core.rule._digest import declaration_digest
 from guardana.core.rule._fixture_schema import parse_fixtures
 from guardana.core.rule._scenario_schema import is_scenario, parse_scenario
+from guardana.core.rule._suite_schema import is_suite, parse_suite
 from guardana.core.rule._trajectory_schema import is_trajectory, parse_trajectory
 from guardana.core.rule._yaml_schema import (
     check_evaluator_expectations,
@@ -175,6 +176,8 @@ def _build_rule(raw: object, path: Path) -> Rule:
         raise RuleLoadError(
             f"invalid rule in {path}: each rule must be a mapping, got {type(raw).__name__}"
         )
+    if is_suite(raw):
+        return parse_suite(raw, path)
     if is_scenario(raw):
         return parse_scenario(raw, path)
     if is_trajectory(raw):

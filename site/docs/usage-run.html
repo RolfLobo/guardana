@@ -43,6 +43,7 @@
 <li><a href="usage-monitor.html">guardana monitor</a></li>
 <li><a href="usage-run.html" aria-current="page">guardana run</a></li>
 <li><a href="usage-calibrate.html">guardana calibrate</a></li>
+<li><a href="usage-suites.html">Quality suites<span class="tag">beta</span></a></li>
 <li><a href="privacy.html">Evidence and redaction</a></li>
 </ul>
 <h2>Recorded applications</h2><ul>
@@ -109,7 +110,7 @@
 <li><a href="design/extension-author-tooling.html">Extension author tooling<span class="tag">accepted</span></a></li>
 <li><a href="design/target-locators.html">Target locators<span class="tag">implemented</span></a></li>
 <li><a href="design/output-plugins.html">Output plugins<span class="tag">proposed</span></a></li>
-<li><a href="design/quality-suites.html">Quality suites<span class="tag">proposed</span></a></li>
+<li><a href="design/quality-suites.html">Quality suites<span class="tag">implemented</span></a></li>
 <li><a href="design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
 <li><a href="design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
 <li><a href="design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
@@ -158,6 +159,7 @@
 <li><a href="usage-monitor.html">guardana monitor</a></li>
 <li><a href="usage-run.html" aria-current="page">guardana run</a></li>
 <li><a href="usage-calibrate.html">guardana calibrate</a></li>
+<li><a href="usage-suites.html">Quality suites<span class="tag">beta</span></a></li>
 <li><a href="privacy.html">Evidence and redaction</a></li>
 </ul>
 <h2>Recorded applications</h2><ul>
@@ -224,7 +226,7 @@
 <li><a href="design/extension-author-tooling.html">Extension author tooling<span class="tag">accepted</span></a></li>
 <li><a href="design/target-locators.html">Target locators<span class="tag">implemented</span></a></li>
 <li><a href="design/output-plugins.html">Output plugins<span class="tag">proposed</span></a></li>
-<li><a href="design/quality-suites.html">Quality suites<span class="tag">proposed</span></a></li>
+<li><a href="design/quality-suites.html">Quality suites<span class="tag">implemented</span></a></li>
 <li><a href="design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
 <li><a href="design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
 <li><a href="design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
@@ -321,6 +323,8 @@ another build's run, which is exactly what storing them as fields exists to prev
 <p>A schema-7 run migrates to schema 8 with the correction fields <code>null</code>; nothing is
 recomputed. Its trials line still prints
 <code>graded by &lt;assessor&gt;, grader error not corrected</code>, as it was written.</p>
+<p>A schema-8 run migrates to schema 9 with <code>suite: null</code> on every rule; nothing is
+recomputed.</p>
 <p>One thing <em>is</em> recovered: the <strong>title</strong> of a framework reference, which version 3
 onward records beside its framework and id. It is looked up from the installed
 catalogue for the exact <code>(framework, id)</code> pair the document already carries, so
@@ -358,7 +362,8 @@ with the first empty and the second <code>null</code>, because that is what it k
 records repeated trials: <code>run.execution.trials</code>, <code>assessments[].trial</code> and
 <code>run.rules[].trial_summary</code>, and renames <code>run.rules[].trials</code> to <code>declared_requests</code>,
 which is what it always counted. Version 8 records the <code>correction</code> block on
-<code>trial_summary</code> and the calibration fields on <code>run.evaluators[]</code>.</p>
+<code>trial_summary</code> and the calibration fields on <code>run.evaluators[]</code>. Version 9 records
+<code>run.rules[].suite</code>, what a quality suite measured and concluded.</p>
 <p>Top level:</p>
 <div class="table-wrap"><table>
 <thead>
@@ -370,7 +375,7 @@ which is what it always counted. Version 8 records the <code>correction</code> b
 <tbody>
 <tr>
 <td><code>schema_version</code></td>
-<td><code>8</code>. Stated once, for the whole document.</td>
+<td><code>9</code>. Stated once, for the whole document.</td>
 </tr>
 <tr>
 <td><code>run</code></td>
@@ -433,7 +438,7 @@ which is what it always counted. Version 8 records the <code>correction</code> b
 </tr>
 <tr>
 <td><code>rules</code> / <code>evaluators</code></td>
-<td>what did the checking, with digests, declared request counts, a <code>trial_summary</code> for each rule that repeated, and calibration</td>
+<td>what did the checking, with digests, declared request counts, a <code>trial_summary</code> for each rule that repeated, a <code>suite</code> summary for each quality suite, and calibration</td>
 </tr>
 <tr>
 <td><code>coverage</code></td>
@@ -633,6 +638,80 @@ written before schema 8.</p>
 a later build prints the verdict this run was written with. A rule that stopped part-way
 is not in <code>rules</code>, so it has no summary to misread. <code>run.rules[].declared_requests</code> is
 the number of requests the rule declared, attempts included.</p>
+<h2 id="suite-summaries">Suite summaries</h2>
+<p>Each <a href="usage-suites.html">quality suite</a> carries what it measured over its dataset and what
+its gate concluded, as the suite built it while it ran. A suite has no <code>trial_summary</code>.</p>
+<pre><code class="language-json">&quot;suite&quot;: {
+  &quot;dataset&quot;: &quot;support-golden@2026.09&quot;,
+  &quot;dataset_digest&quot;: &quot;sha256:…&quot;,
+  &quot;sample_size&quot;: 100,
+  &quot;sample_seed&quot;: 7,
+  &quot;trials_per_case&quot;: 3,
+  &quot;cases&quot;: 100,
+  &quot;measured&quot;: 98,
+  &quot;ungraded&quot;: 2,
+  &quot;worst&quot;: 0.9133,
+  &quot;best&quot;: 0.92,
+  &quot;low&quot;: 0.8418,
+  &quot;high&quot;: 0.9589,
+  &quot;min_pass_rate&quot;: 0.9,
+  &quot;min_sample&quot;: 30,
+  &quot;outcome&quot;: &quot;pass&quot;,
+  &quot;reason&quot;: null,
+  &quot;correction&quot;: {&quot;status&quot;: &quot;deterministic&quot;, &quot;assessor&quot;: null, &quot;reason&quot;: null, &quot;worst&quot;: null,
+                 &quot;best&quot;: null, &quot;low&quot;: null, &quot;high&quot;: null, &quot;sensitivity&quot;: null,
+                 &quot;specificity&quot;: null, &quot;dataset_digest&quot;: null, &quot;positives&quot;: null,
+                 &quot;negatives&quot;: null}
+}
+</code></pre>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dataset</code>, <code>dataset_digest</code></td>
+<td>the dataset's declared <code>name@version</code> and the digest of its file</td>
+</tr>
+<tr>
+<td><code>sample_size</code>, <code>sample_seed</code></td>
+<td>the subset that ran, or both <code>null</code> when every case did</td>
+</tr>
+<tr>
+<td><code>trials_per_case</code></td>
+<td>the attempts at every case</td>
+</tr>
+<tr>
+<td><code>cases</code>, <code>measured</code>, <code>ungraded</code></td>
+<td>the cases that ran, those whose every attempt was graded, and those with an attempt nobody could grade</td>
+</tr>
+<tr>
+<td><code>worst</code>, <code>best</code></td>
+<td>the pass rate with every ungraded attempt counted failed, and counted passed</td>
+</tr>
+<tr>
+<td><code>low</code>, <code>high</code></td>
+<td>the 95% Wilson limits, at <code>worst</code> and at <code>best</code></td>
+</tr>
+<tr>
+<td><code>min_pass_rate</code>, <code>min_sample</code></td>
+<td>the suite's gate</td>
+</tr>
+<tr>
+<td><code>outcome</code>, <code>reason</code></td>
+<td><code>pass</code>, <code>fail</code> or <code>inconclusive</code>, and why the suite declined when it did</td>
+</tr>
+<tr>
+<td><code>correction</code></td>
+<td><code>deterministic</code>, <code>corrected</code> or <code>uncorrected</code>; when corrected, the pass rates and limits corrected for the judge's error, in pass space, with the sensitivity, specificity, class counts and corpus digest applied</td>
+</tr>
+</tbody>
+</table></div>
+<p>A reader refuses a summary whose outcome its own numbers contradict: a pass below
+<code>min_sample</code> or under the bar, a fail at or over it, a decline without a reason.</p>
 <h2 id="field-names-borrowed-on-purpose">Field names borrowed on purpose</h2>
 <p><code>usage.input_tokens</code> and <code>usage.output_tokens</code> are the OpenTelemetry GenAI
 convention's <a href="https://opentelemetry.io/docs/specs/semconv/registry/attributes/gen-ai/"><code>gen_ai.usage.input_tokens</code> /

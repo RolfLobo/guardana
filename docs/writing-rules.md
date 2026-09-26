@@ -211,6 +211,25 @@ A run that hits a bound — steps, per-step tool calls, byte budget, or the 120 
 deadline — is `inconclusive` too, and the history is never trimmed to fit: the
 span that would be dropped is the one carrying the payload.
 
+### Quality suites: `dataset:` instead of `prompts:`
+
+A suite grades a versioned dataset and gates its pass rate. For example:
+
+```yaml
+id: acme.quality.support_answers
+title: The support bot still answers the golden set
+severity: high
+target_kind: endpoint
+taxonomy: [LLM09:2025]
+evaluator: contains
+requires: [chat]
+dataset: ./support-golden.jsonl
+gate:
+  min_pass_rate: 0.90
+```
+
+See [quality suites](usage-suites.md) for the dataset, gate and results.
+
 ### A note on capabilities
 
 A dynamic YAML rule must declare `requires: [chat]`. Since 0.5 there is more than

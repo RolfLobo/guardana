@@ -20,6 +20,7 @@ from guardana.core.report import Evidence, Finding, ScanResult
 from guardana.core.severity import Severity
 from guardana.core.target import TargetKind
 from guardana.core.testing import manifest_for
+from guardana.core.testing.manifests import suite_rule, suite_summary
 from guardana.report import get_renderer
 
 _SAMPLED = "acme.prompt.demo"
@@ -299,3 +300,23 @@ def test_a_summary_with_no_bound_and_nothing_failed_says_why() -> None:
 
     assert "no bound: the rule reported a finding its 3 recorded case(s) do not show" in text
     assert "clean" not in text.split(_SAMPLED, 2)[-1].split("\n", 1)[0]
+
+
+def test_a_repeating_suite_is_not_denied_by_the_trials_line() -> None:
+    """Only the suite repeated: the line must name the single-attempt rule, not deny K."""
+    summary = suite_summary()
+    result = ScanResult(
+        (),
+        ("acme.suite.support_answers", _PROTOCOL),
+        (),
+        suites={"acme.suite.support_answers": summary},
+    )
+    manifest = replace(
+        manifest_for(result, target_kind=TargetKind.ENDPOINT),
+        rules=(suite_rule(summary), RuleRecord(id=_PROTOCOL, digest="p")),
+    )
+    manifest = replace(manifest, execution=replace(manifest.execution, trials=3))
+    text = get_renderer("human", run=manifest).render(result)
+    assert summary.trials_per_case == 3
+    assert "no rule in this run repeats a case" not in text
+    assert f"one attempt per case, whatever was asked: {_PROTOCOL}" in text

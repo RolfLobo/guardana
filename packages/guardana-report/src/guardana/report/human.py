@@ -5,13 +5,14 @@ from guardana.core.assessment import AssessmentStatus
 from guardana.core.manifest import RunManifest
 from guardana.core.manifest.records import CorrectionStatus, JudgeCorrection, TrialSummary
 from guardana.core.report import Finding, ScanResult
+from guardana.core.suite import describe
 from guardana.core.trials import CONFIDENCE, wilson_interval
 
 _ICON = {"CRITICAL": "✖", "HIGH": "✖", "MEDIUM": "▲", "LOW": "•", "INFO": "·"}
 
 
 class HumanRenderer:
-    """Terminal output: one line per finding, what each repeating rule rests on, a summary."""
+    """Terminal output: one line per finding, what each repeating rule and suite rests on."""
 
     name = "human"
 
@@ -44,10 +45,10 @@ class HumanRenderer:
         for gap in result.coverage_shortfall:
             lines.append(f"! [COVERAGE] {gap.name} — demanded, and not available ({gap.kind})")
             lines.append(f"    {gap.detail}")
-        trials = _trials_block(result, self._run)
-        if trials:
-            lines.append("")
-            lines.extend(trials)
+        for block in (_trials_block(result, self._run), _measured_block(result)):
+            if block:
+                lines.append("")
+                lines.extend(block)
         lines.append("")
         lines.append(_summary(result))
         return "\n".join(lines)
@@ -62,11 +63,20 @@ def _trials_block(result: ScanResult, run: RunManifest | None) -> list[str]:
     """
     if run is None:
         return []
-    repeating = [(r.id, r.trial_summary) for r in run.rules if r.trial_summary is not None]
+    suites = set(result.suites) | {r.id for r in run.rules if r.suite is not None}
+    repeating = [
+        (r.id, r.trial_summary)
+        for r in run.rules
+        if r.trial_summary is not None and r.id not in suites
+    ]
     asked = run.execution.trials
-    once = [r.id for r in run.rules if r.trial_summary is None]
+    once = [r.id for r in run.rules if r.trial_summary is None and r.id not in suites]
     if not repeating:
         if asked > 1 and once:
+            # A suite that repeated is shown in the Measured block, so the line must not
+            # claim that nothing in the run repeated.
+            if any(s.trials_per_case > 1 for s in result.suites.values()):
+                return [f"Trials: one attempt per case, whatever was asked: {', '.join(once)}"]
             return [f"Trials: {asked} asked for, and no rule in this run repeats a case"]
         return []
     assessors: dict[str, set[str]] = {}
@@ -83,6 +93,14 @@ def _trials_block(result: ScanResult, run: RunManifest | None) -> list[str]:
     # attacker who adapts, it would be a claim no run made.
     lines.append("  static prompt set · no adaptive attacker ran")
     return lines
+
+
+def _measured_block(result: ScanResult) -> list[str]:
+    """State each suite's pass rate and conclusion, one line each, as the suite stored it."""
+    if not result.suites:
+        return []
+    suites = sorted(result.suites.items())
+    return ["Measured", *(f"  {rule_id}  {describe(summary)}" for rule_id, summary in suites)]
 
 
 def _trials_line(summary: TrialSummary, assessors: str) -> str:

@@ -28,9 +28,8 @@ sys.path.insert(0, str(_REPO / "packages" / "guardana-core" / "src"))
 sys.path.insert(0, str(_REPO / "packages" / "guardana-rules" / "src"))
 
 from guardana.core import __version__  # noqa: E402
+from guardana.core.evaluator import CONFIG_WIRED  # noqa: E402
 from guardana.core.evaluator.base import Evaluator  # noqa: E402
-from guardana.core.evaluator.guard import GuardEvaluator  # noqa: E402
-from guardana.core.evaluator.llm_judge import LlmJudgeEvaluator  # noqa: E402
 from guardana.core.pack import PACK_SCHEMA_VERSION  # noqa: E402
 from guardana.core.rule.base import Rule  # noqa: E402
 from guardana.core.severity import Severity  # noqa: E402
@@ -125,10 +124,7 @@ def _catalog(rules: list[Rule]) -> str:
 
 def _evaluators() -> str:
     always = {type(e).id: type(e) for e in provide_evaluators()}
-    configured: dict[str, type[Evaluator]] = {
-        LlmJudgeEvaluator.id: LlmJudgeEvaluator,
-        GuardEvaluator.id: GuardEvaluator,
-    }
+    configured: dict[str, type[Evaluator]] = {kind.id: kind for kind in CONFIG_WIRED}
     lines = [
         _HEADER,
         "An evaluator turns a model's reply into a verdict with a confidence.",

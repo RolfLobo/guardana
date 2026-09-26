@@ -43,6 +43,7 @@
 <li><a href="usage-monitor.html">guardana monitor</a></li>
 <li><a href="usage-run.html">guardana run</a></li>
 <li><a href="usage-calibrate.html">guardana calibrate</a></li>
+<li><a href="usage-suites.html">Quality suites<span class="tag">beta</span></a></li>
 <li><a href="privacy.html">Evidence and redaction</a></li>
 </ul>
 <h2>Recorded applications</h2><ul>
@@ -109,7 +110,7 @@
 <li><a href="design/extension-author-tooling.html">Extension author tooling<span class="tag">accepted</span></a></li>
 <li><a href="design/target-locators.html">Target locators<span class="tag">implemented</span></a></li>
 <li><a href="design/output-plugins.html">Output plugins<span class="tag">proposed</span></a></li>
-<li><a href="design/quality-suites.html">Quality suites<span class="tag">proposed</span></a></li>
+<li><a href="design/quality-suites.html">Quality suites<span class="tag">implemented</span></a></li>
 <li><a href="design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
 <li><a href="design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
 <li><a href="design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
@@ -158,6 +159,7 @@
 <li><a href="usage-monitor.html">guardana monitor</a></li>
 <li><a href="usage-run.html">guardana run</a></li>
 <li><a href="usage-calibrate.html">guardana calibrate</a></li>
+<li><a href="usage-suites.html">Quality suites<span class="tag">beta</span></a></li>
 <li><a href="privacy.html">Evidence and redaction</a></li>
 </ul>
 <h2>Recorded applications</h2><ul>
@@ -224,7 +226,7 @@
 <li><a href="design/extension-author-tooling.html">Extension author tooling<span class="tag">accepted</span></a></li>
 <li><a href="design/target-locators.html">Target locators<span class="tag">implemented</span></a></li>
 <li><a href="design/output-plugins.html">Output plugins<span class="tag">proposed</span></a></li>
-<li><a href="design/quality-suites.html">Quality suites<span class="tag">proposed</span></a></li>
+<li><a href="design/quality-suites.html">Quality suites<span class="tag">implemented</span></a></li>
 <li><a href="design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
 <li><a href="design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
 <li><a href="design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
@@ -427,6 +429,18 @@ class MyRule(Rule):
             RuleFixture(&quot;a file we could not parse&quot;, _artifact(b&quot;&quot;), FixtureOutcome.INCONCLUSIVE),
         ]
 </code></pre>
+<h2 id="suites">Suites</h2>
+<p>Suite fixtures use the single-turn shape. One <code>reply:</code> answers every case; a fixture can instead name its own <code>dataset:</code>. Each case in that fixture dataset may carry <code>reply</code>, falling back to the fixture's <code>reply:</code>.</p>
+<p>This fixture list shows a separate dataset and a single reply:</p>
+<pre><code class="language-yaml">fixtures:
+  - name: every answer names the setting
+    dataset: ./fixtures/answers-pass.jsonl
+    outcome: clean
+  - name: the model says nothing
+    reply: &quot;&quot;
+    outcome: inconclusive
+</code></pre>
+<p>A case-level <code>reply</code> is allowed only in a fixture dataset. Two different replies to the same messages are refused. A fixture dataset with fewer cases than <code>gate.min_sample</code> is refused at load. A suite without clean, finding and inconclusive samples is reported <code>indeterminate</code>, like any rule. See <a href="usage-suites.html">quality suites</a>.</p>
 <h2 id="exit-codes">Exit codes</h2>
 <div class="table-wrap"><table>
 <thead>

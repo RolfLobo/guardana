@@ -12,7 +12,7 @@ from guardana.core.assessment import (
     case_id_for,
     from_verdict,
 )
-from guardana.core.evaluator.base import Verdict
+from guardana.core.evaluator.base import Measurement, Verdict
 from guardana.core.gate import GateOutcome, gate_outcome
 from guardana.core.profile.model import FailOn, Policy
 from guardana.core.report import ScanResult
@@ -107,6 +107,50 @@ def test_a_confident_pass_keeps_its_confidence() -> None:
     assert assessment.status is AssessmentStatus.MEASURED
     assert assessment.passed is True
     assert assessment.confidence == 0.6
+
+
+_CHARS = Measurement(812.0, "chars", Direction.LOWER_IS_BETTER, 4000.0)
+
+
+def test_a_graded_verdict_hands_its_measurement_to_the_assessment() -> None:
+    verdict = Verdict("fail", 0.5, "long", "length", _CHARS)
+
+    assessment = from_verdict(verdict, case_id="c", subject_ref="r", rule_id="guardana.x")
+
+    assert assessment.passed is False
+    assert (assessment.value, assessment.unit) == (812.0, "chars")
+    assert assessment.direction is Direction.LOWER_IS_BETTER
+    assert assessment.threshold == 4000.0
+
+
+def test_an_inconclusive_verdict_records_no_measurement() -> None:
+    # A number from a verdict nobody could grade would be averaged as if it were read.
+    verdict = Verdict("inconclusive", 0.0, "no reply", "length", _CHARS)
+
+    assessment = from_verdict(verdict, case_id="c", subject_ref="r", rule_id="guardana.x")
+
+    assert (assessment.value, assessment.unit, assessment.direction, assessment.threshold) == (
+        None,
+        None,
+        None,
+        None,
+    )
+
+
+def test_a_moved_threshold_unit_or_direction_changes_the_comparable_key() -> None:
+    base = _assessment(unit="chars", direction=Direction.LOWER_IS_BETTER, threshold=4000.0)
+    for moved in (
+        _assessment(unit="chars", direction=Direction.LOWER_IS_BETTER, threshold=2000.0),
+        _assessment(unit="tokens", direction=Direction.LOWER_IS_BETTER, threshold=4000.0),
+        _assessment(unit="chars", direction=Direction.HIGHER_IS_BETTER, threshold=4000.0),
+    ):
+        assert moved.comparable_key != base.comparable_key
+    assert (
+        _assessment(
+            unit="chars", direction=Direction.LOWER_IS_BETTER, threshold=4000.0, value=1.0
+        ).comparable_key
+        == base.comparable_key
+    )
 
 
 def test_a_case_id_is_stable_and_changes_with_the_case() -> None:

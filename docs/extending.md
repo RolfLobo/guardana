@@ -81,6 +81,18 @@ the attempt, or the second attempt reads what the first one left.
 only for a rule that grades in its own code and stamps verdicts with its own id, as
 `guardana.output.secrets` does.
 
+### Reading calibrations and concluding
+
+These are additive extension points for a rule:
+
+| Extension point | Use |
+|---|---|
+| `RuleContext.calibrations` | Read calibrations available to the rule. |
+| `RuleContext.conclude(summary)` | Record the rule's conclusion. |
+| `RuleFixture.rule` | Use the variant of the declaring rule that a sample runs. |
+| `Runner(calibrations=...)` | Pass calibrations to the runner. |
+| `ScanResult.suites` | Read suite results from the scan result. |
+
 ## Adding an Evaluator
 
 An `Evaluator` turns a model response (or artifact observation) into a
@@ -139,6 +151,27 @@ five small one-file examples spanning cheap heuristic, exact marker match,
 reply-length lead, LLM-judge, and safety-classifier patterns. (`llm_judge` and `guard` need a
 model of their own and are wired from the profile's `evaluators:` block —
 see [`profiles.md`](profiles.md#config-wired-evaluators-llm_judge-and-guard).)
+
+### Reporting a measurement
+
+`Verdict.measurement: Measurement | None` carries `value`, `unit`, `direction` and `threshold`. `from_verdict` carries the measurement onto the assessment.
+
+An evaluator reports one by passing it with its verdict:
+
+```python
+from guardana.core.assessment import Direction
+from guardana.core.evaluator import Measurement, Verdict
+
+Verdict(
+    "pass",
+    1.0,
+    "reply stayed under the limit",
+    self.id,
+    measurement=Measurement(len(reply), "chars", Direction.LOWER_IS_BETTER, 4000),
+)
+```
+
+`Assessment.comparable_key` includes unit, direction and threshold. `diff` compares measurements only when both runs carry matching values for those fields.
 
 ### Declaring grader identity and determinism
 

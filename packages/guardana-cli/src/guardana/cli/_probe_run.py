@@ -1,8 +1,10 @@
 import secrets
+from collections.abc import Mapping
 from dataclasses import dataclass, replace
 
 from guardana.cli._endpoint import build_endpoint
 from guardana.cli._run_meta import ProbeOutcome, target_identity
+from guardana.core.manifest.records import CalibrationRecord
 from guardana.core.profile import Profile
 from guardana.core.registry import Registry
 from guardana.core.report import ScanResult
@@ -86,6 +88,7 @@ def run_probe(
     connection: Connection,
     *,
     concurrency: int = DEFAULT_ENDPOINT_CONCURRENCY,
+    calibrations: Mapping[str, CalibrationRecord] | None = None,
 ) -> ProbeOutcome:
     """Run every endpoint-kind rule in `registry` against a live model.
 
@@ -107,7 +110,9 @@ def run_probe(
     """
     meter = UsageMeter(profile.budgets)
     target = _target(connection, connection.system_prompt, meter)
-    probed = run_target_probe(registry, profile, target, concurrency=concurrency)
+    probed = run_target_probe(
+        registry, profile, target, concurrency=concurrency, calibrations=calibrations
+    )
     # Every planted EndpointTarget shares this meter. Taking the one snapshot
     # after all passes avoids summing cumulative snapshots once per canary.
     return ProbeOutcome(replace(probed.result, usage=meter.snapshot()), probed.identity)
@@ -119,13 +124,18 @@ def run_target_probe(
     target: Target,
     *,
     concurrency: int = DEFAULT_ENDPOINT_CONCURRENCY,
+    calibrations: Mapping[str, CalibrationRecord] | None = None,
 ) -> ProbeOutcome:
     """Run endpoint rules against any CLI-selectable target.
 
     A target implementing :class:`SystemPromptPlanter` gets one isolated view per
     random canary. Without that protocol, canary rules are skipped rather than
     graded against a marker nobody planted.
+
+    `calibrations` reach every pass, so a judge-graded rule corrects with the records
+    the command loaded and will write into the manifest.
     """
+    measured = dict(calibrations or {})
     canary_rules: list[tuple[Rule, str]] = []
     normal_rules: list[Rule] = []
     unplantable: list[Rule] = []
@@ -149,6 +159,7 @@ def run_target_probe(
                 registry=_sub_registry(normal_rules, registry),
                 profile=profile,
                 concurrency=concurrency,
+                calibrations=measured,
             ).run(target)
         )
         skipped = _unplantable_skips(unplantable, target, profile)
@@ -164,6 +175,7 @@ def run_target_probe(
                 registry=_sub_registry([rule], registry),
                 profile=profile,
                 concurrency=concurrency,
+                calibrations=measured,
             ).run(canary_target)
         )
 

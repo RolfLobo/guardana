@@ -7,7 +7,7 @@ from guardana.core.manifest.records import EvaluatorRecord, ResultSummary, RuleR
 from guardana.core.manifest.settings import ConfigurationRef, ExecutionSettings, PrivacyRecord
 from guardana.core.manifest.usage import RunUsage
 
-MANIFEST_SCHEMA_VERSION = 8
+MANIFEST_SCHEMA_VERSION = 9
 """Version of the run document, moved independently of the CLI.
 
 A run written by 0.7.3 and one written by 0.9.0 are the same document if the
@@ -34,6 +34,9 @@ count of declared model calls no longer shares a name with the trials per case.
 Version 8 records whether each repeating rule's rate was corrected for its judge's
 error (`rules[].trial_summary.correction`) and the per-class calibration that
 correction reads (`evaluators[].calibration`).
+
+Version 9 records what a suite measured over its dataset and what its gate concluded
+(`rules[].suite`), with the pass rate corrected for its judge's error or why not.
 """
 
 

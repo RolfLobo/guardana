@@ -48,6 +48,7 @@ from guardana.core.manifest.records import (
     CalibrationRecord,
     EvaluatorRecord,
     RuleRecord,
+    SuiteSummary,
     TrialSummary,
 )
 from guardana.core.manifest.settings import PrivacyRecord
@@ -341,12 +342,17 @@ def build_manifest(  # noqa: PLR0913 — a manifest is assembled from independen
     concurrency: int = 1,
     deployment: DeploymentRef | None = None,
     source_kind: SourceKind | None = None,
+    calibrations: Mapping[str, RecordedCalibration] | None = None,
 ) -> RunManifest:
     """Describe the run that produced `result`, digesting the rules that actually ran.
 
     Only the rules that ran are digested. A rule that was skipped or errored did
     not test anything, and listing it as part of the plan would let a later
     comparison treat a check that never happened as coverage it had.
+
+    `calibrations` are the records the run itself was handed; given, they are used as
+    they are, so the run and its record correct with the same measurements. Left out,
+    the profile's are read here.
     """
     now = datetime.now(UTC)
     ran = tuple(rule for rule in registry.rules() if rule.meta.id in result.rules_run)
@@ -358,7 +364,8 @@ def build_manifest(  # noqa: PLR0913 — a manifest is assembled from independen
     for assessment in result.assessments:
         recorded.setdefault(assessment.rule_id, []).append(assessment)
     reported = {f.rule_id for f in (*result.findings, *result.unverified, *result.waived)}
-    calibrations = calibrations_or_exit(profile)
+    if calibrations is None:
+        calibrations = calibrations_or_exit(profile)
     grading = _Grading(
         evaluators=registry.evaluators(),
         calibrations={key: value.as_record() for key, value in calibrations.items()},
@@ -369,6 +376,7 @@ def build_manifest(  # noqa: PLR0913 — a manifest is assembled from independen
             rule,
             registry.origin_of(rule.meta.id),
             _trial_summary(rule, recorded.get(rule.meta.id, []), result, reported, grading),
+            result.suites.get(rule.meta.id),
         )
         for rule in ran
     )
@@ -419,7 +427,12 @@ def build_manifest(  # noqa: PLR0913 — a manifest is assembled from independen
     )
 
 
-def _rule_record(rule: Rule, origin: Origin, trial_summary: TrialSummary | None) -> RuleRecord:
+def _rule_record(
+    rule: Rule,
+    origin: Origin,
+    trial_summary: TrialSummary | None,
+    suite: SuiteSummary | None = None,
+) -> RuleRecord:
     """Describe one rule that ran, including which distribution supplied it.
 
     An unattributed origin stays `None` rather than becoming `"unknown"`: a
@@ -434,6 +447,7 @@ def _rule_record(rule: Rule, origin: Origin, trial_summary: TrialSummary | None)
         maturity=str(rule.meta.maturity),
         declared_requests=rule.estimated_requests,
         trial_summary=trial_summary,
+        suite=suite,
     )
 
 
@@ -462,8 +476,11 @@ def _trial_summary(
 
     Every summary carries its correction, decided after the bound so a suppressed bound
     is never corrected. `None` there is what a migrated document says, never a build.
+
+    A suite gets none: its trials are summarised as a pass rate in its own summary, and
+    an attack success rate over the same trials would state the opposite quantity.
     """
-    if not any(a.trial is not None for a in recorded):
+    if rule.meta.id in result.suites or not any(a.trial is not None for a in recorded):
         return None
     rule_id = rule.meta.id
     trials = reduce_rule(

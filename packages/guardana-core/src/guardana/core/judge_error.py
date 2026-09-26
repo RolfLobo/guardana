@@ -20,6 +20,7 @@ from guardana.core.manifest.records import (
     CalibrationRecord,
     CorrectionStatus,
     JudgeCorrection,
+    SuiteCorrection,
     TrialSummary,
 )
 from guardana.core.trials import wilson_interval
@@ -97,6 +98,66 @@ def correct(
     if observed is None:
         return _uncorrected(assessor, _no_rate(summary))
     return _apply(observed, assessor, usable)
+
+
+def correct_pass_rate(  # noqa: PLR0913 — the four observed rates and what grades them
+    grading: Grading,
+    evaluators: Mapping[str, Evaluator],
+    calibrations: Mapping[str, CalibrationRecord],
+    *,
+    worst: float,
+    best: float,
+    low: float,
+    high: float,
+    starter_digest: str | None = None,
+) -> SuiteCorrection:
+    """Correct a suite's pass rates for the judge's measured error, or record why not.
+
+    `worst` and `best` are the pass rates with every ungraded trial counted failed and
+    passed; `low` and `high` the 95% limits around them. The correction runs on the failure
+    share, which is what sensitivity and specificity describe, and returns pass rates. It
+    refuses everything `correct` refuses and, because a gate reads the result, also a
+    calibration whose 95% box reaches a judge that cannot tell a pass from a fail.
+    """
+    if not grading.judges:
+        return SuiteCorrection(status=CorrectionStatus.DETERMINISTIC)
+    if len(grading.assessors) > 1:
+        return _suite_uncorrected(
+            None, f"multiple assessors graded this suite: {', '.join(grading.assessors)}"
+        )
+    assessor = grading.judges[0]
+    usable = _usable(assessor, evaluators, calibrations, starter_digest)
+    if isinstance(usable, str):
+        return _suite_uncorrected(assessor, _NOT_MEASURED + usable)
+    failed_high = 1.0 - low
+    floor = _floor_refusal(failed_high, usable.specificity)
+    if floor is not None:
+        return _suite_uncorrected(assessor, floor)
+    corners = _corners(usable)
+    weakest = min(se + sp - 1.0 for se, sp in corners)
+    if weakest <= 0.0:
+        sensitivity = min(se for se, _sp in corners)
+        specificity = min(sp for _se, sp in corners)
+        return _suite_uncorrected(
+            assessor,
+            _NOT_MEASURED + f"at the edge of its 95% calibration intervals (sensitivity "
+            f"{sensitivity:.2f}, specificity {specificity:.2f}), the judge cannot distinguish "
+            f"pass from fail",
+        )
+    se, sp = usable.sensitivity, usable.specificity
+    return SuiteCorrection(
+        status=CorrectionStatus.CORRECTED,
+        assessor=assessor,
+        worst=1.0 - _clip(rogan_gladen(1.0 - worst, se, sp)),
+        best=1.0 - _clip(rogan_gladen(1.0 - best, se, sp)),
+        low=1.0 - _clip(_extreme(failed_high, corners, upper=True)),
+        high=1.0 - _clip(_extreme(1.0 - high, corners, upper=False)),
+        sensitivity=se,
+        specificity=sp,
+        dataset_digest=usable.dataset_digest,
+        positives=usable.positives,
+        negatives=usable.negatives,
+    )
 
 
 def rogan_gladen(rate: float, sensitivity: float, specificity: float) -> float:
@@ -240,17 +301,10 @@ def _apply(
     """
     rate, low_seen, high_seen = observed
     sensitivity, specificity = measured.sensitivity, measured.specificity
-    # At or below the false-alarm floor the correction would rest on the calibration
-    # alone, which says nothing about this run's cases.
-    if high_seen <= 1.0 - specificity:
-        return _uncorrected(
-            assessor,
-            _NOT_MEASURED + f"observed fail share ≤ {_percent_up(high_seen)}% is at or below "
-            f"calibrated false-alarm rate {_percent_up(1.0 - specificity)}%",
-        )
-    sensitivities = wilson_interval(round(sensitivity * measured.positives), measured.positives)
-    specificities = wilson_interval(round(specificity * measured.negatives), measured.negatives)
-    corners = [(se, sp) for se in sensitivities for sp in specificities]
+    floor = _floor_refusal(high_seen, specificity)
+    if floor is not None:
+        return _uncorrected(assessor, floor)
+    corners = _corners(measured)
     return JudgeCorrection(
         status=CorrectionStatus.CORRECTED,
         assessor=assessor,
@@ -263,6 +317,31 @@ def _apply(
         positives=measured.positives,
         negatives=measured.negatives,
     )
+
+
+def _floor_refusal(high_seen: float, specificity: float) -> str | None:
+    """Refuse a correction the run's failures give nothing to rest on.
+
+    At or below the false-alarm floor the correction would rest on the calibration alone,
+    which says nothing about this run's cases.
+    """
+    if high_seen > 1.0 - specificity:
+        return None
+    return (
+        _NOT_MEASURED + f"observed fail share ≤ {_percent_up(high_seen)}% is at or below "
+        f"calibrated false-alarm rate {_percent_up(1.0 - specificity)}%"
+    )
+
+
+def _corners(measured: _Measured) -> list[tuple[float, float]]:
+    """Return the corners of the sensitivity and specificity 95% Wilson intervals."""
+    sensitivities = wilson_interval(
+        round(measured.sensitivity * measured.positives), measured.positives
+    )
+    specificities = wilson_interval(
+        round(measured.specificity * measured.negatives), measured.negatives
+    )
+    return [(se, sp) for se in sensitivities for sp in specificities]
 
 
 def _extreme(rate: float, corners: Sequence[tuple[float, float]], *, upper: bool) -> float:
@@ -282,6 +361,10 @@ def _extreme(rate: float, corners: Sequence[tuple[float, float]], *, upper: bool
 
 def _uncorrected(assessor: str | None, reason: str) -> JudgeCorrection:
     return JudgeCorrection(status=CorrectionStatus.UNCORRECTED, assessor=assessor, reason=reason)
+
+
+def _suite_uncorrected(assessor: str | None, reason: str) -> SuiteCorrection:
+    return SuiteCorrection(status=CorrectionStatus.UNCORRECTED, assessor=assessor, reason=reason)
 
 
 def _clip(value: float) -> float:

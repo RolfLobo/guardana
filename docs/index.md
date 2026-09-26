@@ -33,6 +33,7 @@ Start with the root [README](../README.md). Before production use, read [Product
 - [`usage-baseline.md`](usage-baseline.md) — accept risk with an expiry
 - [`usage-monitor.md`](usage-monitor.md) — schedule active re-verification
 - [`usage-calibrate.md`](usage-calibrate.md) — measure evaluator confidence
+- [`usage-suites.md`](usage-suites.md) — gate a deployed endpoint against a golden set
 - [`privacy.md`](privacy.md) — control redaction and retained evidence
 
 ## Recorded applications

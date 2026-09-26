@@ -21,6 +21,9 @@ from guardana.core.manifest.records import (
     JudgeCorrection,
     ResultSummary,
     RuleRecord,
+    SuiteCorrection,
+    SuiteOutcome,
+    SuiteSummary,
     TrialSummary,
 )
 from guardana.core.manifest.settings import ConfigurationRef, EvidenceMode, ExecutionSettings
@@ -242,6 +245,7 @@ def _rules(raw: object) -> tuple[RuleRecord, ...]:
                 maturity=_optional_text(block, "maturity"),
                 declared_requests=_optional_int(block, "declared_requests"),
                 trial_summary=_trial_summary(block),
+                suite=_suite(block),
             )
         )
     return tuple(records)
@@ -335,6 +339,110 @@ def _correction(raw: object) -> JudgeCorrection | None:
         )
     except ValueError as exc:
         raise ManifestLoadError(f"{what}: {exc}") from exc
+
+
+_SUITE_COUNTS = ("trials_per_case", "cases", "measured", "ungraded", "min_sample")
+_SUITE_SHARES = ("worst", "best", "low", "high")
+
+
+def _suite(rule: Mapping[str, Any]) -> SuiteSummary | None:
+    """Read what a suite measured and concluded, refusing a summary absent or malformed.
+
+    Every key is required, null included: a stored pass is what a pipeline reads, and a
+    block missing the numbers behind it must not read back as one that stated none.
+    """
+    what = "run.rules[].suite"
+    if "suite" not in rule:
+        raise ManifestLoadError(f"{what} is missing; null says the rule is not a suite")
+    raw = rule["suite"]
+    if raw is None:
+        return None
+    block = _mapping(raw, what)
+    raw_outcome = _present(block, "outcome", what)
+    try:
+        outcome = SuiteOutcome(raw_outcome if isinstance(raw_outcome, str) else "")
+    except ValueError as exc:
+        raise ManifestLoadError(
+            f"{what}.outcome {raw_outcome!r} is not one of {[str(o) for o in SuiteOutcome]}"
+        ) from exc
+    counts = {key: _whole(block, key, what) for key in _SUITE_COUNTS}
+    shares = {key: _nullable_number(block, key, what) for key in _SUITE_SHARES}
+    dataset = _text(block, "dataset", what)
+    dataset_digest = _text(block, "dataset_digest", what)
+    min_pass_rate = _nullable_number(block, "min_pass_rate", what)
+    if min_pass_rate is None:
+        raise ManifestLoadError(f"{what}.min_pass_rate must be a number")
+    sample_size = _nullable_count(block, "sample_size", what)
+    sample_seed = _nullable_count(block, "sample_seed", what)
+    reason = _nullable_text(block, "reason", what)
+    correction = _suite_correction(_present(block, "correction", what))
+    try:
+        return SuiteSummary(
+            dataset=dataset,
+            dataset_digest=dataset_digest,
+            trials_per_case=counts["trials_per_case"],
+            cases=counts["cases"],
+            measured=counts["measured"],
+            ungraded=counts["ungraded"],
+            min_pass_rate=min_pass_rate,
+            min_sample=counts["min_sample"],
+            outcome=outcome,
+            correction=correction,
+            worst=shares["worst"],
+            best=shares["best"],
+            low=shares["low"],
+            high=shares["high"],
+            sample_size=sample_size,
+            sample_seed=sample_seed,
+            reason=reason,
+        )
+    except ValueError as exc:
+        raise ManifestLoadError(f"{what}: {exc}") from exc
+
+
+def _suite_correction(raw: object) -> SuiteCorrection:
+    """Read whether a suite's pass rate was corrected for its judge's error, refusing a guess.
+
+    Never null: a suite records how it was graded from the first version that has one.
+    """
+    what = "run.rules[].suite.correction"
+    block = _mapping(raw, what)
+    raw_status = block.get("status")
+    try:
+        status = CorrectionStatus(raw_status if isinstance(raw_status, str) else "")
+    except ValueError as exc:
+        raise ManifestLoadError(
+            f"{what}.status {raw_status!r} is not one of {[str(s) for s in CorrectionStatus]}"
+        ) from exc
+    texts = {key: _nullable_text(block, key, what) for key in _CORRECTION_TEXT}
+    numbers = {
+        key: _nullable_number(block, key, what)
+        for key in (*_SUITE_SHARES, "sensitivity", "specificity")
+    }
+    try:
+        return SuiteCorrection(
+            status=status,
+            assessor=texts["assessor"],
+            reason=texts["reason"],
+            worst=numbers["worst"],
+            best=numbers["best"],
+            low=numbers["low"],
+            high=numbers["high"],
+            sensitivity=numbers["sensitivity"],
+            specificity=numbers["specificity"],
+            dataset_digest=texts["dataset_digest"],
+            positives=_nullable_count(block, "positives", what),
+            negatives=_nullable_count(block, "negatives", what),
+        )
+    except ValueError as exc:
+        raise ManifestLoadError(f"{what}: {exc}") from exc
+
+
+def _whole(block: Mapping[str, Any], key: str, what: str) -> int:
+    value = _present(block, key, what)
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise ManifestLoadError(f"{what}.{key} must be a whole number")
+    return value
 
 
 def _present(block: Mapping[str, Any], key: str, what: str) -> object:

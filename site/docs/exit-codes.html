@@ -43,6 +43,7 @@
 <li><a href="usage-monitor.html">guardana monitor</a></li>
 <li><a href="usage-run.html">guardana run</a></li>
 <li><a href="usage-calibrate.html">guardana calibrate</a></li>
+<li><a href="usage-suites.html">Quality suites<span class="tag">beta</span></a></li>
 <li><a href="privacy.html">Evidence and redaction</a></li>
 </ul>
 <h2>Recorded applications</h2><ul>
@@ -109,7 +110,7 @@
 <li><a href="design/extension-author-tooling.html">Extension author tooling<span class="tag">accepted</span></a></li>
 <li><a href="design/target-locators.html">Target locators<span class="tag">implemented</span></a></li>
 <li><a href="design/output-plugins.html">Output plugins<span class="tag">proposed</span></a></li>
-<li><a href="design/quality-suites.html">Quality suites<span class="tag">proposed</span></a></li>
+<li><a href="design/quality-suites.html">Quality suites<span class="tag">implemented</span></a></li>
 <li><a href="design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
 <li><a href="design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
 <li><a href="design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
@@ -158,6 +159,7 @@
 <li><a href="usage-monitor.html">guardana monitor</a></li>
 <li><a href="usage-run.html">guardana run</a></li>
 <li><a href="usage-calibrate.html">guardana calibrate</a></li>
+<li><a href="usage-suites.html">Quality suites<span class="tag">beta</span></a></li>
 <li><a href="privacy.html">Evidence and redaction</a></li>
 </ul>
 <h2>Recorded applications</h2><ul>
@@ -224,7 +226,7 @@
 <li><a href="design/extension-author-tooling.html">Extension author tooling<span class="tag">accepted</span></a></li>
 <li><a href="design/target-locators.html">Target locators<span class="tag">implemented</span></a></li>
 <li><a href="design/output-plugins.html">Output plugins<span class="tag">proposed</span></a></li>
-<li><a href="design/quality-suites.html">Quality suites<span class="tag">proposed</span></a></li>
+<li><a href="design/quality-suites.html">Quality suites<span class="tag">implemented</span></a></li>
 <li><a href="design/paired-regression-statistics.html">Paired regression statistics<span class="tag">proposed</span></a></li>
 <li><a href="design/attack-techniques.html">Attack techniques<span class="tag">proposed</span></a></li>
 <li><a href="design/namespaced-extension-ids.html">Namespaced extension ids<span class="tag">proposed</span></a></li>
@@ -306,7 +308,10 @@ reading.</p>
 no rule ran, <strong>no rule that ran reached a verdict</strong>, a check could not run under
 <code>fail_on_error</code>, one side of a comparison never finished, or <strong>coverage the operator
 demanded was not there</strong> — a dimension named in <code>trace.require</code>, or one an assertion
-in a security contract needs. If indeterminate and clean shared a code, a broken
+in a security contract needs — or <strong>a suite declined</strong>: too few of its cases were
+measured, its judge's error could not be corrected, ungraded trials leave its pass
+rate on both sides of its bar, a corrected rate clears the bar while the raw rate and
+the corrected lower limit do not, or the suite raised before it concluded. If indeterminate and clean shared a code, a broken
 setup would read as a green build.</p>
 <p>The second of those is worth stating on its own, because it is the one that looks
 like a completed run. An endpoint answering every request with an empty message — a
@@ -316,10 +321,13 @@ zero, and nothing was established. That is <code>2</code>, and no <code>fail_on_
 <code>fail_on_inconclusive</code> decides what to do when <em>some</em> checks go dark, which is a
 preference, and a run with nothing at all to show is not one. One check reaching a
 verdict is enough to make <code>0</code> honest again.</p>
-<p>That last case is the only one no <code>fail_on_*</code> setting can switch off, and
-deliberately: every other branch covers checks nobody specifically asked for, while
-this one was asked for by name. <code>fail_on_skipped</code> defaults to off, so without it the
+<p>That last case has no <code>fail_on_*</code> setting in front of it, deliberately: the
+switches cover checks nobody specifically asked for, while this one was asked for by
+name. <code>fail_on_skipped</code> defaults to off, so without it the
 default path for &quot;the contract I wrote could not be checked&quot; would have been <code>0</code>.</p>
+<p>A declined suite has no switch in front of it either, for the same reason: its bar
+is a demand its author wrote into the rule, and a pass rate the suite could not
+establish is not a preference to switch off.</p>
 <p><strong><code>6</code> is separate from <code>1</code>, in both directions.</strong> A budget stopping a run is not
 a security verdict, so an under-budgeted pipeline must not report a failure that
 never happened. More importantly the other way round: a team must not be able to

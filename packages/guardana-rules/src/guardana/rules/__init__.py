@@ -10,6 +10,11 @@ from guardana.core.evaluator import (
     LengthEvaluator,
     ToolCallEvaluator,
 )
+from guardana.core.evaluator.answered import AnsweredEvaluator
+from guardana.core.evaluator.contains import ContainsEvaluator
+from guardana.core.evaluator.exact_match import ExactMatchEvaluator
+from guardana.core.evaluator.json_valid import JsonValidEvaluator
+from guardana.core.evaluator.regex import RegexEvaluator
 from guardana.core.rule import Rule
 from guardana.core.rule.yaml_rule import load_yaml_rules
 from guardana.rules.agent.excessive_agency import ExcessiveAgencyRule
@@ -116,17 +121,22 @@ def provide_rules() -> list[Rule]:
 def provide_evaluators() -> list[Evaluator]:
     """Return every built-in evaluator that can be constructed with no arguments.
 
-    `LlmJudgeEvaluator` and `GuardEvaluator` are excluded here because each needs
-    a model callable to ask. The CLI builds them from a `guardana.yaml`
-    `evaluators:` block (`guardana.cli._evaluators.wire_config_evaluators`) and
-    registers them at run time. Absent that config, a rule that asks for
-    `evaluator: llm_judge` resolves to nothing and is skipped visibly — never a
-    silent pass.
+    `LlmJudgeEvaluator`, `ReferenceJudgeEvaluator` and `GuardEvaluator` are
+    excluded here because each needs a model callable to ask. The CLI builds
+    the judge and the guard from a `guardana.yaml` `evaluators:` block
+    (`guardana.cli._evaluators.wire_config_evaluators`) and registers them at run
+    time. Absent that config, a rule that asks for `evaluator: llm_judge`
+    resolves to nothing and is skipped visibly — never a silent pass.
     """
     return [
         AmplificationEvaluator(),
+        AnsweredEvaluator(),
         CanaryEvaluator(),
+        ContainsEvaluator(),
+        ExactMatchEvaluator(),
+        JsonValidEvaluator(),
         KeywordEvaluator(),
         LengthEvaluator(),
+        RegexEvaluator(),
         ToolCallEvaluator(),
     ]

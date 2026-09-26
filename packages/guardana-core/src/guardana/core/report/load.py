@@ -22,6 +22,7 @@ from guardana.core.manifest.migrations import (
     migrate_v5,
     migrate_v6,
     migrate_v7,
+    migrate_v8,
 )
 from guardana.core.manifest.model import RunManifest
 from guardana.core.manifest.usage import RunUsage
@@ -48,6 +49,7 @@ _MIGRATIONS = {
     5: migrate_v5,
     6: migrate_v6,
     7: migrate_v7,
+    8: migrate_v8,
 }
 """One step forward per version, keyed by the version the document *is*.
 
@@ -180,6 +182,7 @@ def _result(raw: dict[str, Any], manifest: RunManifest, path: Path) -> ScanResul
             for rule in manifest.rules
             if rule.trial_summary is not None
         },
+        suites={rule.id: rule.suite for rule in manifest.rules if rule.suite is not None},
     )
 
 

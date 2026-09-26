@@ -35,7 +35,10 @@ reading.
 no rule ran, **no rule that ran reached a verdict**, a check could not run under
 `fail_on_error`, one side of a comparison never finished, or **coverage the operator
 demanded was not there** — a dimension named in `trace.require`, or one an assertion
-in a security contract needs. If indeterminate and clean shared a code, a broken
+in a security contract needs — or **a suite declined**: too few of its cases were
+measured, its judge's error could not be corrected, ungraded trials leave its pass
+rate on both sides of its bar, a corrected rate clears the bar while the raw rate and
+the corrected lower limit do not, or the suite raised before it concluded. If indeterminate and clean shared a code, a broken
 setup would read as a green build.
 
 The second of those is worth stating on its own, because it is the one that looks
@@ -47,10 +50,14 @@ zero, and nothing was established. That is `2`, and no `fail_on_*` switches it o
 preference, and a run with nothing at all to show is not one. One check reaching a
 verdict is enough to make `0` honest again.
 
-That last case is the only one no `fail_on_*` setting can switch off, and
-deliberately: every other branch covers checks nobody specifically asked for, while
-this one was asked for by name. `fail_on_skipped` defaults to off, so without it the
+That last case has no `fail_on_*` setting in front of it, deliberately: the
+switches cover checks nobody specifically asked for, while this one was asked for by
+name. `fail_on_skipped` defaults to off, so without it the
 default path for "the contract I wrote could not be checked" would have been `0`.
+
+A declined suite has no switch in front of it either, for the same reason: its bar
+is a demand its author wrote into the rule, and a pass rate the suite could not
+establish is not a preference to switch off.
 
 **`6` is separate from `1`, in both directions.** A budget stopping a run is not
 a security verdict, so an under-budgeted pipeline must not report a failure that

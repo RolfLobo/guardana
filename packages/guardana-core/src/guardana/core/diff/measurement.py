@@ -13,7 +13,7 @@ refusal to compare cases whose definition moved.
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
-from guardana.core.assessment import Assessment, AssessmentStatus
+from guardana.core.assessment import Assessment, AssessmentStatus, ComparableKey
 
 _NAMED_IN_A_NOTE = 3
 """How many case ids a note quotes before it stops. A note nobody finishes is a
@@ -30,10 +30,11 @@ class MeasurementDelta:
     """
 
     paired: int = 0
-    """Cases both runs measured, with the same assessor and the same dataset."""
+    """Cases both runs measured, with the same assessor, dataset and measurement bound."""
 
     incomparable: int = 0
-    """Cases both runs have, graded by a different assessor or over a different dataset.
+    """Cases both runs have, graded by a different assessor, over a different dataset,
+    or measured in a different unit, direction or threshold.
 
     Excluded from every rate rather than counted as changed. A rule whose
     expectation was edited produces the same `case_id` and a different definition
@@ -63,8 +64,9 @@ class MeasurementDelta:
         lines: list[str] = []
         if self.incomparable:
             lines.append(
-                f"{self.incomparable} measured case(s) were not compared: the assessor or "
-                f"the dataset changed, so the two results are not answers to one question"
+                f"{self.incomparable} measured case(s) were not compared: the assessor, "
+                f"dataset, or measurement unit, direction, or threshold changed, so the "
+                f"results answer different questions"
             )
         if self.blinded:
             shown = self.blinded[:_NAMED_IN_A_NOTE]
@@ -104,7 +106,7 @@ def measure(
     blinded: list[str] = []
     for case_id in sorted(lhs.keys() & rhs.keys()):
         was, now = lhs[case_id], rhs[case_id]
-        if was.comparable_key != now.comparable_key:
+        if not _comparable(was.comparable_key, now.comparable_key):
             incomparable += 1
             continue
         if was.measured and not now.measured:
@@ -129,9 +131,23 @@ def measure(
 class _Case:
     """One case of one run, its trials reduced to what a pairing needs."""
 
-    comparable_key: tuple[str, str, str | None]
+    comparable_key: ComparableKey
     measured: bool
     passed: bool
+
+
+def _comparable(was: ComparableKey, now: ComparableKey) -> bool:
+    """Whether two cases answer one question.
+
+    An ungraded trial records no unit, direction or threshold: its bound is unknown
+    rather than different, so the measurement half is compared only when both sides
+    carry one. Otherwise a grader that went blind would read as an edited case.
+    """
+    if was[:3] != now[:3]:
+        return False
+    if was[3] is None or now[3] is None:
+        return True
+    return was[3:] == now[3:]
 
 
 def _cases(assessments: Sequence[Assessment], trials: Mapping[str, int]) -> dict[str, _Case]:
@@ -148,8 +164,9 @@ def _cases(assessments: Sequence[Assessment], trials: Mapping[str, int]) -> dict
         else:
             known = len(recorded) >= (planned or 1)
         measured = known and all(a.status is AssessmentStatus.MEASURED for a in recorded)
+        keyed = next((a for a in recorded if a.unit is not None), recorded[0])
         cases[case_id] = _Case(
-            comparable_key=recorded[0].comparable_key,
+            comparable_key=keyed.comparable_key,
             measured=measured,
             passed=measured and all(a.passed for a in recorded),
         )

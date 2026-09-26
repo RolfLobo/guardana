@@ -170,6 +170,17 @@ def migrate_v5(document: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
+def _rules(raw: object) -> list[object]:
+    """Return a document's rule records, refusing anything that is not a list of them.
+
+    A missing or malformed `run.rules` migrated to an empty list would load as a run in
+    which no rule ran, which is a different document from the one on disk.
+    """
+    if not isinstance(raw, list):
+        raise ManifestLoadError("run.rules must be a list of rule records")
+    return raw
+
+
 def migrate_v6(document: Mapping[str, Any]) -> dict[str, Any]:
     """Rewrite a schema-6 saved run as a schema-7 one, recomputing nothing.
 
@@ -197,10 +208,7 @@ def migrate_v6(document: Mapping[str, Any]) -> dict[str, Any]:
         "run": {
             **run,
             "execution": {**(execution if isinstance(execution, dict) else {}), "trials": 1},
-            "rules": [
-                _renamed_rule(_mapping(rule, "run.rules[]"))
-                for rule in (rules if isinstance(rules, list) else [])
-            ],
+            "rules": [_renamed_rule(_mapping(rule, "run.rules[]")) for rule in _rules(rules)],
         },
     }
 
@@ -223,14 +231,31 @@ def migrate_v7(document: Mapping[str, Any]) -> dict[str, Any]:
         "$schema": schema_url(8),
         "run": {
             **run,
-            "rules": [
-                _uncorrected_rule(_mapping(rule, "run.rules[]"))
-                for rule in (rules if isinstance(rules, list) else [])
-            ],
+            "rules": [_uncorrected_rule(_mapping(rule, "run.rules[]")) for rule in _rules(rules)],
             "evaluators": [
                 _unmeasured_per_class(_mapping(entry, "run.evaluators[]"))
                 for entry in (evaluators if isinstance(evaluators, list) else [])
             ],
+        },
+    }
+
+
+def migrate_v8(document: Mapping[str, Any]) -> dict[str, Any]:
+    """Rewrite a schema-8 saved run as a schema-9 one, recomputing nothing.
+
+    Every **`run.rules[].suite`** arrives null, overwriting whatever the document holds:
+    no version-8 build ran a suite, so a summary found there was not written by one and
+    would otherwise reach a pipeline as a stored pass nobody measured.
+    """
+    run = _mapping(document.get("run"), "run")
+    rules = run.get("rules")
+    return {
+        **document,
+        "schema_version": 9,
+        "$schema": schema_url(9),
+        "run": {
+            **run,
+            "rules": [{**_mapping(rule, "run.rules[]"), "suite": None} for rule in _rules(rules)],
         },
     }
 
