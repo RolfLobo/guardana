@@ -33,7 +33,9 @@ _RAW = "https://raw.githubusercontent.com/guardana/guardana/refs/heads/main"
 _SCHEMAS = _REPO / "schemas"
 _SCHEMA_FILE = re.compile(r"^(?P<kind>[a-z][a-z0-9-]*)-v(?P<version>[1-9][0-9]*)\.schema\.json$")
 _CONTROL_README = "https://raw.githubusercontent.com/guardana/control/refs/heads/main/README.md"
-_CONTROL_SUMMARY = "Decide, enforce and record the tool calls your AI agents make. Status: alpha."
+_CONTROL_SUMMARY = (
+    "Watch, decide, enforce and record the tool calls your AI agents make. Status: alpha."
+)
 """Quoted from Control's README, which owns how Control describes itself."""
 
 sys.path.insert(0, str(_REPO / "packages" / "guardana-core" / "src"))

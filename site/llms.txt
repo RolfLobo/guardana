@@ -94,7 +94,7 @@ This file is generated from the documentation map; do not edit it by hand.
 
 ## Related project
 
-- [Guardana Control](https://raw.githubusercontent.com/guardana/control/refs/heads/main/README.md): Decide, enforce and record the tool calls your AI agents make. Status: alpha.
+- [Guardana Control](https://raw.githubusercontent.com/guardana/control/refs/heads/main/README.md): Watch, decide, enforce and record the tool calls your AI agents make. Status: alpha.
 
 ## Optional
 
