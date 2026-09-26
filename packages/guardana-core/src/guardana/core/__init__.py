@@ -18,7 +18,7 @@ from guardana.core.target import (
 )
 from guardana.core.taxonomy import TaxonomyRef
 
-__version__ = "0.28.0"
+__version__ = "0.29.0"
 
 __all__ = [
     "Capability",

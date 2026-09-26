@@ -275,8 +275,8 @@ pip install guardana-cli                  # or plain pip
 </code></pre>
 <h2 id="run-it-as-a-container">Run it as a container</h2>
 <p>The CLI and collector images are available from GitHub Container Registry:</p>
-<pre><code class="language-bash">docker run --rm -v &quot;$PWD:/work:ro&quot; ghcr.io/guardana/guardana:0.28 scan /work
-docker run --rm ghcr.io/guardana/guardana-collector:0.28 --help
+<pre><code class="language-bash">docker run --rm -v &quot;$PWD:/work:ro&quot; ghcr.io/guardana/guardana:0.29 scan /work
+docker run --rm ghcr.io/guardana/guardana-collector:0.29 --help
 </code></pre>
 <p>Tags include the exact version, the moving minor used above, and <code>latest</code>. Pin the moving minor in CI to receive fixes without changing the rule set. Both images run as a non-root user, support <code>linux/amd64</code> and <code>linux/arm64</code>, and include an SBOM and signed provenance attestation. See <a href="https://github.com/guardana/guardana/blob/main/deploy/docker/README.md"><code>deploy/docker/README.md</code></a> for mounts, exit codes, reports, and image builds.</p>
 <h2 id="the-optional-collector">The optional collector</h2>
@@ -294,7 +294,7 @@ guardana-collector migrate             # then: guardana-collector serve
 </main>
 </div>
 <footer class="foot"><div class="bar">
-<span class="who">Guardana 0.28.0 · Apache-2.0 ·
+<span class="who">Guardana 0.29.0 · Apache-2.0 ·
 maintained by Konrad Karauda</span>
 <a href="https://github.com/guardana/guardana/blob/main/docs/install.md">Edit this page on GitHub</a>
 <a href="https://github.com/guardana/guardana">github.com/guardana</a>

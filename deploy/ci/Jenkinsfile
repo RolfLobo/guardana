@@ -7,7 +7,7 @@
 pipeline {
   agent {
     docker {
-      image 'ghcr.io/guardana/guardana:0.28'
+      image 'ghcr.io/guardana/guardana:0.29'
       args '--entrypoint=""'
     }
   }

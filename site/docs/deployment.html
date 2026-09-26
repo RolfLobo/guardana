@@ -370,7 +370,7 @@ docker compose -f deploy/docker-compose.yml status   # or: guardana-collector st
 <p>Roll the <em>image</em> back to the matching tag at the same time. A collector older
 than its schema is exactly the situation <code>/readyz</code> and the version check exist to
 stop, and they will stop it.</p>
-<p><strong>Pin the image to a minor tag</strong> (<code>:0.28</code>) rather than <code>latest</code>. You want fixes
+<p><strong>Pin the image to a minor tag</strong> (<code>:0.29</code>) rather than <code>latest</code>. You want fixes
 without a schema you did not plan for; <code>latest</code> gives you both.</p>
 <h2 id="backups-and-restoring-one">Backups, and restoring one</h2>
 <p>The <code>guardana-data</code> volume is the only state that matters, and the only backup
@@ -479,7 +479,7 @@ them is worked around silently: each is absent, and says so.</p>
 <pre><code class="language-bash">docker run -d --name guardana-collector \
   -e GUARDANA_DATABASE_URL=&quot;postgresql://guardana:…@db.internal:5432/guardana&quot; \
   -p 127.0.0.1:8000:8000 \
-  ghcr.io/guardana/guardana-collector:0.28
+  ghcr.io/guardana/guardana-collector:0.29
 </code></pre>
 <p>Or without a container at all — <code>pip install &quot;guardana-server[serve]&quot;</code>, then
 <code>guardana-collector migrate</code> and <code>guardana-collector serve</code>. The ASGI server is an
@@ -489,7 +489,7 @@ extra rather than a dependency, so a site that already runs gunicorn points it a
 </main>
 </div>
 <footer class="foot"><div class="bar">
-<span class="who">Guardana 0.28.0 · Apache-2.0 ·
+<span class="who">Guardana 0.29.0 · Apache-2.0 ·
 maintained by Konrad Karauda</span>
 <a href="https://github.com/guardana/guardana/blob/main/docs/deployment.md">Edit this page on GitHub</a>
 <a href="https://github.com/guardana/guardana">github.com/guardana</a>

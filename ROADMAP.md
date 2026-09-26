@@ -23,15 +23,16 @@ Every roadmap item must preserve these properties:
 5. Application-specific risk remains expressible without forking the engine.
 6. Public schemas are versioned and migratable.
 
-## What ships today (0.28.0)
+## What ships today (0.29.0)
 
-The current release is beta. It provides artifact scanning, controlled endpoint and MCP
-probing with repeated trials, recorded-trace analysis, regression comparison, policy and
-baseline gates, extension APIs with scaffolding for a new pack, and an optional
-authenticated PostgreSQL-backed collector; a judge-graded rate is corrected for the
-judge's measured error when a matching calibration exists, and otherwise the report says
-so. See [FEATURES.md](FEATURES.md) for the concise overview and
-[Product status](docs/product-status.md) for limitations.
+The current release is beta. It provides offline artifact scanning, controlled endpoint
+and MCP probing with repeated trials, recorded-trace analysis, regression comparison,
+policy and baseline gates, extension APIs with scaffolding for a new pack, and an
+optional authenticated PostgreSQL-backed collector. Quality suites grade versioned
+datasets supplied by the team and gate their pass rates. Judge-graded trials and suite
+pass rates are corrected for the judge's measured error when a matching calibration
+exists; otherwise the report says so. See [FEATURES.md](FEATURES.md) for the concise
+overview and [Product status](docs/product-status.md) for limitations.
 
 ## Now: repeatable application assurance
 

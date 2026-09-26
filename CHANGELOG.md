@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.29.0] - 2026-09-26 — quality suites gate versioned datasets on measured pass rates
+
 ### Added
 
 - **Quality suites and datasets.** Declarative suite rules grade versioned JSONL datasets supplied by the team. Each case can run for repeated trials, with one assessment per trial.

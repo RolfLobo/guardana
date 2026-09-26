@@ -18,12 +18,12 @@ guardana config explain
 ## `doctor` — what this installation is
 
 ```text
-✓ guardana-core: 0.28.0
-✓ guardana-rules: 0.28.0
-✓ guardana-cli: 0.28.0
-✓ guardana-report: 0.28.0
+✓ guardana-core: 0.29.0
+✓ guardana-rules: 0.29.0
+✓ guardana-cli: 0.29.0
+✓ guardana-report: 0.29.0
 ✓ rules discovered: 51
-✓ evaluators discovered: 5
+✓ evaluators discovered: 10
 ✓ target schemes: none (installed targets are Python-only)
 ✓ profile: default parsed
 ! budgets: no ceiling set — a probe against a paid endpoint has no upper bound
