@@ -55,7 +55,16 @@ calls, tell the user how many calls and which engine, and wait.
    link present in the input still present in the output, length caps hold. Re-ask once quoting
    the failure; then mark the item failed. Taste is not yours to apply — a doubtful sentence
    goes to the second engine or to the user.
-5. **Wire it in through the gates**: a docs page through `test_docs_consistency.py` and
+5. **A rewrite of an existing page is compared with `git show main:<path>`** before it is wired
+   in, and with the `--input` file too when the page was edited before it was sent. List every
+   fact the base states that the rewrite dropped — a flag, an exit code, a default value, a
+   maturity caveat, an item of a list of what a command does. A dropped fact returns in its
+   original sentence, byte-identical, unless the brief removed it on purpose; it is never
+   re-worded here. A code block left without a sentence that introduces it is re-asked once with
+   the block quoted, then marked failed. No base to compare with (a new or renamed page) is
+   stated in the report, never skipped silently. The code-span check in step 4 does not catch
+   any of this: it lives in prose.
+6. **Wire it in through the gates**: a docs page through `test_docs_consistency.py` and
    `build_site.py --check`; the landing page through `sync_site.py --check` and
    `test_landing_page.py`; a rule's prompts through its positive, negative and inconclusive
    fixtures (`guardana rule test`).

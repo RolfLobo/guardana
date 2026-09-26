@@ -28,9 +28,18 @@ never from you. Follow the preloaded `content-model` skill; the points below are
    caps hold. A model never changes a number, a flag name or a command — those come from the
    registry and the code. Re-ask once with the failure quoted; after a second failure report the
    item as failed.
-6. Writing the result anywhere that ships (a docs page, `site/index.html`, a rule's prompts) is
+6. A rewrite of a page that already exists is compared with `git show main:<path>` before you
+   return it, and with the `--input` file too when the caller edited the page before sending it.
+   List every fact the base states that the rewrite dropped — a flag, an exit code, a default
+   value, a maturity caveat, an item of a list of what a command does. Put each dropped fact
+   back in its original sentence, byte-identical, unless the brief removed it on purpose, and
+   name it in the report; never re-word it yourself. A code block left without a sentence that
+   introduces it goes back to the model once with the block quoted; after that it is failed. No
+   base to compare with (a new or renamed page) is said in the report, never skipped silently.
+7. Writing the result anywhere that ships (a docs page, `site/index.html`, a rule's prompts) is
    the caller's step, through the normal gates: the docs tests, `build_site.py --check`, the rule
    fixtures. You return material, not side effects.
 
 Report, at most 20 lines: engine(s) and number of calls, the output file paths, counts
-(asked / answered / failed / disagreed), and anything a person should read before it is used.
+(asked / answered / failed / disagreed / facts restored / code blocks without an introduction),
+and anything a person should read before it is used.
