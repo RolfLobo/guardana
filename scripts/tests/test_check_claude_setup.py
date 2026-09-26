@@ -201,3 +201,59 @@ def test_a_gitignored_file_under_claude_is_named(
     )
     out = _problems(monkeypatch, capsys, tmp_path)
     assert ".claude/skills/build/SKILL.md: gitignored" in out
+
+
+def test_the_harness_local_files_are_not_named(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], tmp_path: Path
+) -> None:
+    """A live session's lock, local settings or worktree must not turn the gate red."""
+    _tree(tmp_path)
+    (tmp_path / ".gitignore").write_text(
+        ".claude/scheduled_tasks.lock\n.claude/settings.local.json\n.claude/worktrees/\n",
+        encoding="utf-8",
+    )
+    (tmp_path / ".claude" / "scheduled_tasks.lock").write_text("{}", encoding="utf-8")
+    (tmp_path / ".claude" / "settings.local.json").write_text("{}", encoding="utf-8")
+    (tmp_path / ".claude" / "worktrees" / "lane").mkdir(parents=True)
+    (tmp_path / ".claude" / "worktrees" / "lane" / "x.py").write_text("", encoding="utf-8")
+    monkeypatch.setattr(check_claude_setup, "ROOT", tmp_path)
+    assert check_claude_setup.main() == 0
+    assert "in sync" in capsys.readouterr().out
+
+
+def test_a_file_named_like_a_harness_file_elsewhere_is_named(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], tmp_path: Path
+) -> None:
+    _tree(tmp_path)
+    (tmp_path / ".gitignore").write_text(
+        "*.lock\nworktrees/\nworktrees2/\n*.orig\n", encoding="utf-8"
+    )
+    (tmp_path / ".claude" / "scheduled_tasks.lock").write_text("{}", encoding="utf-8")
+    (tmp_path / ".claude" / "settings.local.json.orig").write_text("{}", encoding="utf-8")
+    (tmp_path / ".claude" / "worktrees2").mkdir()
+    (tmp_path / ".claude" / "worktrees2" / "x").write_text("", encoding="utf-8")
+    (tmp_path / ".claude" / "skills" / "work" / "scheduled_tasks.lock").write_text(
+        "{}", encoding="utf-8"
+    )
+    (tmp_path / ".claude" / "skills" / "worktrees").mkdir()
+    (tmp_path / ".claude" / "skills" / "worktrees" / "SKILL.md").write_text(
+        SKILL.format(name="worktrees"), encoding="utf-8"
+    )
+    out = _problems(monkeypatch, capsys, tmp_path)
+    assert ".claude/skills/work/scheduled_tasks.lock: gitignored" in out
+    assert ".claude/skills/worktrees/SKILL.md: gitignored" in out
+    assert ".claude/settings.local.json.orig: gitignored" in out
+    assert ".claude/worktrees2/x: gitignored" in out
+    assert ".claude/scheduled_tasks.lock:" not in out
+
+
+def test_a_path_git_would_quote_is_matched_unquoted(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], tmp_path: Path
+) -> None:
+    _tree(tmp_path)
+    (tmp_path / ".gitignore").write_text(".claude/worktrees/\n", encoding="utf-8")
+    (tmp_path / ".claude" / "worktrees").mkdir()
+    (tmp_path / ".claude" / "worktrees" / "\u00e9.txt").write_text("", encoding="utf-8")
+    monkeypatch.setattr(check_claude_setup, "ROOT", tmp_path)
+    assert check_claude_setup.main() == 0
+    assert "in sync" in capsys.readouterr().out

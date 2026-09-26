@@ -74,7 +74,7 @@ Wired in `.claude/settings.json`; never invoked by hand except the checks.
 | `ruff_on_edit.py` | PostToolUse hook: `ruff check --fix` + `ruff format` on the file just written | `repo` (that one file) | `-` | `-` | — |
 | `guard_hook.py` | PreToolUse hook: deny/ask for the commands a prompt cannot be trusted to hold | `-` | `-` | `-` | — |
 | `session_start.sh` | SessionStart hook: work in flight, uncommitted paths, text engines | `-` | `-` | `-` | — |
-| `check_claude_setup.py` | gate: frontmatter, rule globs, quoted paths, hook paths, CLAUDE.md budget | `-` | `-` | `-` | — |
+| `check_claude_setup.py` | gate: frontmatter, rule globs, quoted paths, hook paths, nothing gitignored under `.claude/` but harness-local state, CLAUDE.md budget | `-` | `-` | `-` | — |
 | `check_ops_catalogue.py` | gate: every script has one row here, every row has a script | `-` | `-` | `-` | — |
 | `text_model.py` | the one door to GPT (`codex`) and Gemini (`agy`) for reader-facing wording and verdicts about it | `local` (the `--out` file) | `--detect` | GPT / Gemini | `codex` or `agy` installed |
 

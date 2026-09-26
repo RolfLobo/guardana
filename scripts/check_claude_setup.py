@@ -10,7 +10,8 @@ Checks: frontmatter parses; skills and agents have a description and a name
 matching their file; a skill's `agent:` exists; every rule has `paths` and every
 glob matches a file; repo paths quoted in CLAUDE.md, rules, skills and agents
 exist; the hook commands in settings.json point at files; no agent is
-configured on a model family this repository never uses; CLAUDE.md stays inside
+configured on a model family this repository never uses; nothing under .claude/
+is gitignored except the harness's machine-local state; CLAUDE.md stays inside
 its line budget. Exit 0 clean, 1 findings.
 """
 
@@ -41,6 +42,12 @@ PATH_ROOTS = (
 QUOTED = re.compile(r"`([^`\s]+)`")
 PLACEHOLDER = re.compile(r"[<>{}*$…]|\.\.\.")
 HOOK_PATH = re.compile(r"CLAUDE_PROJECT_DIR[^\"]*?/(scripts/[\w./-]+)")
+# Written by the harness while sessions run and ignored on purpose; a trailing slash is a directory.
+HARNESS_LOCAL = (
+    ".claude/scheduled_tasks.lock",
+    ".claude/settings.local.json",
+    ".claude/worktrees/",
+)
 
 
 def _frontmatter(path: Path) -> dict[str, object]:
@@ -118,10 +125,19 @@ def _check_hooks(problems: list[str]) -> None:
 
 
 def _check_ignored(problems: list[str]) -> None:
-    """Name every gitignored file under .claude/: a clone never gets it and git never shows it."""
+    """Name every gitignored file under .claude/ but the harness's own: a clone never gets it."""
     try:
         done = subprocess.run(
-            ["git", "ls-files", "--others", "--ignored", "--exclude-standard", "--", ".claude"],  # noqa: S607
+            [  # noqa: S607
+                "git",
+                "ls-files",
+                "-z",
+                "--others",
+                "--ignored",
+                "--exclude-standard",
+                "--",
+                ".claude",
+            ],
             cwd=ROOT,
             capture_output=True,
             text=True,
@@ -133,8 +149,14 @@ def _check_ignored(problems: list[str]) -> None:
         return
     problems.extend(
         f"{line}: gitignored, so it is not in the repository"
-        for line in done.stdout.splitlines()
-        if line
+        for line in done.stdout.split("\0")
+        if line and not _harness_local(line)
+    )
+
+
+def _harness_local(path: str) -> bool:
+    return any(
+        path == entry or (entry.endswith("/") and path.startswith(entry)) for entry in HARNESS_LOCAL
     )
 
 
